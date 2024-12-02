@@ -103,7 +103,7 @@ class User:
 # Example Usage
 if __name__ == "__main__":
     # Create a new user
-    user = User(first_name="David", last_name="Volodarsky", email="volodavi@post.bgu.ac.il", password="securepassword123")
+    user = User(first_name="David", last_name="Volodarsky", email="noaabo@post.bgu.ac.il", password="securepassword123")
     
     # Register the user
     if user.register():
