@@ -5,8 +5,7 @@ import os
 import re
 from email.mime.text import MIMEText
 import logging
-from Backend.BusinessLayer.Util.Exceptions import EmailSendingError, UserDoesnotExistsError, UserOrPasswordIncorrectError
-from Exceptions import UserAlreadyExistsError, InvalidEmailDomainError, AuthenticationCodeError
+from Backend.BusinessLayer.Util.Exceptions import *
 from Users.user import User
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,7 +14,10 @@ class UserController:
     def __init__(self):
         self.users = {}  # This will store users with email as the key
         self.pending_auth_codes = {}  # To store pending auth codes and their expiry times
-
+        
+    
+    def generateUserId(self):
+        return len(self.users) + 1
     
     def register_step1(self, email, password, first_name, last_name):
         """Step 1: Send authentication code to the user's email."""
@@ -51,7 +53,7 @@ class UserController:
             raise AuthenticationCodeError()
 
         # Add the user to the system if everything is valid
-        user_id = str(len(self.users) + 1)
+        user_id = self.generateUserId(self)
         user = User(user_id, email, password, first_name, last_name)
         self.users[email] = user
         del self.pending_auth_codes[email]  # Remove the pending auth code after successful registration
@@ -144,3 +146,19 @@ class UserController:
         logging.info(f"User {email} logged out successfully.")
         return "Logout successful"
 
+    def registerToCourse(self, courseId, userId):
+        """Add user to course (through User object)."""
+        user = self.users.get(userId)
+        if user:
+            user.registerToCourse(courseId)
+        else:
+            raise UserDoesnotExistsError()
+        
+    def editUserProfile(self, email, **kwargs):
+        """Edit the user's profile details."""
+        user = self.users.get(email)
+        if user:
+            user.editProfile(**kwargs)
+            return "Profile updated successfully"
+        else:
+            raise UserDoesnotExistsError()
