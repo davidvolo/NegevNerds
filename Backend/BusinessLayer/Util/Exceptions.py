@@ -53,6 +53,75 @@ class UserIsNotRegisterToCourse(BaseError):
         
 class CourseIsNotExist(BaseError):
     """Exception raised when the user is not exist."""
-    def __init__(self, course_Id):
-        message = f"Cousre {course_Id} is not exist."
+    def __init__(self, course_id):
+        message = f"Cousre {course_id} is not exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
+
+class CourseAlreadyExists(BaseError):
+    """Exception raised when the user is not exist."""
+    def __init__(self, course_id):
+        message = f"Cousre {course_id} is already exist."
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
+
+class ManagerIsNotExist(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self, manager_id):
+        message = f"manager {manager_id} is not exist."
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
+
+class ManagerAlreadyExists(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self, manager_id):
+        message = f"manager {manager_id} is already exist."
+        super().__init__(message, code=409)
+
+class ExamIsNotExist(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self, year, semester, moed):
+        message = f"exam from year- {year},semester- {semester}, moed- {moed} is not exist."
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
+
+class ExamAlreadyExists(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self, exam_Id):
+        message = f"exam {exam_Id} is already exist."
+        super().__init__(message, code=409)  # 4
+
+
+class UserAlreadyPostEmoji(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self, userId):
+        message = f"user {userId} already post this emojy."
+        super().__init__(message, code=409)  # 4
+
+
+class EmojiNotFounded(BaseError):
+    """Exception raised when the manager is not exist."""
+    def __init__(self):
+        message = "Emoji not found or count is already zero."
+        super().__init__(message, code=409)  # 4
+
+
+class QuestionAlreadyInExam(BaseError):
+    """Exception raised when the question is already part of the exam."""
+    def __init__(self):
+        message = "The question is already in the exam."
+        super().__init__(message, code=409)
+
+
+class QuestionDoesNotMeetExamFields(BaseError):
+    """Exception raised when the question does not meet the required fields for the exam."""
+    def __init__(self):
+        message = "The question does not meet the required fields for the exam."
+        super().__init__(message, code=400)  # Bad Request
+
+
+class QuestionNotFound(BaseError):
+    """Exception raised when a question is not found in the list."""
+    def __init__(self, question_id):
+        message = f"Question '{question_id}' not found in the list."
+        super().__init__(message, code=404)
