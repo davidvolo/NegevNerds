@@ -36,25 +36,27 @@ class User:
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
 
-        subject = "Your Authentication Code"
-        message = (f"Hello {self.first_name},\n\n"
-                   f"Your authentication code for NegevNerds is: {self.auth_code}\n"
-                   f"This code is valid for 3 minutes.\n\n"
-                   f"Thank you!")
+        subject = "קוד האימות שלך"
+        message = ("\u202B"  # Right-to-Left Embedding (RLE)
+                    f"שלום {self.first_name},\n\n"
+                    f"קוד האימות שלך עבור NegevNerds הוא: {self.auth_code}\n"
+                    f"הקוד תקף למשך 3 דקות.\n\n"
+                    f"תודה רבה!")
         msg = MIMEText(message)
         msg["Subject"] = subject
         msg["From"] = sender_email
         msg["To"] = self.email
 
+        # Send the email
         try:
-            # Connect to the SMTP server and send email
             with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()  # Secure the connection
+                server.starttls()
                 server.login(sender_email, sender_password)
-                server.sendmail(sender_email, self.email, msg.as_string())
-            print(f"Authentication code sent to {self.email}.")
+                server.send_message(msg)
+            print("Authentication code sent successfully.")
         except Exception as e:
-            print(f"Failed to send authentication code. Error: {e}")
+            print(f"Failed to send authentication code: {e}")
+
 
     def register(self):
         """Register the user."""
@@ -103,7 +105,7 @@ class User:
 # Example Usage
 if __name__ == "__main__":
     # Create a new user
-    user = User(first_name="David", last_name="Volodarsky", email="noaabo@post.bgu.ac.il", password="securepassword123")
+    user = User(first_name="David", last_name="Volodarsky", email="volodavi@post.bgu.ac.il", password="securepassword123")
     
     # Register the user
     if user.register():

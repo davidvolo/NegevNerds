@@ -76,11 +76,12 @@ class UserController:
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
 
-        subject = "Your Authentication Code"
-        message = (f"Hello {first_name},\n\n"
-                   f"Your authentication code for NegevNerds is: {auth_code}\n"
-                   f"This code is valid for 3 minutes.\n\n"
-                   f"Thank you!")
+        subject = "קוד האימות שלך"
+        message = ("\u202B"  # Right-to-Left Embedding (RLE)
+                    f"שלום {self.first_name},\n\n"
+                    f"קוד האימות שלך עבור NegevNerds הוא: {self.auth_code}\n"
+                    f"הקוד תקף למשך 3 דקות.\n\n"
+                    f"תודה רבה!")
         msg = MIMEText(message)
         msg["Subject"] = subject
         msg["From"] = sender_email
@@ -97,6 +98,7 @@ class UserController:
         except Exception as e:
             logging.error(f"Failed to send authentication code. Error: {e}")
             raise EmailSendingError() 
+        
         
     def verify_auth_code(self, auth_code, auth_code_expiry, entered_code):
             """Verify the authentication code entered by the user."""

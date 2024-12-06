@@ -66,3 +66,62 @@ class NegevNerds:
             return "User successfully removed from the course."
         except Exception as e:
             return f"Error: {e}"
+        
+
+    def search_exam_by_specifics(self, course_id, year : int, semester=None, moed=None):
+        """Search for exams by course ID and optionally filter by year, semester, and moed."""
+        try:
+            # Fetch all exams for the course from courseController
+            exams = self.courseController.search_exam_by_specifics(course_id,year,semester,moed)
+            return exams
+        except Exception as e:
+            raise Exception(f"Failed to search exams: {e}")
+        
+    def search_all_course_exmas(self, course_id):
+        """Search for all the exams in the system for specific course"""
+        try:
+            # Fetch all exams for the course from courseController
+            exams = self.courseController.search_all_course_exmas(course_id)
+            return exams
+        except Exception as e:
+            raise Exception(f"Failed to search exams: {e}")
+        
+    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
+        """Editing exam's course name """
+        try:
+            self.courseController.edit_exam_course_name(course_id, year, semester, moed, new_course_name)
+            return "The exams' course name was updated successfully."
+        except Exception as e:
+            raise Exception(f"Failed to edit exam's course name {e}")
+        
+    def edit_exam_link(self, course_id, year, semester, moed, new_link):
+        """Editing exam's link """
+        try:
+            self.courseController.edit_exam_link(course_id, year, semester, moed, new_link)
+            return "The exams' link was updated successfully."
+        except Exception as e:
+            raise Exception(f"Failed to edit exam's link {e}")
+    
+    def edit_exam_year(self, course_id, year, semester, moed, new_year):
+        """Editing exam's year """
+        try:
+            self.courseController.edit_exam_year(course_id, year, semester, moed, new_year)
+            return "The exams' year was updated successfully."
+        except Exception as e:
+            raise Exception(f"Failed to edit exam's link {e}")
+    
+    def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
+        """Editing exam's semester """
+        try:
+            self.courseController.edit_exam_semester(course_id, year, semester, moed, new_semester)
+            return "The exams' semester was updated successfully."
+        except Exception as e:
+            raise Exception(f"Failed to edit exam's link {e}")
+    
+    def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
+        """Editing exam's moed """
+        try:
+            self.courseController.edit_exam_moed(course_id, year, semester, moed, new_moed)
+            return "The exams' moed was updated successfully."
+        except Exception as e:
+            raise Exception(f"Failed to edit exam's link {e}")
