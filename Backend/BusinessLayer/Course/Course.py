@@ -20,6 +20,15 @@ class Course:
 
     def get_syllabus(self):
         return self.syllabus
+    
+    def get_all_exams(self):
+        """Retrieve all exam IDs from the exams dictionary."""
+        exams_id = []
+        for exam_id in self.exams.keys():  # Explicitly iterating over the keys
+            exams_id.append(exam_id)
+        return exams_id
+
+
 
     def get_exam(self, year, semester, moed):
         """Fetch an exam by ID."""
@@ -29,6 +38,34 @@ class Course:
                     return exam
         else:
             raise ExamIsNotExist(year, semester, moed)
+
+    # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
+    def get_exams(self, year : int, semester=None, moed=None):
+        """Fetch exams by year, and optionally filter by semester and moed."""
+        exams = []
+        
+        if year in self.exams:
+            # Iterate through exams for the specified year
+            for exam in self.exams[year]:
+                # Case 1: Neither semester nor moed specified
+                if semester is None and moed is None:
+                    exams.append(exam)
+                # Case 2: Only moed specified
+                elif semester is None and moed is not None:
+                    if exam.moed == moed:
+                        exams.append(exam)
+                # Case 3: Only semester specified
+                elif semester is not None and moed is None:
+                    if exam.semester == semester:
+                        exams.append(exam)
+                # Case 4: Both semester and moed specified
+                elif exam.semester == semester and exam.moed == moed:
+                    exams.append(exam)
+        else:
+            raise ExamIsNotExist(year, semester, moed)
+        
+        return exams
+
 
     def get_managers(self):
         return self.managers
@@ -101,4 +138,23 @@ class Course:
         exam = self.get_exam(year, semester, moed)
         exam.remove_comment(question_id, comment_id)
 
+    def edit_exam_course_name(self,year, semester, moed, new_course_name):
+        exam = self.get_exam(year,semester,moed)
+        exam.edit_course_name(new_course_name)
+    
+    def edit_exam_link(self,year, semester, moed, new_link):
+        exam = self.get_exam(year,semester,moed)
+        exam.edit_link(new_link)
+
+    def edit_exam_year(self,year, semester, moed, new_year):
+        exam = self.get_exam(year,semester,moed)
+        exam.edit_link(new_year)
+    
+    def edit_exam_semester(self,year, semester, moed, new_semester):
+        exam = self.get_exam(year,semester,moed)
+        exam.edit_semester(new_semester)
+    
+    def edit_exam_moed(self,year, semester, moed, new_moed):
+        exam = self.get_exam(year,semester,moed)
+        exam.edit_moed(new_moed)
 

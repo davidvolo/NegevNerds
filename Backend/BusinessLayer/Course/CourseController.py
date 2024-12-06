@@ -95,4 +95,60 @@ class CourseController:
         course = self.get_course(course_id)
         course.remove_comment( year, semester, moed, question_id, comment_id)
 
+    def sort_exams(self,exams):
+        """Sort exams by year (descending), semester (ascending), and moed (ascending)."""
+        return sorted(
+            exams,
+            key=lambda exam: (-exam.get("year", 0), exam.get("semester", ""), exam.get("moed", ""))
+        )
 
+
+    def search_exam_by_specifics(self, course_id, year : int, semester=None, moed=None):
+        """
+        Retrieves all exams for a course  in spefici year and optionally filters by semester and moed.
+
+        :param course_id: The ID of the course.
+        :param year: Optional filter by year.
+        :param semester: Optional filter by semester.
+        :param moed: Optional filter by moed.
+        :return: List of exams matching the criteria.
+        """
+        course = self.get_course(course_id)
+        exams = course.get_exams(year,semester,moed)  # Assuming Course class has this method
+
+        sorted_exmas = self.sort_exams(exams)
+        
+        return sorted_exmas
+    
+    def search_all_course_exmas(self, course_id):
+        """
+        Retrieves all exams for a specifiv course
+
+        :param course_id: The ID of the course.
+        :return: List of exams matching the criteria.
+        """
+        course = self.get_course(course_id)
+        exams = course.get_all_exams()  # Assuming Course class has this method
+        sorted_exmas = self.sort_exams(exams)
+        
+        return sorted_exmas
+    
+    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
+        course = self.get_course(course_id)
+        course.edit_exam_course_name(year, semester, moed, new_course_name)
+    
+    def edit_exam_link(self, course_id, year, semester, moed, new_link):
+        course = self.get_course(course_id)
+        course.edit_exam_link(year, semester, moed, new_link)
+        
+    def edit_exam_year(self, course_id, year, semester, moed, new_year):
+        course = self.get_course(course_id)
+        course.edit_exam_year(year, semester, moed, new_year)
+
+    def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
+        course = self.get_course(course_id)
+        course.edit_exam_semester(year, semester, moed, new_semester)
+
+    def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
+        course = self.get_course(course_id)
+        course.edit_exam_moed(year, semester, moed, new_moed)

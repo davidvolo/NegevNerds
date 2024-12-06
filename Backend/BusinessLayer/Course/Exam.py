@@ -65,3 +65,34 @@ class Exam:
         return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
                 f"Semester: {self.semester}, Moed: {self.moed}, "
                 f"Questions: {len(self.questions_list)})")
+    
+    def edit_course_name(self, new_course_name):
+        """Edit the course name."""
+        self.course_name = new_course_name
+
+    def edit_link(self, new_link):
+        """Edit the exam link."""
+        self.link = new_link
+
+    def edit_year(self, new_year):
+        """Edit the year of the exam."""
+        if isinstance(new_year, int):
+            self.year = new_year
+        else:
+            raise ValueError("Year must be an integer.")
+
+    def edit_semester(self, new_semester):
+        """Edit the semester of the exam."""
+        valid_semesters = {'a', 'b', 'c', 'A', 'B', 'C'}
+        if new_semester in valid_semesters:
+            self.semester = Semester(new_semester)
+        else:
+            raise ValueError("Invalid value for semester. Must be one of {'a', 'b', 'c', 'A', 'B', 'C'}.")
+
+    def edit_moed(self, new_moed):
+        """Edit the moed of the exam."""
+        valid_moeds = {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}
+        if new_moed in valid_moeds:
+            self.moed = Moed(new_moed)
+        else:
+            raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
