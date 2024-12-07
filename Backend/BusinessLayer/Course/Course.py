@@ -3,11 +3,12 @@ from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class Course:
-    def __init__(self, course_id, name, syllabus):
+    def __init__(self, course_id, name, syllabus, course_topics):
         self.id = course_id
         self.name = name
         self.syllabus = syllabus
-        self.exams = {}  # Dictionary to store exams with exam_id as key
+        self.course_topics = course_topics if course_topics is not None else []  # Default to an empty list
+        self.exams = {}  # Dictionary to store exams by years
         self.managers = {}  # Dictionary to store managers with manager_id as key
         self.students = []  # List of students for the course
 
@@ -21,23 +22,43 @@ class Course:
     def get_syllabus(self):
         return self.syllabus
     
+    def get_topics(self):
+        return self.course_topics
+    
+    # to delete:
+    # def get_all_exams(self):
+    #     """Retrieve all exam IDs from the exams dictionary."""
+    #     exams_id = []
+    #     for exam_id in self.exams.keys():  # Explicitly iterating over the keys
+    #         exams_id.append(exam_id)
+    #     return exams_id
+    
     def get_all_exams(self):
-        """Retrieve all exam IDs from the exams dictionary."""
-        exams_id = []
-        for exam_id in self.exams.keys():  # Explicitly iterating over the keys
-            exams_id.append(exam_id)
-        return exams_id
+        """Retrieve all exams from the exams dictionary."""
+        all_exams = []
+        for year_exams in self.exams.values():
+            for exam in year_exams:
+                all_exams.append(exam)
+        return all_exams
 
+    def get_question(self, year, semester, moed, question_id):
+        """get a specific question."""
+        return self.get_exam(year, semester, moed).get_question(question_id)
 
+    def get_questions_by_keywords(self, keywords):
+        """get questions by keywords."""
+        questions = []
+        for exam in self.get_all_exams:
+            questions = questions + exam.get_questions_by_keywords(keywords)
+        return questions
 
     def get_exam(self, year, semester, moed):
-        """Fetch an exam by ID."""
+        """get a specific exam."""
         if self.exams[year] in self.exams:
             for exam in self.exams[year]:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
-        else:
-            raise ExamIsNotExist(year, semester, moed)
+        raise ExamIsNotExist(year, semester, moed)
 
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
     def get_exams(self, year : int, semester=None, moed=None):
@@ -78,6 +99,20 @@ class Course:
         self.syllabus = syllabus
     
     # Methods
+    def add_course_topic(self, course_topic):
+        """Add a topic to the course."""
+        if course_topic not in self.course_topics:
+            self.course_topics.append(course_topic)
+        else:
+            raise TopicAlreadyExist(course_topic)
+
+    def remove_course_topic(self, course_topic):
+        """Remove a topic from the course."""
+        if course_topic in self.course_topics:
+            self.course_topics.remove(course_topic)
+        else:
+            raise TopicNotFound(course_topic)
+    
     def add_student(self, user_id):
         """Adds a student to the course."""
         if user_id not in self.students:
@@ -122,15 +157,30 @@ class Course:
         else:
             raise ManagerIsNotExist(manager_id)
 
-    def add_question(self, exam_id, year, question_id, semester, moed, question_number, is_american, link_to_question):
+    def add_question(self, exam_id, year, question_id, semester, moed, question_number, question_topic, is_american, link_to_question):
         """Delegate question addition to the specified Exam."""
         exam = self.get_exam(year,semester,moed)
-        exam.add_question(year, question_id, semester, moed, question_number, is_american, link_to_question)
+        if question_topic not in self.course_topics:
+            raise TopicNotFound(question_topic)
+        else:
+            exam.add_question(year, question_id, semester, moed, question_number, question_topic, is_american, link_to_question)
 
     def remove_question(self, year, semester, moed, question_id):
         """Delegate question removal to the specified Exam."""
         exam = self.get_exam(year, semester, moed)
         exam.remove_question(question_id)
+
+    def add_topic_to_question(self, year, semester, moed, question_id, question_topic):
+        if question_topic not in self.course_topics:
+            raise TopicNotFound(question_topic)
+        else:
+            self.get_question(year, semester, moed, question_id).add_question_topic(question_topic)
+            
+    def remove_topic_from_question(self, year, semester, moed, question_id, question_topic):
+        if question_topic not in self.course_topics:
+            raise TopicNotFound(question_topic)
+        else:
+            self.get_question(year, semester, moed, question_id).remove_question_topic(question_topic)
 
     def add_comment(self, year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text):
         """Delegate comment addition to the specified Exam and Question."""

@@ -20,12 +20,12 @@ class CourseController:
         else:
             raise CourseIsNotExist(course_id)
 
-    def open_course(self, course_id, name, syllabus):
+    def open_course(self, course_id, name, syllabus, course_topics):
         """Opens a new course"""
 
         if course_id in self.courses:
             raise CourseAlreadyExists(course_id)
-        self.courses[course_id] = Course(course_id, name, syllabus)
+        self.courses[course_id] = Course(course_id, name, syllabus, course_topics)
 
     def remove_course(self, course_id):
         """Remove an existing course"""
@@ -97,6 +97,22 @@ class CourseController:
         course = self.get_course(course_id)
         course.remove_question( year, semester, moed, question_id)
 
+    def add_course_topic(self, course_id, course_topic):
+        course = self.get_course(course_id)
+        course.add_course_topic(course_topic)
+        
+    def remove_course_topic(self, course_id, course_topic):
+        course = self.get_course(course_id)
+        course.remove_course_topic(course_topic)
+    
+    def add_topic_to_question(self, course_id, year, semester, moed, question_id, question_topic):
+        course = self.get_course(course_id)
+        course.add_topic_to_question(year, semester, moed, question_id, question_topic)
+        
+    def remove_topic_from_question(self, course_id, year, semester, moed, question_id, question_topic):
+        course = self.get_course(course_id)
+        course.remove_topic_from_question(year, semester, moed, question_id, question_topic)
+        
     def add_comment(self, course_id, year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text):
         """
         Delegates comment addition to the specified Exam and Question.
@@ -118,7 +134,14 @@ class CourseController:
             key=lambda exam: (-exam.get("year", 0), exam.get("semester", ""), exam.get("moed", ""))
         )
 
-
+    def search_question_by_specifics(self, course_id, year, semester, moed, question_id):
+        course = self.get_course(course_id)
+        return course.get_question(year, semester, moed, question_id)
+            
+    def get_questions_by_keywords(self, course_id, keywords):
+        course = self.get_course(course_id)
+        return course.get_questions_by_keywords(keywords)
+        
     def search_exam_by_specifics(self, course_id, year : int, semester=None, moed=None):
         """
         Retrieves all exams for a course  in spefici year and optionally filters by semester and moed.
@@ -136,7 +159,7 @@ class CourseController:
         
         return sorted_exmas
     
-    def search_all_course_exmas(self, course_id):
+    def search_all_course_exams(self, course_id):
         """
         Retrieves all exams for a specifiv course
 

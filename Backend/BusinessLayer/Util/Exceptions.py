@@ -125,3 +125,15 @@ class QuestionNotFound(BaseError):
     def __init__(self, question_id):
         message = f"Question '{question_id}' not found in the list."
         super().__init__(message, code=404)
+
+class TopicAlreadyExist(BaseError):
+    """Exception raised when a question topic is already in the course topics."""
+    def __init__(self, question_topic):
+        message = f"Topic '{question_topic}' is already in the course topics."
+        super().__init__(message, code=404)
+
+class TopicNotFound(BaseError):
+    """Exception raised when a question topic is not found in the course topics."""
+    def __init__(self, question_topic):
+        message = f"Topic '{question_topic}' not found in the course topics."
+        super().__init__(message, code=404)
