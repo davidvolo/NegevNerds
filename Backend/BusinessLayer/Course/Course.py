@@ -73,6 +73,10 @@ class Course:
     def get_students(self):
         return self.students
 
+    # Setters
+    def set_syllabus(self, syllabus):
+        self.syllabus = syllabus
+    
     # Methods
     def add_student(self, user_id):
         """Adds a student to the course."""

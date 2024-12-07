@@ -27,6 +27,14 @@ class CourseController:
             raise CourseAlreadyExists(course_id)
         self.courses[course_id] = Course(course_id, name, syllabus)
 
+    def remove_course(self, course_id):
+        """Remove an existing course"""
+
+        if course_id in self.courses:
+            self.courses.pop(course_id, None)
+        else:
+            raise CourseIsNotExist(course_id)
+            
     def get_course(self, course_id):
         """
         Retrieves a course by its ID.
@@ -35,6 +43,14 @@ class CourseController:
         if not course:
             raise CourseIsNotExist(course_id)
         return course
+
+    def set_syllabus_of_course(self, course_id, syllabus):
+        """Set syllabus of an existing course"""
+
+        if course_id in self.courses:
+            self.courses.get(course_id).set_syllabus(syllabus)
+        else:
+            raise CourseIsNotExist(course_id)
 
     def add_exam_to_course(self, course_id , course_name, link, year, semester, moed):
         """
