@@ -16,7 +16,7 @@ class Exam:
         self.moed = Moed(moed)
         self.questions_list = {}  # Default to an empty list
 
-    def add_question(self, year, questionId, semester, moed, question_number, is_american, link_to_question):
+    def add_question(self, year, questionId, semester, moed, question_number, question_topic, is_american, link_to_question):
         """
         Add a question to the questions list.
 
@@ -24,7 +24,7 @@ class Exam:
         """
         if year == self.year and semester == self.semester and moed == self.moed:
             if self.questions_list[question_number] is None:
-                question = Question(year, questionId, semester, moed, question_number, is_american,
+                question = Question(year, questionId, semester, moed, question_number, question_topic, is_american,
                                     link_to_question, self.link)
                 self.questions_list[question_number] = question
             else:
@@ -43,7 +43,18 @@ class Exam:
             raise QuestionNotFound
 
     def get_question(self, question_id):
-        return self.questions_list[question_id]
+        if question_id in self.questions_list.keys():
+            return self.questions_list[question_id]
+        else:
+            raise QuestionNotFound
+        
+    def get_questions_by_keywords(self, keywords):
+        questions = []
+        for keyword in keywords:
+            for question in self.questions_list.values():
+                if keyword in question.get_question_topics():
+                    questions.append(question)
+        return questions
 
     def add_comment(self, question_id, comment_id, writer_name, prev_id, comment_text):
         """
