@@ -8,3 +8,4 @@ https://postbguacil-my.sharepoint.com/:w:/g/personal/noaabo_post_bgu_ac_il/EZfwA
 
 https://docs.google.com/document/d/12XwImruV5HWZFCxDculYl0YyIEqie1IMSrvQ93FRr1o/edit?usp=sharing - tasks
 
+https://drive.google.com/file/d/1q9WZEhXA7kMxPvhd6wVL72YQ518R2Wsq/view?usp=sharing
