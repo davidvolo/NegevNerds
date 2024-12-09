@@ -1,3 +1,5 @@
+from Backend.BusinessLayer.Course.enums import Semester, Moed
+
 class QuestionDTO:
     def __init__(self, question_id, year, semester, moed, question_number, question_topics, is_american, link_to_question):
         """
@@ -5,8 +7,8 @@ class QuestionDTO:
         """
         self.question_id = question_id
         self.year = year
-        self.semester = semester
-        self.moed = moed
+        self.semester = Semester(semester)  # Convert to Enum
+        self.moed = Moed(moed)              # Convert to Enum
         self.question_number = question_number
         self.question_topics = question_topics
         self.is_american = is_american

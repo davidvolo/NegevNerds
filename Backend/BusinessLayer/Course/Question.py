@@ -1,8 +1,8 @@
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
-from Backend.DataLayer import QuestionDTO, ExamDTO
-
+from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class Question:
@@ -65,11 +65,13 @@ class Question:
     def remove_comment(self, comment_id):
         """
         Remove a comment from the comments list if it exists.
+        Raise an exception if the comment is not found.
         """
-        if comment_id in self.comments:
-            self.comments.remove(comment_id)
-        else:
-            print(f"Comment '{comment_id}' not found in the list.")
+        for comment in self.comments:
+            if comment.id == comment_id:
+                self.comments.remove(comment)
+                return
+        raise CommentNotFound(comment_id)
 
     def __str__(self):
         """

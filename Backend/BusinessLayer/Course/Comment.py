@@ -20,19 +20,29 @@ class Comment:
         """
         Add an emoji to the comment, incrementing its count.
         """
-        if userId not in self.emoji_counter_map[emoji]:
-            self.emoji_counter_map[emoji].add(userId)
-            if emoji == "dislike":
-                self.emoji_counter_map["like"].remove(userId)
-            else:
-                self.emoji_counter_map["like"].remove(userId)
-        else:
-            raise UserAlreadyPostEmoji
+        # Ensure the emoji exists in the counter map
+        if emoji not in self.emoji_counter_map:
+            raise EmojiNotFounded()
 
-    def remove_emoji(self, emoji):
+        # Check if the user already posted this emoji
+        if userId in self.emoji_counter_map[emoji]:
+            raise UserAlreadyPostEmoji(userId)
 
-        if emoji in self.emoji_counter_map and self.emoji_counter_map[emoji] > 0:
-            self.emoji_counter_map[emoji] -= 1
+        # Remove conflicting emoji if needed
+        if emoji == "like" and userId in self.emoji_counter_map["dislike"]:
+            self.emoji_counter_map["dislike"].remove(userId)
+        elif emoji == "dislike" and userId in self.emoji_counter_map["like"]:
+            self.emoji_counter_map["like"].remove(userId)
+
+        # Add the userId to the emoji set
+        self.emoji_counter_map[emoji].add(userId)
+
+    def remove_emoji(self, emoji, userId):
+        """
+        Remove an emoji from the comment for a specific user.
+        """
+        if emoji in self.emoji_counter_map and userId in self.emoji_counter_map[emoji]:
+            self.emoji_counter_map[emoji].remove(userId)
         else:
             raise EmojiNotFounded
 
@@ -40,4 +50,9 @@ class Comment:
         self.text = new_text
 
     def get_score(self):
-        return self.emoji_counter_map["like"] - self.emoji_counter_map["dislike"]
+        """
+        Calculate and return the score of the comment.
+        The score is the count of 'like' emojis minus the count of 'dislike' emojis.
+        """
+        return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])
+

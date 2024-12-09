@@ -36,33 +36,28 @@ class Exam:
     def generate_question_id(self):
         return len(self.questions_list) + 1
 
-    def add_question(self, year, semester, moed, questionDTO):
+    def add_question(self, questionDTO):
         """
-        Add a question to the questions list.
+        Add a question to the exam.
+        """
+        # Check if the fields match
+        if questionDTO.year != self.year or questionDTO.semester != self.semester or questionDTO.moed != self.moed:
+            raise QuestionDoesNotMeetExamFields(questionDTO.question_id)        # Check if the question already exists
 
-        :param question: The question to add.
-        """
-        if year == self.year and semester == self.semester and moed == self.moed:
-            if self.questions_list[questionDTO.question_number] is None:
-                questionId = self.generate_question_id()
-                question = Question(year, questionId, semester, moed, questionDTO.question_number,
-                                    questionDTO.question_topic, questionDTO.is_american, questionDTO.link_to_question,
-                                    self.link)
-                self.questions_list[questionDTO.question_number] = question
-            else:
-                raise QuestionAlreadyInExam
-        else:
-            raise QuestionDoesNotMeetExamFields
+        if questionDTO.question_id in self.questions_list:
+            raise QuestionAlreadyInExam(questionDTO.question_id)
+
+        # Add the question to the list
+        self.questions_list[questionDTO.question_id] = questionDTO
 
     def remove_question(self, question_id):
         """
         Remove a question from the questions list if it exists.
-
         """
-        if question_id in self.questions_list.keys():
-            self.questions_list[question_id] = None
+        if question_id in self.questions_list:
+            del self.questions_list[question_id]  # Remove the question completely
         else:
-            raise QuestionNotFound
+            raise QuestionNotFound(question_id)
 
     def get_question(self, question_id):
         if question_id in self.questions_list.keys():
@@ -116,11 +111,14 @@ class Exam:
 
     def edit_semester(self, new_semester):
         """Edit the semester of the exam."""
-        valid_semesters = {'a', 'b', 'c', 'A', 'B', 'C'}
-        if new_semester in valid_semesters:
-            self.semester = Semester(new_semester)
-        else:
-            raise ValueError("Invalid value for semester. Must be one of {'a', 'b', 'c', 'A', 'B', 'C'}.")
+        try:
+            if isinstance(new_semester, Semester):
+                self.semester = new_semester
+            else:
+                self.semester = Semester(new_semester)
+        except ValueError:
+            # Raise a more descriptive error if the value is not valid
+            raise ValueError(f"Invalid value for semester. Must be one of {[s.value for s in Semester]}.")
 
     def edit_moed(self, new_moed):
         """Edit the moed of the exam."""
