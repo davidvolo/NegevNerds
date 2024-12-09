@@ -73,7 +73,7 @@ class CourseIsNotExist(BaseError):
     """Exception raised when the user is not exist."""
 
     def __init__(self, course_id):
-        message = f"Cousre {course_id} is not exist."
+        message = f"Course {course_id} is not exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
 
@@ -81,7 +81,7 @@ class CourseAlreadyExists(BaseError):
     """Exception raised when the user is not exist."""
 
     def __init__(self, course_id):
-        message = f"Cousre {course_id} is already exist."
+        message = f"Course {course_id} is already exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
 
@@ -121,7 +121,7 @@ class UserAlreadyPostEmoji(BaseError):
     """Exception raised when the manager is not exist."""
 
     def __init__(self, userId):
-        message = f"user {userId} already post this emojy."
+        message = f"user {userId} already post this emoji."
         super().__init__(message, code=409)  # 4
 
 
@@ -175,7 +175,7 @@ class TopicNotFound(BaseError):
 
 class CommentNotFound(BaseError):
     """Exception raised when a comment is not found in the list."""
+
     def __init__(self, comment_id):
         message = f"Comment with ID '{comment_id}' not found in the list."
         super().__init__(message, code=404)
-

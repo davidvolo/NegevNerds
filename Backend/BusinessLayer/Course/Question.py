@@ -80,5 +80,3 @@ class Question:
         return (f"Question(ID: {self.id}, Year: {self.year}, Semester: {self.semester}, Moed: {self.moed}, "
                 f"Number: {self.question_number}, IsAmerican: {self.is_american}, "
                 f"Comments: {len(self.comments)})")
-
-

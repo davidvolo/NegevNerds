@@ -53,13 +53,16 @@ class TestExam(unittest.TestCase):
             year=2024,
             semester="Spring",  # Matching semester
             moed="A",  # Matching moed
-            question_number=2,
+            question_number=2,  # This is the key in the dictionary
             question_topics=["Graphs"],
             is_american=True,
             link_to_question="http://example.com/question2"
         )
         self.exam.add_question(question_dto)
-        self.assertIn(question_dto.question_id, self.exam.questions_list)
+
+        # Verify the question was added under the correct key (question_number)
+        self.assertIn(question_dto.question_number, self.exam.questions_list)
+        self.assertEqual(self.exam.questions_list[question_dto.question_number], question_dto)
 
     def test_add_question_fields_not_matching(self):
         """
