@@ -125,3 +125,13 @@ class NegevNerds:
             return "The exams' moed was updated successfully."
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
+
+    def add_question(self, course_id, year, semester, moed, question_number, question_topic, is_american, link_to_question):
+        """Adds a question to an exam in the specified course.
+        If the exam does not exist, it creates a new one."""
+        try:
+            self.courseController.add_question(
+                course_id, year, semester, moed, question_number, question_topic, is_american, link_to_question)
+            return "Question added successfully."
+        except Exception as e:
+            raise Exception(f"Failed to add question: {e}")

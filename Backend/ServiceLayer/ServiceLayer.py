@@ -218,3 +218,20 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+    def add_question(self, course_id, year, semester, moed, question):
+        """
+        Handles adding a question to an exam.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, question)
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
