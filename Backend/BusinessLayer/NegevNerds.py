@@ -3,9 +3,9 @@ import json
 from Backend.BusinessLayer.Util.Exceptions import *
 
 class NegevNerds:
-    def __init__(self, userController, courseController):
-        self.userController = userController
-        self.courseController = courseController
+    def __init__(self, user_controller, course_controller):
+        self.userController = user_controller
+        self.courseController = course_controller
         
     def register(self, email, password, first_name, last_name):
         """Register a new user."""
@@ -33,7 +33,7 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
         
-    def editProfile(self, email, **kwargs):
+    def edit_profile(self, email, **kwargs):
         """Edit the user's profile."""
         try:
             result = self.userController.editUserProfile(email, **kwargs)
@@ -41,26 +41,26 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
         
-    def registerToCourse(self, courseId, userId):
+    def registerToCourse(self, course_id, user_id):
         """Add the user to course and add the course to user."""
         try:
             # Register the user to the course using CourseController
-            self.courseController.registerToCourse(courseId, userId)
+            self.courseController.registerToCourse(course_id, user_id)
             # Register the course to the user using UserController
-            self.userController.registerToCourse(courseId,userId)
+            self.userController.registerToCourse(course_id, user_id)
             return "User successfully registered to the course."
         except Exception as e:
             return f"Error: {e}"
         
-    def removeStudentFromCourse(self, courseId, userId):
+    def removeStudentFromCourse(self, course_id, user_id):
         """Remove the user from the course and remove the course from user."""
         try:
             # Remove the user from the course using CourseController
-            self.courseController.removeStudentFromCourse(courseId, userId)
+            self.courseController.removeStudentFromCourse(course_id, user_id)
             # Remove the course from the user using UserController
-            user = self.userController.users.get(userId)
+            user = self.userController.users.get(user_id)
             if user:
-                user.removeCourse(courseId)
+                user.removeCourse(course_id)
             else:
                 raise UserDoesnotExistsError()
             return "User successfully removed from the course."
@@ -68,16 +68,16 @@ class NegevNerds:
             return f"Error: {e}"
         
 
-    def search_exam_by_specifics(self, course_id, year : int, semester=None, moed=None):
+    def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed."""
         try:
             # Fetch all exams for the course from courseController
-            exams = self.courseController.search_exam_by_specifics(course_id,year,semester,moed)
+            exams = self.courseController.search_exam_by_specifics(course_id, year, semester, moed)
             return exams
         except Exception as e:
             raise Exception(f"Failed to search exams: {e}")
         
-    def search_all_course_exmas(self, course_id):
+    def search_all_course_exams(self, course_id):
         """Search for all the exams in the system for specific course"""
         try:
             # Fetch all exams for the course from courseController
@@ -126,12 +126,12 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
-    def add_question(self, course_id, year, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def add_question(self, course_id, year, semester, moed, questionDTO):
         """Adds a question to an exam in the specified course.
         If the exam does not exist, it creates a new one."""
         try:
             self.courseController.add_question(
-                course_id, year, semester, moed, question_number, question_topic, is_american, link_to_question)
+                course_id, year, semester, moed, questionDTO)
             return "Question added successfully."
         except Exception as e:
             raise Exception(f"Failed to add question: {e}")

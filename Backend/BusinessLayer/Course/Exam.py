@@ -1,6 +1,7 @@
 from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
+from Backend.DataLayer import QuestionDTO, ExamDTO
 
 
 class Exam:
@@ -16,21 +17,38 @@ class Exam:
         self.moed = Moed(moed)
         self.questions_list = {}  # Default to an empty list
 
+    def to_dto(self):
+        """
+        Converts the Exam instance to an ExamDTO.
+        :return: ExamDTO instance.
+        """
+        question_dtos = [question.to_dto() for question in self.questions_list.values()]
+        return ExamDTO(
+            exam_id=self.id,
+            course_name=self.course_name,
+            link=self.link,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            questions_list=question_dtos
+        )
+
     def generate_question_id(self):
         return len(self.questions_list) + 1
 
-    def add_question(self, year, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def add_question(self, year, semester, moed, questionDTO):
         """
         Add a question to the questions list.
 
         :param question: The question to add.
         """
         if year == self.year and semester == self.semester and moed == self.moed:
-            if self.questions_list[question_number] is None:
+            if self.questions_list[questionDTO.question_number] is None:
                 questionId = self.generate_question_id()
-                question = Question(year, questionId, semester, moed, question_number, question_topic, is_american,
-                                    link_to_question, self.link)
-                self.questions_list[question_number] = question
+                question = Question(year, questionId, semester, moed, questionDTO.question_number,
+                                    questionDTO.question_topic, questionDTO.is_american, questionDTO.link_to_question,
+                                    self.link)
+                self.questions_list[questionDTO.question_number] = question
             else:
                 raise QuestionAlreadyInExam
         else:
