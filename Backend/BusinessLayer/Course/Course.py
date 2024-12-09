@@ -122,16 +122,20 @@ class Course:
         else:
             raise UserIsNotRegisterToCourse()
 
-    def add_exam(self,exam_id, course_name, link, year, semester, moed):
+    def generate_exam_id(self):
+        return len(self.exams) + 1
+
+    def add_exam(self, course_name, link, year, semester, moed):
         """Adds an exam to the course."""
         exam = self.get_exam(year, semester, moed)
         if exam is None:
+            exam_id = self.generate_exam_id()
             exam = Exam(exam_id, course_name, link, year, semester, moed)
             if year not in self.exams.keys:
                 self.exams[year] = []
             self.exams[year].append(exam)
         else:
-            raise ExamAlreadyExists(exam_id)
+            raise ExamAlreadyExists(exam.id)
 
     def remove_exam(self, year, semester, moed):
         """Removes an exam from the course."""
@@ -155,16 +159,16 @@ class Course:
         else:
             raise ManagerIsNotExist(manager_id)
 
-    def add_question(self, exam_id, year, question_id, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def add_question(self, year, semester, moed, question_number, question_topic, is_american, link_to_question):
         """Delegate question addition to the specified Exam."""
         exam = self.get_exam(year,semester,moed)
         if exam is not None:
             if question_topic not in self.course_topics:
                 raise TopicNotFound(question_topic)
             else:
-                exam.add_question(year, question_id, semester, moed, question_number, question_topic, is_american, link_to_question)
+                exam.add_question(year, semester, moed, question_number, question_topic, is_american, link_to_question)
         else:
-            raise ExamIsNotExist
+            self.add_exam(self.course_name, None, year, semester, moed)
 
     def remove_question(self, year, semester, moed, question_id):
         """Delegate question removal to the specified Exam."""

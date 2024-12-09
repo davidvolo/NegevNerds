@@ -16,7 +16,10 @@ class Exam:
         self.moed = Moed(moed)
         self.questions_list = {}  # Default to an empty list
 
-    def add_question(self, year, questionId, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def generate_question_id(self):
+        return len(self.questions_list) + 1
+
+    def add_question(self, year, semester, moed, question_number, question_topic, is_american, link_to_question):
         """
         Add a question to the questions list.
 
@@ -24,6 +27,7 @@ class Exam:
         """
         if year == self.year and semester == self.semester and moed == self.moed:
             if self.questions_list[question_number] is None:
+                questionId = self.generate_question_id()
                 question = Question(year, questionId, semester, moed, question_number, question_topic, is_american,
                                     link_to_question, self.link)
                 self.questions_list[question_number] = question
