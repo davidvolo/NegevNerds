@@ -1,6 +1,7 @@
 from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
+from Backend.DataLayer import QuestionDTO, ExamDTO
 
 
 class Exam:
@@ -15,6 +16,22 @@ class Exam:
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
         self.questions_list = {}  # Default to an empty list
+
+    def to_dto(self):
+        """
+        Converts the Exam instance to an ExamDTO.
+        :return: ExamDTO instance.
+        """
+        question_dtos = [question.to_dto() for question in self.questions_list.values()]
+        return ExamDTO(
+            exam_id=self.id,
+            course_name=self.course_name,
+            link=self.link,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            questions_list=question_dtos
+        )
 
     def generate_question_id(self):
         return len(self.questions_list) + 1

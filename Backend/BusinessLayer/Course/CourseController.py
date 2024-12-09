@@ -4,15 +4,15 @@ from Backend.BusinessLayer.Util.Exceptions import *
 
 class CourseController:
     def __init__(self):
-        self.courses = {} #courseId, Course
-        
-    """--------------cousre functionallity--------------"""
+        self.courses = {}  # courseId, Course
 
-    def register_to_course(self, courseId, userId):
-        course = self.get_course(courseId)
+    """--------------course functionality--------------"""
+
+    def register_to_course(self, course_id, user_id):
+        course = self.get_course(course_id)
         if course is not None:
-            self.courses[courseId].addStudent(userId)
-            
+            self.courses[course_id].addStudent(user_id)
+
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
         course = self.courses.get(course_id)
@@ -35,7 +35,7 @@ class CourseController:
             self.courses.pop(course_id, None)
         else:
             raise CourseIsNotExist(course_id)
-            
+
     def get_course(self, course_id):
         """
         Retrieves a course by its ID.
@@ -78,24 +78,23 @@ class CourseController:
         course = self.get_course(course_id)
         course.remove_course_topic(course_topic)
 
-    """--------------exams functionallity--------------"""
+    """--------------exams functionality--------------"""
 
-
-    def add_exam_to_course(self, course_id , course_name, link, year, semester, moed):
+    def add_exam_to_course(self, course_id, course_name, link, year, semester, moed):
         """
         Adds an exam to a course.
         """
         course = self.get_course(course_id)
         course.add_exam(course_name, link, year, semester, moed)
 
-    def remove_exam_from_course(self, course_id,  year, semester, moed):
+    def remove_exam_from_course(self, course_id, year, semester, moed):
         """
         Removes an exam from a course.
         """
         course = self.get_course(course_id)
-        course.remove_exam( year, semester, moed)
+        course.remove_exam(year, semester, moed)
 
-    def sort_exams(self,exams):
+    def sort_exams(self, exams):
         """Sort exams by year (descending), semester (ascending), and moed (ascending)."""
         return sorted(
             exams,
@@ -104,7 +103,7 @@ class CourseController:
 
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """
-        Retrieves all exams for a course  in spefici year and optionally filters by semester and moed.
+        Retrieves all exams for a course in specific year and optionally filters by semester and moed.
 
         :param course_id: The ID of the course.
         :param year: Optional filter by year.
@@ -115,22 +114,22 @@ class CourseController:
         course = self.get_course(course_id)
         exams = course.get_exams(year, semester, moed)  # Assuming Course class has this method
 
-        sorted_exmas = self.sort_exams(exams)
+        sorted_exams = self.sort_exams(exams)
 
-        return sorted_exmas
+        return sorted_exams
 
     def search_all_course_exams(self, course_id):
         """
-        Retrieves all exams for a specifiv course
+        Retrieves all exams for a specific course
 
         :param course_id: The ID of the course.
         :return: List of exams matching the criteria.
         """
         course = self.get_course(course_id)
         exams = course.get_all_exams()  # Assuming Course class has this method
-        sorted_exmas = self.sort_exams(exams)
+        sorted_exams = self.sort_exams(exams)
 
-        return sorted_exmas
+        return sorted_exams
 
     def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
         course = self.get_course(course_id)
@@ -152,27 +151,26 @@ class CourseController:
         course = self.get_course(course_id)
         course.edit_exam_moed(year, semester, moed, new_moed)
 
-    """--------------question functionallity--------------"""
+    """--------------question functionality--------------"""
 
-
-    def add_question(self, course_id,  year, question_id, semester, moed, question_number, is_american, link_to_question):
+    def add_question(self, course_id, year, semester, moed, question_number, is_american, link_to_question):
         """
         Delegates question addition to the specified Exam.
         """
         course = self.get_course(course_id)
-        course.add_question(year, question_id, semester, moed, question_number, is_american, link_to_question)
+        course.add_question(year, semester, moed, question_number, is_american, link_to_question)
 
-    def remove_question(self, course_id,  year, semester, moed, question_id):
+    def remove_question(self, course_id, year, semester, moed, question_id):
         """
         Delegates question removal to the specified Exam.
         """
         course = self.get_course(course_id)
-        course.remove_question( year, semester, moed, question_id)
-    
+        course.remove_question(year, semester, moed, question_id)
+
     def add_topic_to_question(self, course_id, year, semester, moed, question_id, question_topic):
         course = self.get_course(course_id)
         course.add_topic_to_question(year, semester, moed, question_id, question_topic)
-        
+
     def remove_topic_from_question(self, course_id, year, semester, moed, question_id, question_topic):
         course = self.get_course(course_id)
         course.remove_topic_from_question(year, semester, moed, question_id, question_topic)
@@ -185,19 +183,18 @@ class CourseController:
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
 
-    """--------------comment functionallity--------------"""
+    """--------------comment functionality--------------"""
 
-        
     def add_comment(self, course_id, year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text):
         """
         Delegates comment addition to the specified Exam and Question.
         """
         course = self.get_course(course_id)
-        course.add_comment( year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text)
+        course.add_comment(year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text)
 
-    def remove_comment(self,course_id, year, semester, moed, question_id, comment_id):
+    def remove_comment(self, course_id, year, semester, moed, question_id, comment_id):
         """
         Delegates comment removal to the specified Exam and Question.
         """
         course = self.get_course(course_id)
-        course.remove_comment( year, semester, moed, question_id, comment_id)
+        course.remove_comment(year, semester, moed, question_id, comment_id)

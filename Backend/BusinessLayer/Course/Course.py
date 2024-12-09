@@ -159,14 +159,15 @@ class Course:
         else:
             raise ManagerIsNotExist(manager_id)
 
-    def add_question(self, year, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def add_question(self, year, semester, moed, questionDTO):
         """Delegate question addition to the specified Exam."""
         exam = self.get_exam(year,semester,moed)
         if exam is not None:
-            if question_topic not in self.course_topics:
-                raise TopicNotFound(question_topic)
+            for question_topic in questionDTO.question_topics:
+                if question_topic not in self.course_topics:
+                    raise TopicNotFound(question_topic)
             else:
-                exam.add_question(year, semester, moed, question_number, question_topic, is_american, link_to_question)
+                exam.add_question(year, semester, moed, questionDTO)
         else:
             self.add_exam(self.course_name, None, year, semester, moed)
 
