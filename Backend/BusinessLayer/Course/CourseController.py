@@ -153,12 +153,12 @@ class CourseController:
 
     """--------------question functionality--------------"""
 
-    def add_question(self, course_id, year, semester, moed, question_number, is_american, link_to_question):
+    def add_question(self, course_id, year, semester, moed, questionDTO):
         """
         Delegates question addition to the specified Exam.
         """
         course = self.get_course(course_id)
-        course.add_question(year, semester, moed, question_number, is_american, link_to_question)
+        course.add_question(year, semester, moed, questionDTO)
 
     def remove_question(self, course_id, year, semester, moed, question_id):
         """

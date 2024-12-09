@@ -36,18 +36,19 @@ class Exam:
     def generate_question_id(self):
         return len(self.questions_list) + 1
 
-    def add_question(self, year, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def add_question(self, year, semester, moed, questionDTO):
         """
         Add a question to the questions list.
 
         :param question: The question to add.
         """
         if year == self.year and semester == self.semester and moed == self.moed:
-            if self.questions_list[question_number] is None:
+            if self.questions_list[questionDTO.question_number] is None:
                 questionId = self.generate_question_id()
-                question = Question(year, questionId, semester, moed, question_number, question_topic, is_american,
-                                    link_to_question, self.link)
-                self.questions_list[question_number] = question
+                question = Question(year, questionId, semester, moed, questionDTO.question_number,
+                                    questionDTO.question_topic, questionDTO.is_american, questionDTO.link_to_question,
+                                    self.link)
+                self.questions_list[questionDTO.question_number] = question
             else:
                 raise QuestionAlreadyInExam
         else:
