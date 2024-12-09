@@ -1,7 +1,6 @@
-from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
-from Backend.DataLayer import QuestionDTO, ExamDTO
+from Backend.DataLayer.ExamDTO import ExamDTO
 
 
 class Exam:
@@ -15,7 +14,7 @@ class Exam:
         self.year = year
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
-        self.questions_list = {}  # Default to an empty list
+        self.questions_list = {}  # <Question number, Question>
 
     def to_dto(self):
         """
@@ -42,29 +41,33 @@ class Exam:
         """
         # Check if the fields match
         if questionDTO.year != self.year or questionDTO.semester != self.semester or questionDTO.moed != self.moed:
-            raise QuestionDoesNotMeetExamFields(questionDTO.question_id)        # Check if the question already exists
-
-        if questionDTO.question_id in self.questions_list:
-            raise QuestionAlreadyInExam(questionDTO.question_id)
+            raise QuestionDoesNotMeetExamFields(questionDTO.question_number)
+        # Check if the question already exists
+        if questionDTO.question_number in self.questions_list:
+            raise QuestionAlreadyInExam(questionDTO.question_number)
 
         # Add the question to the list
-        self.questions_list[questionDTO.question_id] = questionDTO
+        questionDTO.question_id = self.generate_question_id()
+        self.questions_list[questionDTO.question_number] = questionDTO
 
-    def remove_question(self, question_id):
+    def remove_question(self, question_number):
         """
         Remove a question from the questions list if it exists.
         """
-        if question_id in self.questions_list:
-            del self.questions_list[question_id]  # Remove the question completely
+        if question_number in self.questions_list:
+            del self.questions_list[question_number]  # Remove the question completely
         else:
-            raise QuestionNotFound(question_id)
+            raise QuestionNotFound(question_number)
 
-    def get_question(self, question_id):
-        if question_id in self.questions_list.keys():
-            return self.questions_list[question_id]
+    def get_question(self, question_number):
+        """
+        Retrieve a question by its number.
+        """
+        if question_number in self.questions_list:
+            return self.questions_list[question_number]
         else:
-            raise QuestionNotFound
-        
+            raise QuestionNotFound(question_number)
+
     def get_questions_by_keywords(self, keywords):
         questions = []
         for keyword in keywords:
@@ -73,18 +76,17 @@ class Exam:
                     questions.append(question)
         return questions
 
-    def add_comment(self, question_id, comment_id, writer_name, prev_id, comment_text):
+    def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
         """
-        Add a comment to the comments list.
+        Add a comment to the comments list of a specific question.
         """
-        self.get_question(question_id).add_comment(comment_id, writer_name, prev_id, comment_text)
+        self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
-    def remove_comment(self, question_id,  comment_id):
+    def remove_comment(self, question_number, comment_id):
         """
-        Remove a comment from the comments list if it exists.
+        Remove a comment from the comments list of a specific question.
         """
-        self.get_question(question_id).remove_comment(comment_id)
-
+        self.get_question(question_number).remove_comment(comment_id)
 
     def __str__(self):
         """

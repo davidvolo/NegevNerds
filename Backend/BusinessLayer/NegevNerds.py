@@ -1,12 +1,12 @@
-import json
-
 from Backend.BusinessLayer.Util.Exceptions import *
 
+
 class NegevNerds:
-    def __init__(self, user_controller, course_controller):
+    def __init__(self, user_controller, course_controller, file_manager):
         self.userController = user_controller
         self.courseController = course_controller
-        
+        self.fileManager = file_manager
+
     def register(self, email, password, first_name, last_name):
         """Register a new user."""
         try:
@@ -32,7 +32,7 @@ class NegevNerds:
             return result  # Return the result from the controller
         except Exception as e:
             return f"Error: {e}"
-        
+
     def edit_profile(self, email, **kwargs):
         """Edit the user's profile."""
         try:
@@ -40,7 +40,7 @@ class NegevNerds:
             return result
         except Exception as e:
             return f"Error: {e}"
-        
+
     def registerToCourse(self, course_id, user_id):
         """Add the user to course and add the course to user."""
         try:
@@ -51,7 +51,7 @@ class NegevNerds:
             return "User successfully registered to the course."
         except Exception as e:
             return f"Error: {e}"
-        
+
     def removeStudentFromCourse(self, course_id, user_id):
         """Remove the user from the course and remove the course from user."""
         try:
@@ -62,11 +62,10 @@ class NegevNerds:
             if user:
                 user.removeCourse(course_id)
             else:
-                raise UserDoesnotExistsError()
+                raise UserDoesnotExistsError(user_id)
             return "User successfully removed from the course."
         except Exception as e:
             return f"Error: {e}"
-        
 
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed."""
@@ -76,7 +75,7 @@ class NegevNerds:
             return exams
         except Exception as e:
             raise Exception(f"Failed to search exams: {e}")
-        
+
     def search_all_course_exams(self, course_id):
         """Search for all the exams in the system for specific course"""
         try:
@@ -85,7 +84,7 @@ class NegevNerds:
             return exams
         except Exception as e:
             raise Exception(f"Failed to search exams: {e}")
-        
+
     def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
         """Editing exam's course name """
         try:
@@ -93,7 +92,7 @@ class NegevNerds:
             return "The exams' course name was updated successfully."
         except Exception as e:
             raise Exception(f"Failed to edit exam's course name {e}")
-        
+
     def edit_exam_link(self, course_id, year, semester, moed, new_link):
         """Editing exam's link """
         try:
@@ -101,7 +100,7 @@ class NegevNerds:
             return "The exams' link was updated successfully."
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
-    
+
     def edit_exam_year(self, course_id, year, semester, moed, new_year):
         """Editing exam's year """
         try:
@@ -109,7 +108,7 @@ class NegevNerds:
             return "The exams' year was updated successfully."
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
-    
+
     def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
         """Editing exam's semester """
         try:
@@ -117,7 +116,7 @@ class NegevNerds:
             return "The exams' semester was updated successfully."
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
-    
+
     def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
         """Editing exam's moed """
         try:
@@ -126,12 +125,51 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
-    def add_question(self, course_id, year, semester, moed, questionDTO):
-        """Adds a question to an exam in the specified course.
-        If the exam does not exist, it creates a new one."""
+    def add_question_with_pdf(self, course_id, year, semester, moed, pdf_file_content, question_dto):
+        """
+        Add a question to a course exam with an associated PDF file.
+
+        :param course_id: ID of the course.
+        :param year: Year of the exam.
+        :param semester: Semester of the exam.
+        :param moed: Moed of the exam.
+        :param pdf_file_content: Content of the PDF file.
+        :param question_dto: QuestionDTO containing question details.
+        :return: Path to the saved PDF file.
+        """
         try:
-            self.courseController.add_question(
-                course_id, year, semester, moed, questionDTO)
+            # Get course name for filename generation
+            course = self.courseController.get_course(course_id)
+            course_name = course.get_name()
+
+            # Save the PDF file with a custom name
+            pdf_path = self.fileManager.save_file_question(
+                file_content=pdf_file_content,
+                course_name=course_name,
+                year=year,
+                semester=semester,
+                moed=moed,
+                question_number=question_dto.question_number
+            )
+
+            # Update the link_to_question in the QuestionDTO
+            question_dto.link_to_question = pdf_path
+
+            # Add the question to the course
+            self.courseController.add_question(course_id, year, semester, moed, question_dto)
+
             return "Question added successfully."
+        except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:
+            raise e
         except Exception as e:
-            raise Exception(f"Failed to add question: {e}")
+            raise Exception(f"Failed to add question with PDF: {e}")
+
+    # def add_question(self, course_id, year, semester, moed, questionDTO):
+    #     """Adds a question to an exam in the specified course.
+    #     If the exam does not exist, it creates a new one."""
+    #     try:
+    #         self.courseController.add_question(
+    #             course_id, year, semester, moed, questionDTO)
+    #         return "Question added successfully."
+    #     except Exception as e:
+    #         raise Exception(f"Failed to add question: {e}")

@@ -1,5 +1,6 @@
 import json
-from BusinessLayer import NegevNerds
+from Backend.BusinessLayer import NegevNerds
+
 
 class ServiceLayer:
     def __init__(self, negev_nerds: NegevNerds):
@@ -9,7 +10,7 @@ class ServiceLayer:
         """Handle user registration and return JSON."""
         try:
             result = self.negev_nerds.register(email, password, first_name, last_name)
-            
+
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
@@ -29,7 +30,7 @@ class ServiceLayer:
         """Handle user login and return JSON."""
         try:
             result = self.negev_nerds.login(email, password)
-            
+
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
@@ -49,7 +50,7 @@ class ServiceLayer:
         """Handle user logout and return JSON."""
         try:
             result = self.negev_nerds.logout(email)
-            
+
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
@@ -65,12 +66,12 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def search_exam_by_specifics(self, course_id, year :int, semester=None, moed=None):
+    def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
         try:
             # Call the business layer method with the provided arguments
             result = self.negev_nerds.search_exam_by_specifics(course_id, year, semester, moed)
-            
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -86,13 +87,13 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
-    def search_all_course_exmas(self, course_id):
+
+    def search_all_course_exams(self, course_id):
         """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
         try:
             # Call the business layer method with the provided arguments
             result = self.negev_nerds.search_all_course_exmas(course_id)
-            
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -108,13 +109,13 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
+
     def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
         """Editing exam's course name """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_course_name( course_id, year, semester, moed, new_course_name)
-            
+            result = self.negev_nerds.edit_exam_course_name(course_id, year, semester, moed, new_course_name)
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -130,13 +131,13 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-    
+
     def edit_exam_link(self, course_id, year, semester, moed, new_link):
         """Editing exam's link """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_link( course_id, year, semester, moed, new_link)
-            
+            result = self.negev_nerds.edit_exam_link(course_id, year, semester, moed, new_link)
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -152,13 +153,13 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-    
+
     def edit_exam_year(self, course_id, year, semester, moed, new_year):
         """Editing exam's year """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_year( course_id, year, semester, moed, new_year)
-            
+            result = self.negev_nerds.edit_exam_year(course_id, year, semester, moed, new_year)
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -174,13 +175,13 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
+
     def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
         """Editing exam's semester """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_semester( course_id, year, semester, moed, new_semester)
-            
+            result = self.negev_nerds.edit_exam_semester(course_id, year, semester, moed, new_semester)
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -201,8 +202,8 @@ class ServiceLayer:
         """Editing exam's moed """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_moed( course_id, year, semester, moed, new_moed)
-            
+            result = self.negev_nerds.edit_exam_moed(course_id, year, semester, moed, new_moed)
+
             # Check if any exams are found
             if not result:
                 return json.dumps({
@@ -219,13 +220,13 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def add_question(self, course_id, year, semester, moed, questionDTO):
+    def add_question_with_pdf(self, course_id, year, semester, moed, pdf_file_content, questionDTO):
         """
         Handles adding a question to an exam.
         :return: JSON response indicating success or failure.
         """
         try:
-            result = self.negev_nerds.add_question(course_id, year, semester, moed, questionDTO)
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, pdf_file_content, questionDTO)
             return json.dumps({
                 "status": "success",
                 "message": result

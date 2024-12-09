@@ -177,23 +177,39 @@ class Course:
         else:
             raise ManagerIsNotExist(manager_id)
 
+    # def add_question(self, year, semester, moed, questionDTO):
+    #     """
+    #     Add a question to the exam. If the exam doesn't exist, raise ExamIsNotExist.
+    #     """
+    #     try:
+    #         exam = self.get_exam(year, semester, moed)
+    #         exam.add_question(questionDTO)
+    #     except ExamIsNotExist:
+    #         raise ExamIsNotExist(
+    #             year=year,
+    #             semester=semester,
+    #             moed=moed
+    #         )
+    #     except QuestionDoesNotMeetExamFields as e:
+    #         raise QuestionDoesNotMeetExamFields(str(e))
+    #     except QuestionAlreadyInExam as e:
+    #         raise QuestionAlreadyInExam(str(e))
+
     def add_question(self, year, semester, moed, questionDTO):
         """
-        Add a question to the exam. If the exam doesn't exist, raise ExamIsNotExist.
+        Add a question to an exam, ensuring its topics are valid.
         """
-        try:
-            exam = self.get_exam(year, semester, moed)
-            exam.add_question(year, semester, moed, questionDTO)
-        except ExamIsNotExist:
-            raise ExamIsNotExist(
-                year=year,
-                semester=semester,
-                moed=moed
-            )
-        except QuestionDoesNotMeetExamFields as e:
-            raise QuestionDoesNotMeetExamFields(str(e))
-        except QuestionAlreadyInExam as e:
-            raise QuestionAlreadyInExam(str(e))
+        # Validate that all question topics exist in the course topics
+        for topic in questionDTO.question_topics:
+            if topic not in self.course_topics:
+                raise TopicNotFound(topic)
+
+        # Delegate to the Exam instance
+        exam = self.get_exam(year, semester, moed)
+        if exam is not None:
+            exam.add_question(questionDTO)
+        else:
+            raise ExamIsNotExist(year, semester, moed)
 
     def remove_question(self, year, semester, moed, question_id):
         """Delegate question removal to the specified Exam."""
