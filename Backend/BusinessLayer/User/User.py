@@ -1,15 +1,15 @@
-from Backend.BusinessLayer.Util.Exceptions import *
+from BusinessLayer.Util.Exceptions import *
 
 
 class User:
-    def __init__(self, id, email, password, first_name, last_name):
+    def __init__(self, id, email, password, first_name, last_name, loggedIn = False, courses = []):
         self.id = id
         self.email = email
         self.password = password
         self.first_name = first_name
         self.last_name = last_name
-        self.loggedIn = False
-        self.courses = []
+        self.loggedIn = loggedIn
+        self.courses = courses
     
     
     def login(self):
