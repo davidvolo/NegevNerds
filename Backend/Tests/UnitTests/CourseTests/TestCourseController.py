@@ -1,5 +1,5 @@
 import unittest
-from Backend.BusinessLayer.Course.CourseController import CourseController
+from Backend.BusinessLayer.Course.CourseFacade import CourseController
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, CourseAlreadyExists
 

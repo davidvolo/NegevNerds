@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from Backend.BusinessLayer.User import UserController
+from Backend.BusinessLayer.User import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
 
 class TestUserController(unittest.TestCase):

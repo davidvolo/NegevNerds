@@ -2,7 +2,7 @@ from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
 
 
-class CourseController:
+class CourseFacade:
     def __init__(self):
         self.courses = {}  # courseId, Course
 

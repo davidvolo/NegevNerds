@@ -6,66 +6,18 @@ import re
 import threading
 from email.mime.text import MIMEText
 import logging
-from Backend.BusinessLayer.Util.Exceptions import *
-from Users.user import User
+
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-
-class UserTemp:
-    def __init__(self, first_name, last_name, email, password):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.password = password
-        self.is_authenticated = False
-        self.auth_code = None
-        self.auth_code_expiry = None
-
-    @staticmethod
-    def is_valid_email(email):
-        """Validate email domain."""
-        return re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email)
-
-    def send_auth_code(self):
-        """Generate and send an authentication code via email."""
-        self.auth_code = random.randint(100000, 999999)
-        self.auth_code_expiry = datetime.datetime.now() + datetime.timedelta(minutes=3)
-
-        sender_email = os.getenv("EMAIL_ADDRESS")
-        sender_password = os.getenv("EMAIL_PASSWORD")
-        smtp_server = "smtp.gmail.com"
-        smtp_port = 587
-
-        subject = "קוד האימות שלך"
-        message = (f"שלום {self.first_name},\n\n"
-                   f"קוד האימות שלך עבור NegevNerds הוא: {self.auth_code}\n"
-                   f"הקוד תקף למשך 3 דקות.\n\n"
-                   f"תודה רבה!")
-        msg = MIMEText(message)
-        msg["Subject"] = subject
-        msg["From"] = sender_email
-        msg["To"] = self.email
-
-        try:
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
-                server.login(sender_email, sender_password)
-                server.send_message(msg)
-            logging.info(f"Authentication code sent to {self.email}")
-        except Exception as e:
-            logging.error(f"Failed to send authentication code: {e}")
-            raise Exception("Failed to send authentication code.")
-
-
-class UserController:
+class UserFacade:
     def __init__(self):
         self.users = {}
         self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
         self.auth_lock = threading.Lock()  # Lock for thread-safe access
-    
+
     def generateUserId(self):
         return len(self.users) + 1
 
@@ -113,8 +65,55 @@ class UserController:
                 logging.error(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == 2:
                     raise Exception("Failed to authenticate. Registration aborted.")
-        
+
         return {"message": "Registration process failed."}
+
+
+class UserTemp:
+    def __init__(self, first_name, last_name, email, password):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.password = password
+        self.is_authenticated = False
+        self.auth_code = None
+        self.auth_code_expiry = None
+
+    @staticmethod
+    def is_valid_email(email):
+        """Validate email domain."""
+        return re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email)
+
+    def send_auth_code(self):
+        """Generate and send an authentication code via email."""
+        self.auth_code = random.randint(100000, 999999)
+        self.auth_code_expiry = datetime.datetime.now() + datetime.timedelta(minutes=3)
+
+        sender_email = os.getenv("EMAIL_ADDRESS")
+        sender_password = os.getenv("EMAIL_PASSWORD")
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+
+        subject = "קוד האימות שלך"
+        message = (f"שלום {self.first_name},\n\n"
+                   f"קוד האימות שלך עבור NegevNerds הוא: {self.auth_code}\n"
+                   f"הקוד תקף למשך 3 דקות.\n\n"
+                   f"תודה רבה!")
+        msg = MIMEText(message)
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = self.email
+
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            logging.info(f"Authentication code sent to {self.email}")
+        except Exception as e:
+            logging.error(f"Failed to send authentication code: {e}")
+            raise Exception("Failed to send authentication code.")
+
 
 # class UserController:
 #     def __init__(self):
