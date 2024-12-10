@@ -52,6 +52,12 @@ class UserDoesnotExistsError(BaseError):
         message = f"User with email {email} not exists."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
+class UserIsNotLoggedInError(BaseError):
+    """Exception raised when tring to log out a not logged in user."""
+    def __init__(self, email):
+        message = f"Can't log out {email} since he is not logged in."
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+        
 
 class UserAlreadyRegisterToCourse(BaseError):
     """Exception raised when the user is already register to course."""

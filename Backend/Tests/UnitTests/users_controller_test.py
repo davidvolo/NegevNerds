@@ -1,152 +1,248 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, mock_open, MagicMock
 from datetime import datetime, timedelta
 import sys
 import os
+
+# Add Backend directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from Backend.BusinessLayer.User import UserController
-from Backend.BusinessLayer.Util.Exceptions import *
+
+from BusinessLayer.User.UserController import UserController
+from BusinessLayer.User.User import *
+
 
 class TestUserController(unittest.TestCase):
     def setUp(self):
         """Set up a fresh UserController instance for each test."""
         self.user_controller = UserController()
+        # self.addCleanup(patch.stopall)
+        self.mock_user = MagicMock()
+        self.mock_user.logout = MagicMock()
 
-    @patch("UserController.UserController.send_auth_code")
-    def test_register_step1_happy_path(self, mock_send_auth_code):
-        """Test registration step 1 (happy path)."""
-        mock_send_auth_code.return_value = (123456, datetime.now() + timedelta(minutes=3))
-        
-        result = self.user_controller.register_step1(
-            email="testuser@bgu.ac.il",
-            password="password123",
+    @patch("builtins.input", side_effect=["123456", "כן"])  # Mock user inputs for auth code and terms acceptance
+    @patch("BusinessLayer.User.UserController.UserController.send_auth_code")  # Mock send_auth_code
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock Terms of Use")  # Mock file read
+    def test_register_valid_email_password(self, mock_open_file, mock_send_auth_code, mock_input):
+        """Test registration with valid email and password."""
+        # Mock send_auth_code to simulate email sending
+        mock_send_auth_code.return_value = None
+
+        # Set up a pending authentication code for the test email
+        email = "testuser@post.bgu.ac.il"
+        self.user_controller.pending_auth_codes[email] = (123456, datetime.now() + timedelta(minutes=3))
+
+        # Call the register function
+        result = self.user_controller.register(
+            email=email,
+            password="Valid12!",
             first_name="Test",
             last_name="User"
         )
+
+        # Assertions
+        self.assertIn(email, self.user_controller.users)  # User should be in the system
+        self.assertEqual(self.user_controller.users[email].first_name, "Test")  # First name should match
+        self.assertEqual(self.user_controller.users[email].last_name, "User")  # Last name should match
+        self.assertEqual(self.user_controller.users[email].password, "Valid12!")  # Password should match
+        self.assertEqual(result["message"], "User Test User registered successfully.")  # Success message
+
+    def test_register_multiple_invalid_emails(self):
+        """Test multiple users trying to register with invalid emails."""
+        invalid_emails = [
+            "user1@gmail.com",  # Invalid domain
+            "user2@yahoo.com",  # Invalid domain
+            "user3@",           # Missing domain part
+            "@bgu.ac.il",       # Missing local part
+            "user4.bgu.ac.il",  # Missing '@'
+        ]
         
-        self.assertTrue(result)
-        self.assertIn("testuser@bgu.ac.il", self.user_controller.pending_auth_codes)
-        self.assertEqual(self.user_controller.pending_auth_codes["testuser@bgu.ac.il"]["code"], 123456)
+        for email in invalid_emails:
+            with self.subTest(email=email):
+                with self.assertRaises(Exception) as context:
+                    self.user_controller.register(
+                        email=email,
+                        password="Valid12!",  # Valid password
+                        first_name="Test",
+                        last_name="User"
+                    )
+                # Check the exception message
+                self.assertEqual(str(context.exception), "Invalid email")
+    
+    def test_register_invalid_passwords(self):
+        """Test registration with invalid passwords."""
+        # Mock the send_auth_code to avoid actually sending an email
 
-    def test_register_step1_existing_user(self):
-        """Test registration step 1 for an already registered user (sad path)."""
-        self.user_controller.users["existing@bgu.ac.il"] = "dummy_user"
+        invalid_passwords = [
+            "short",          # Less than 8 characters
+            "onlylowercase",  # No uppercase letter
+            "ONLYUPPERCASE",  # No lowercase letter
+            "NoNum!ber",       # No number
+            "1234@5678",       # No letter
+            "NoSpecialChar1", # No special character
+            "!@#$%^&*",       # No letter or number
+        ]
 
-        with self.assertRaises(UserAlreadyExistsError):
-            self.user_controller.register_step1(
-                email="existing@bgu.ac.il",
-                password="password123",
-                first_name="Existing",
-                last_name="User"
-            )
+        email = "testuser@post.bgu.ac.il"
 
-    def test_register_step1_invalid_email(self):
-        """Test registration step 1 with invalid email (sad path)."""
-        with self.assertRaises(InvalidEmailDomainError):
-            self.user_controller.register_step1(
-                email="invalid_email@notbgu.com",
-                password="password123",
-                first_name="Invalid",
-                last_name="Email"
-            )
+        for password in invalid_passwords:
+            with self.assertRaises(Exception) as context:
+                self.user_controller.register(
+                    email=email,
+                    password=password,
+                    first_name="Test",
+                    last_name="User"
+                )
+            self.assertEqual(str(context.exception), "Invalid password")
 
-    @patch("UserController.UserController.verify_auth_code")
-    def test_register_step2_happy_path(self, mock_verify_auth_code):
-        """Test registration step 2 (happy path)."""
-        email = "newuser@bgu.ac.il"
-        self.user_controller.pending_auth_codes[email] = {
-            "code": 123456,
-            "expiry": datetime.now() + timedelta(minutes=3)
-        }
-        mock_verify_auth_code.return_value = True
 
-        result = self.user_controller.register_step2(
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock Terms of Use")  # Mock terms of use file
+    @patch("builtins.input", side_effect=["123456", "כן"])  # Mock user input for auth code and terms acceptance
+    @patch("BusinessLayer.User.UserController.UserController.send_auth_code")  # Mock send_auth_code
+    def test_register_duplicate_email(self, mock_send_auth_code, mock_input, mock_open_file):
+        """Test registering the same email twice, with Terms of Use mocked."""
+        # Mock the send_auth_code to avoid actually sending an email
+        mock_send_auth_code.return_value = None  # send_auth_code has no return value
+
+        self.assertEqual(0, len(self.user_controller.users))
+        # Mocked authentication code and expiry
+        email = "testuser@post.bgu.ac.il"
+        self.user_controller.pending_auth_codes[email] = (123456, datetime.now() + timedelta(minutes=3))
+
+        # First registration should succeed
+        result = self.user_controller.register(
             email=email,
-            entered_code=123456,
-            password="password123",
-            first_name="New",
+            password="ValidPassword1!",
+            first_name="Test",
             last_name="User"
         )
 
-        self.assertTrue(result)
-        self.assertIn(email, self.user_controller.users)
-        self.assertNotIn(email, self.user_controller.pending_auth_codes)
+        # Assert the user was registered successfully
+        self.assertIn(email, self.user_controller.users)  # User should be added
+        self.assertEqual(result["message"], "User Test User registered successfully.")
+        self.assertEqual(1, len(self.user_controller.users))
 
-    def test_register_step2_wrong_code(self):
-        """Test registration step 2 with incorrect authentication code (sad path)."""
-        email = "newuser@bgu.ac.il"
-        self.user_controller.pending_auth_codes[email] = {
-            "code": 123456,
-            "expiry": datetime.now() + timedelta(minutes=3)
-        }
-
-        with self.assertRaises(AuthenticationCodeError):
-            self.user_controller.register_step2(
+        # Attempt to register the same email again, expecting an exception
+        with self.assertRaises(Exception) as context:
+            self.user_controller.register(
                 email=email,
-                entered_code=654321,
-                password="password123",
-                first_name="New",
+                password="ValidPassword1!",
+                first_name="Test",
                 last_name="User"
             )
 
-    def test_register_step2_expired_code(self):
-        """Test registration step 2 with expired authentication code (sad path)."""
-        email = "newuser@bgu.ac.il"
-        self.user_controller.pending_auth_codes[email] = {
-            "code": 123456,
-            "expiry": datetime.now() - timedelta(minutes=1)
-        }
+        # Assert that the exception message is correct and the number of users is unchanged
+        self.assertEqual(str(context.exception), "User already exists.")
+        self.assertEqual(1, len(self.user_controller.users))
 
-        with self.assertRaises(AuthenticationCodeError):
-            self.user_controller.register_step2(
-                email=email,
-                entered_code=123456,
-                password="password123",
-                first_name="New",
-                last_name="User"
-            )
 
-    def test_register_step2_no_pending_code(self):
-        """Test registration step 2 with no pending code (sad path)."""
-        with self.assertRaises(AuthenticationCodeError):
-            self.user_controller.register_step2(
-                email="notfound@bgu.ac.il",
-                entered_code=123456,
-                password="password123",
-                first_name="Not",
-                last_name="Found"
-            )
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock Terms of Use")  # Mock terms of use file
+    @patch("builtins.input", side_effect=["123456", "כן"])  # Mock user input for auth code and terms acceptance
+    @patch("BusinessLayer.User.UserController.UserController.send_auth_code")  # Mock send_auth_code
+    def test_register_with_automatic_login(self, mock_send_auth_code, mock_input, mock_open_file):
+        """Test that a user is automatically logged in upon successful registration."""
+        # Mock the send_auth_code to avoid actually sending an email
+        mock_send_auth_code.return_value = None
 
-    @patch("UserController.smtplib.SMTP")
-    def test_send_auth_code_happy_path(self, mock_smtp):
-        """Test send_auth_code method (happy path)."""
-        mock_server = MagicMock()
-        mock_smtp.return_value = mock_server
+        # Mocked authentication code and expiry
+        email = "testuser@post.bgu.ac.il"
+        self.user_controller.pending_auth_codes[email] = (123456, datetime.now() + timedelta(minutes=3))
 
-        auth_code, auth_code_expiry = self.user_controller.send_auth_code(
-            email="testuser@bgu.ac.il",
-            first_name="Test"
+        # Call the register function
+        result = self.user_controller.register(
+            email=email,
+            password="ValidPassword1!",
+            first_name="Test",
+            last_name="User"
         )
 
-        self.assertIsInstance(auth_code, int)
-        self.assertTrue(100000 <= auth_code <= 999999)
-        self.assertTrue(auth_code_expiry > datetime.now())
-        mock_server.starttls.assert_called_once()
-        mock_server.login.assert_called_once()
-        mock_server.sendmail.assert_called_once()
+        # Assertions
+        self.assertIn(email, self.user_controller.users)  # User should be added
+        user = self.user_controller.users[email]
+        self.assertTrue(user.loggedIn)  # User should be logged in
+        self.assertEqual(result["message"], "User Test User registered successfully.")
 
-    @patch("UserController.smtplib.SMTP")
-    def test_send_auth_code_email_failure(self, mock_smtp):
-        """Test send_auth_code method when email sending fails (sad path)."""
-        mock_server = MagicMock()
-        mock_server.sendmail.side_effect = Exception("SMTP Error")
-        mock_smtp.return_value = mock_server
+    def test_login_successful(self):
+        """Test successful login with correct email and password."""
+        # Add a test user to the system
+        email = "testuser@post.bgu.ac.il"
+        password = "ValidPassword1!"
+        first_name = "Test"
+        last_name = "User"
+        user_id = self.user_controller.generateUserId()
+        user = User(user_id, email, password, first_name, last_name)
+        self.user_controller.users[email] = user
 
-        with self.assertRaises(EmailSendingError):
-            self.user_controller.send_auth_code(
-                email="testuser@bgu.ac.il",
-                first_name="Test"
-            )
+        self.assertFalse(user.loggedIn)  # User should not be logged in
+
+        # Perform login
+        result = self.user_controller.login(email, password)
+
+        # Assertions
+        self.assertTrue(user.loggedIn)  # User should be logged in
+        self.assertEqual(result, "Login successful")
+
+    def test_login_failure_invalid_email(self):
+        """Test login failure with an invalid email."""
+        # Attempt to log in with a non-existing email
+        with self.assertRaises(UserOrPasswordIncorrectError) as context:
+            self.user_controller.login("invalid@post.bgu.ac.il", "ValidPassword1!")
+        self.assertEqual(str(context.exception), "Invalid email or password. Please try again.")
+
+    def test_login_failure_invalid_password(self):
+        """Test login failure with an invalid password."""
+        # Add a test user to the system
+        email = "testuser@post.bgu.ac.il"
+        password = "ValidPassword1!"
+        first_name = "Test"
+        last_name = "User"
+        user_id = self.user_controller.generateUserId()
+        user = User(user_id, email, password, first_name, last_name)
+        self.user_controller.users[email] = user
+
+        # Attempt to log in with the wrong password
+        with self.assertRaises(UserOrPasswordIncorrectError) as context:
+            self.user_controller.login(email, "WrongPassword!")
+        self.assertEqual(str(context.exception), "Invalid email or password. Please try again.")
+
+    def test_logout_success(self):
+        """Test successful logout of an existing user."""
+        email = "testuser@post.bgu.ac.il"
+        password = "ValidPassword1!"
+        first_name = "Test"
+        last_name = "User"
+        user_id = self.user_controller.generateUserId()
+        user = User(user_id, email, password, first_name, last_name)
+        self.user_controller.users[email] = user
+        user.login()
+        self.assertTrue(user.loggedIn)  # User shoult be logged in
+
+        result = self.user_controller.logout(email)
+        # Assertions
+        self.assertFalse(user.loggedIn)  # User should be logged in
+        self.assertEqual(result, "Logout successful")
+
+    def test_logout_user_does_not_exist(self):
+        # Attempt to log in with a non-existing email
+        email = "inval555id@post.bgu.ac.il"
+        with self.assertRaises(UserOrPasswordIncorrectError) as context:
+            self.user_controller.logout(email)
+        self.assertEqual(str(context.exception), "Invalid email or password. Please try again.")
+   
+    def test_logOut_not_loggedIn_user(self):
+        email = "testuser@post.bgu.ac.il"
+        password = "ValidPassword1!"
+        first_name = "Test"
+        last_name = "User"
+        user_id = self.user_controller.generateUserId()
+        user = User(user_id, email, password, first_name, last_name)
+        self.user_controller.users[email] = user
+        self.assertFalse(user.loggedIn)  # User shoult not be logged in
+        message = f"Can't log out {email} since he is not logged in."
+
+        with self.assertRaises(UserIsNotLoggedInError) as context:
+            self.user_controller.logout(email)
+        self.assertEqual(str(context.exception), message)
+
 
 if __name__ == "__main__":
     unittest.main()
