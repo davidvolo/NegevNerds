@@ -1,6 +1,8 @@
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
+from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class Question:
@@ -18,6 +20,22 @@ class Question:
         self.link_to_question = link_to_question
         self.link_to_exam = link_to_exam
         self.comments = comments if comments is not None else []  # Default to an empty list
+
+    def to_dto(self):
+        """
+        Converts the Question instance to a QuestionDTO.
+        :return: QuestionDTO instance.
+        """
+        return QuestionDTO(
+            question_id=self.id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=self.question_number,
+            question_topics=self.question_topics,
+            is_american=self.is_american,
+            link_to_question=self.link_to_question
+        )
 
     def get_question_topics(self):
         return self.question_topics
@@ -47,11 +65,13 @@ class Question:
     def remove_comment(self, comment_id):
         """
         Remove a comment from the comments list if it exists.
+        Raise an exception if the comment is not found.
         """
-        if comment_id in self.comments:
-            self.comments.remove(comment_id)
-        else:
-            print(f"Comment '{comment_id}' not found in the list.")
+        for comment in self.comments:
+            if comment.id == comment_id:
+                self.comments.remove(comment)
+                return
+        raise CommentNotFound(comment_id)
 
     def __str__(self):
         """
@@ -60,5 +80,3 @@ class Question:
         return (f"Question(ID: {self.id}, Year: {self.year}, Semester: {self.semester}, Moed: {self.moed}, "
                 f"Number: {self.question_number}, IsAmerican: {self.is_american}, "
                 f"Comments: {len(self.comments)})")
-
-

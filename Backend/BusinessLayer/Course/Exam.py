@@ -1,6 +1,6 @@
-from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
+from Backend.DataLayer.ExamDTO import ExamDTO
 
 
 class Exam:
@@ -14,40 +14,60 @@ class Exam:
         self.year = year
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
-        self.questions_list = {}  # Default to an empty list
+        self.questions_list = {}  # <Question number, Question>
 
-    def add_question(self, year, questionId, semester, moed, question_number, question_topic, is_american, link_to_question):
+    def to_dto(self):
         """
-        Add a question to the questions list.
-
-        :param question: The question to add.
+        Converts the Exam instance to an ExamDTO.
+        :return: ExamDTO instance.
         """
-        if year == self.year and semester == self.semester and moed == self.moed:
-            if self.questions_list[question_number] is None:
-                question = Question(year, questionId, semester, moed, question_number, question_topic, is_american,
-                                    link_to_question, self.link)
-                self.questions_list[question_number] = question
-            else:
-                raise QuestionAlreadyInExam
-        else:
-            raise QuestionDoesNotMeetExamFields
+        question_dtos = [question.to_dto() for question in self.questions_list.values()]
+        return ExamDTO(
+            exam_id=self.id,
+            course_name=self.course_name,
+            link=self.link,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            questions_list=question_dtos
+        )
 
-    def remove_question(self, question_id):
+    def generate_question_id(self):
+        return len(self.questions_list) + 1
+
+    def add_question(self, questionDTO):
+        """
+        Add a question to the exam.
+        """
+        # Check if the fields match
+        if questionDTO.year != self.year or questionDTO.semester != self.semester or questionDTO.moed != self.moed:
+            raise QuestionDoesNotMeetExamFields(questionDTO.question_number)
+        # Check if the question already exists
+        if questionDTO.question_number in self.questions_list:
+            raise QuestionAlreadyInExam(questionDTO.question_number)
+
+        # Add the question to the list
+        questionDTO.question_id = self.generate_question_id()
+        self.questions_list[questionDTO.question_number] = questionDTO
+
+    def remove_question(self, question_number):
         """
         Remove a question from the questions list if it exists.
-
         """
-        if question_id in self.questions_list.keys():
-            self.questions_list[question_id] = None
+        if question_number in self.questions_list:
+            del self.questions_list[question_number]  # Remove the question completely
         else:
-            raise QuestionNotFound
+            raise QuestionNotFound(question_number)
 
-    def get_question(self, question_id):
-        if question_id in self.questions_list.keys():
-            return self.questions_list[question_id]
+    def get_question(self, question_number):
+        """
+        Retrieve a question by its number.
+        """
+        if question_number in self.questions_list:
+            return self.questions_list[question_number]
         else:
-            raise QuestionNotFound
-        
+            raise QuestionNotFound(question_number)
+
     def get_questions_by_keywords(self, keywords):
         questions = []
         for keyword in keywords:
@@ -56,18 +76,17 @@ class Exam:
                     questions.append(question)
         return questions
 
-    def add_comment(self, question_id, comment_id, writer_name, prev_id, comment_text):
+    def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
         """
-        Add a comment to the comments list.
+        Add a comment to the comments list of a specific question.
         """
-        self.get_question(question_id).add_comment(comment_id, writer_name, prev_id, comment_text)
+        self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
-    def remove_comment(self, question_id,  comment_id):
+    def remove_comment(self, question_number, comment_id):
         """
-        Remove a comment from the comments list if it exists.
+        Remove a comment from the comments list of a specific question.
         """
-        self.get_question(question_id).remove_comment(comment_id)
-
+        self.get_question(question_number).remove_comment(comment_id)
 
     def __str__(self):
         """
@@ -94,11 +113,14 @@ class Exam:
 
     def edit_semester(self, new_semester):
         """Edit the semester of the exam."""
-        valid_semesters = {'a', 'b', 'c', 'A', 'B', 'C'}
-        if new_semester in valid_semesters:
-            self.semester = Semester(new_semester)
-        else:
-            raise ValueError("Invalid value for semester. Must be one of {'a', 'b', 'c', 'A', 'B', 'C'}.")
+        try:
+            if isinstance(new_semester, Semester):
+                self.semester = new_semester
+            else:
+                self.semester = Semester(new_semester)
+        except ValueError:
+            # Raise a more descriptive error if the value is not valid
+            raise ValueError(f"Invalid value for semester. Must be one of {[s.value for s in Semester]}.")
 
     def edit_moed(self, new_moed):
         """Edit the moed of the exam."""
