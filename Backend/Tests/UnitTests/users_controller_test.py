@@ -4,17 +4,19 @@ from datetime import datetime, timedelta
 import sys
 import os
 
+from Backend.BusinessLayer.Util.Exceptions import UserOrPasswordIncorrectError, UserIsNotLoggedInError
+
 # Add Backend directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
-from BusinessLayer.User.UserController import UserController
-from BusinessLayer.User.User import *
+from Backend.BusinessLayer.User.UserFacade import UserFacade
+from Backend.BusinessLayer.User.User import *
 
 
 class TestUserController(unittest.TestCase):
     def setUp(self):
         """Set up a fresh UserController instance for each test."""
-        self.user_controller = UserController()
+        self.user_controller = UserFacade()
         # self.addCleanup(patch.stopall)
         self.mock_user = MagicMock()
         self.mock_user.logout = MagicMock()

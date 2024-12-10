@@ -1,5 +1,5 @@
 import unittest
-from Backend.BusinessLayer.Course.CourseFacade import CourseController
+from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, CourseAlreadyExists
 
@@ -9,7 +9,7 @@ class TestCourseController(unittest.TestCase):
         """
         Set up a CourseController instance and mock data for testing.
         """
-        self.controller = CourseController()
+        self.controller = CourseFacade()
         self.course_id = "CS101"
         self.course_name = "Computer Science Basics"
         self.syllabus = "Intro to CS"

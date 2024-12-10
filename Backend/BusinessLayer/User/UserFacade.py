@@ -6,15 +6,15 @@ import re
 import threading
 from email.mime.text import MIMEText
 import logging
-from BusinessLayer.User.User import User
-from BusinessLayer.Util.Exceptions import *
+from Backend.BusinessLayer.User.User import User
+from Backend.BusinessLayer.Util.Exceptions import *
 
 # from Util.Exceptions import *
 # from BusinessLayer.User.User import User
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-class UserController:
+class UserFacade:
     def __init__(self):
         self.users = {}
         self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
