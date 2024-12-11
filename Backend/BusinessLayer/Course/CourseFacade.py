@@ -21,18 +21,20 @@ class CourseFacade:
         else:
             raise CourseIsNotExist(course_id)
 
-    def open_course(self, course_id, name, syllabus, course_topics):
+    def open_course(self, course_id, name, course_topics):
         """Opens a new course"""
 
         if course_id in self.courses:
             raise CourseAlreadyExists(course_id)
-        self.courses[course_id] = Course(course_id, name, syllabus, course_topics)
+        course = Course(course_id, name, [], course_topics)
+        self.courses[course_id] = course
+
+        return True
 
     def remove_course(self, course_id):
-        """Remove an existing course"""
-
+        """Remove an existing course along with its folder."""
         if course_id in self.courses:
-            self.courses.pop(course_id, None)
+            del self.courses[course_id]
         else:
             raise CourseIsNotExist(course_id)
 
@@ -52,6 +54,11 @@ class CourseFacade:
             self.courses.get(course_id).set_syllabus(syllabus)
         else:
             raise CourseIsNotExist(course_id)
+
+    def is_course_manager(self, course_id, user_id):
+        """Checks if the user is a manager of the given course."""
+        course = self.get_course(course_id)
+        return user_id in course.managers
 
     def add_manager_to_course(self, course_id, manager_id):
         """
@@ -133,11 +140,11 @@ class CourseFacade:
 
     def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
         course = self.get_course(course_id)
-        course.edit_exam_course_name(year, semester, moed, new_course_name)
+        course.get_exam(year, semester, moed).edit_course_name(new_course_name)
 
     def edit_exam_link(self, course_id, year, semester, moed, new_link):
         course = self.get_course(course_id)
-        course.edit_exam_link(year, semester, moed, new_link)
+        course.get_exam(year, semester, moed).edit_link(new_link)
 
     def edit_exam_year(self, course_id, year, semester, moed, new_year):
         course = self.get_course(course_id)
@@ -145,11 +152,11 @@ class CourseFacade:
 
     def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
         course = self.get_course(course_id)
-        course.edit_exam_semester(year, semester, moed, new_semester)
+        course.get_exam(year, semester, moed).edit_semester(new_semester)
 
     def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
         course = self.get_course(course_id)
-        course.edit_exam_moed(year, semester, moed, new_moed)
+        course.get_exam(year, semester, moed).edit_moed(new_moed)
 
     """--------------question functionality--------------"""
 
@@ -158,22 +165,22 @@ class CourseFacade:
         Delegates question addition to the specified Exam.
         """
         course = self.get_course(course_id)
-        course.add_question(year, semester, moed, questionDTO)
+        course.get_exam(year, semester, moed).add_question(questionDTO)
 
-    def remove_question(self, course_id, year, semester, moed, question_id):
+    def remove_question(self, course_id, year, semester, moed, question_number):
         """
         Delegates question removal to the specified Exam.
         """
         course = self.get_course(course_id)
-        course.remove_question(year, semester, moed, question_id)
+        course.get_exam(year, semester, moed).remove_question(question_number)
 
-    def add_topic_to_question(self, course_id, year, semester, moed, question_id, question_topic):
+    def add_topic_to_question(self, course_id, year, semester, moed, question_number, question_topic):
         course = self.get_course(course_id)
-        course.add_topic_to_question(year, semester, moed, question_id, question_topic)
+        course.get_exam(year, semester, moed).get_question(question_number).add_topic_to_question(question_topic)
 
-    def remove_topic_from_question(self, course_id, year, semester, moed, question_id, question_topic):
+    def remove_topic_from_question(self, course_id, year, semester, moed, question_number, question_topic):
         course = self.get_course(course_id)
-        course.remove_topic_from_question(year, semester, moed, question_id, question_topic)
+        course.get_exam(year, semester, moed).get_question(question_number).remove_topic_from_question(question_topic)
 
     def search_question_by_specifics(self, course_id, year, semester, moed, question_id):
         course = self.get_course(course_id)
@@ -185,16 +192,16 @@ class CourseFacade:
 
     """--------------comment functionality--------------"""
 
-    def add_comment(self, course_id, year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text):
+    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, prev_id, comment_text):
         """
         Delegates comment addition to the specified Exam and Question.
         """
         course = self.get_course(course_id)
-        course.add_comment(year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text)
+        course.get_exam(year, semester, moed).get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
-    def remove_comment(self, course_id, year, semester, moed, question_id, comment_id):
+    def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """
         Delegates comment removal to the specified Exam and Question.
         """
         course = self.get_course(course_id)
-        course.remove_comment(year, semester, moed, question_id, comment_id)
+        course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)

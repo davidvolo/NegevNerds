@@ -66,6 +66,96 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def register_to_course(self, course_id, user_id):
+        """Handle user registration to a course and return JSON response."""
+        try:
+            result = self.negev_nerds.registerToCourse(course_id, user_id)
+
+            # If result contains "Error", return it in the JSON response
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+
+            # Return the success message in JSON format
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            # In case of exception, return the error message
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def remove_student_from_course(self, course_id, user_id):
+        """Handle removing a user from a course and return JSON response."""
+        try:
+            result = self.negev_nerds.removeStudentFromCourse(course_id, user_id)
+
+            # If result contains "Error", return it in the JSON response
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+
+            # Return the success message in JSON format
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            # In case of exception, return the error message
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def open_course(self, course_id, name, syllabus_content, course_topics):
+        """Handle course creation and save syllabus, return JSON response."""
+        try:
+            result = self.negev_nerds.open_course(course_id, name, syllabus_content, course_topics)
+
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def remove_course(self, course_id):
+        """Handle course removal and return JSON response."""
+        try:
+            result = self.negev_nerds.remove_course(course_id)
+
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
         try:
@@ -110,11 +200,11 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
+    def edit_exam_course_name(self, user_id, course_id, year, semester, moed, new_course_name):
         """Editing exam's course name """
         try:
             # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_course_name(course_id, year, semester, moed, new_course_name)
+            result = self.negev_nerds.edit_exam_course_name(user_id, course_id, year, semester, moed, new_course_name)
 
             # Check if any exams are found
             if not result:

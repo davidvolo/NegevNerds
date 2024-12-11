@@ -5,7 +5,7 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 
 class Course:
     def __init__(self, course_id, name, syllabus, course_topics):
-        self.id = course_id
+        self.course_id = course_id
         self.name = name
         self.syllabus = syllabus
         self.course_topics = course_topics if course_topics is not None else []  # Default to an empty list
@@ -177,90 +177,6 @@ class Course:
         else:
             raise ManagerIsNotExist(manager_id)
 
-    # def add_question(self, year, semester, moed, questionDTO):
-    #     """
-    #     Add a question to the exam. If the exam doesn't exist, raise ExamIsNotExist.
-    #     """
-    #     try:
-    #         exam = self.get_exam(year, semester, moed)
-    #         exam.add_question(questionDTO)
-    #     except ExamIsNotExist:
-    #         raise ExamIsNotExist(
-    #             year=year,
-    #             semester=semester,
-    #             moed=moed
-    #         )
-    #     except QuestionDoesNotMeetExamFields as e:
-    #         raise QuestionDoesNotMeetExamFields(str(e))
-    #     except QuestionAlreadyInExam as e:
-    #         raise QuestionAlreadyInExam(str(e))
-
-    def add_question(self, year, semester, moed, questionDTO):
-        """
-        Add a question to an exam, ensuring its topics are valid.
-        """
-        # Validate that all question topics exist in the course topics
-        for topic in questionDTO.question_topics:
-            if topic not in self.course_topics:
-                raise TopicNotFound(topic)
-
-        # Delegate to the Exam instance
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.add_question(questionDTO)
-        else:
-            raise ExamIsNotExist(year, semester, moed)
-
-    def remove_question(self, year, semester, moed, question_id):
-        """Delegate question removal to the specified Exam."""
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.remove_question(question_id)
-        else:
-            raise ExamIsNotExist
-
-    def add_topic_to_question(self, year, semester, moed, question_id, question_topic):
-        if question_topic not in self.course_topics:
-            raise TopicNotFound(question_topic)
-        else:
-            self.get_question(year, semester, moed, question_id).add_question_topic(question_topic)
-
-    def remove_topic_from_question(self, year, semester, moed, question_id, question_topic):
-        if question_topic not in self.course_topics:
-            raise TopicNotFound(question_topic)
-        else:
-            self.get_question(year, semester, moed, question_id).remove_question_topic(question_topic)
-
-    def add_comment(self, year, semester, moed, question_id, comment_id, writer_name, prev_id, comment_text):
-        """Delegate comment addition to the specified Exam and Question."""
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.add_comment(question_id, comment_id, writer_name, prev_id, comment_text)
-        else:
-            raise ExamIsNotExist
-
-    def remove_comment(self, year, semester, moed, question_id, comment_id):
-        """Delegate comment removal to the specified Exam and Question."""
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.remove_comment(question_id, comment_id)
-        else:
-            raise ExamIsNotExist
-
-    def edit_exam_course_name(self, year, semester, moed, new_course_name):
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.edit_course_name(new_course_name)
-        else:
-            raise ExamIsNotExist
-
-    def edit_exam_link(self, year, semester, moed, new_link):
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.edit_link(new_link)
-        else:
-            raise ExamIsNotExist
-
     def edit_exam_year(self, year, semester, moed, new_year):
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
@@ -273,18 +189,4 @@ class Course:
                 self.exams[new_year] = []
             self.exams[new_year].append(exam)
         else:
-            raise ExamIsNotExist(year,semester,moed)
-
-    def edit_exam_semester(self, year, semester, moed, new_semester):
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.edit_semester(new_semester)
-        else:
-            raise ExamIsNotExist
-
-    def edit_exam_moed(self, year, semester, moed, new_moed):
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            exam.edit_moed(new_moed)
-        else:
-            raise ExamIsNotExist
+            raise ExamIsNotExist(year, semester, moed)
