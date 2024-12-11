@@ -21,7 +21,8 @@ class Exam:
         Converts the Exam instance to an ExamDTO.
         :return: ExamDTO instance.
         """
-        question_dtos = [question.to_dto() for question in self.questions_list.values()]
+        # Change this line to use 'to_dict' instead of 'to_dto' for questions
+        question_dtos = [question.to_dict() for question in self.questions_list.values()]
         return ExamDTO(
             exam_id=self.id,
             course_name=self.course_name,
@@ -76,17 +77,17 @@ class Exam:
                     questions.append(question)
         return questions
 
-    def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
-        """
-        Add a comment to the comments list of a specific question.
-        """
-        self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
+    # def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
+    #     """
+    #     Add a comment to the comments list of a specific question.
+    #     """
+    #     self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
-    def remove_comment(self, question_number, comment_id):
-        """
-        Remove a comment from the comments list of a specific question.
-        """
-        self.get_question(question_number).remove_comment(comment_id)
+    # def remove_comment(self, question_number, comment_id):
+    #     """
+    #     Remove a comment from the comments list of a specific question.
+    #     """
+    #     self.get_question(question_number).remove_comment(comment_id)
 
     def __str__(self):
         """
