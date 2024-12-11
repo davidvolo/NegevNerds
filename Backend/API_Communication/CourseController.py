@@ -1,7 +1,7 @@
 import json
 
 from flask import Blueprint, request, jsonify
-from flask_cors import cross_origin
+from flask_cors import cross_origin, CORS
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
@@ -10,6 +10,14 @@ from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 course_controller = Blueprint('course_controller', __name__)
+
+CORS(course_controller, resources={
+    r"/api/*": {
+        "origins": "*",  # Or specify exact origin like "http://localhost:3000"
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 
 serviceLayer = ServiceLayer(NegevNerds(UserFacade(), CourseFacade(), FileManager("../")))
