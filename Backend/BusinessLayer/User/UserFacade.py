@@ -15,21 +15,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class UserFacade:
-
-    _instance = None  # Class-level attribute to hold the single instance
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls, *args, **kwargs)
-        return cls._instance
-
-
     def __init__(self):
-        if not hasattr(self, 'initialized'):
-            self.users = {}
-            self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
-            self.auth_lock = threading.Lock()  # Lock for thread-safe access
-            self.initialized = True
+        self.users = {}
+        self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
+        self.auth_lock = threading.Lock()  # Lock for thread-safe access
     
     def generateUserId(self):
         return str(len(self.users) + 1)
@@ -72,7 +61,7 @@ class UserFacade:
                 logging.error(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == 2:
                     raise Exception("האימות נכשל. הרשמה בוטלה.")
-    
+                
     def register_termOfUse_part(self, email, password, first_name, last_name, accept: bool):
         # Interactively verify the code
         try:
