@@ -1,130 +1,181 @@
 import unittest
 from Backend.BusinessLayer.Course.Exam import Exam
+from Backend.BusinessLayer.Util.Exceptions import QuestionDoesNotMeetExamFields, QuestionAlreadyInExam, QuestionNotFound
 from Backend.BusinessLayer.Course.enums import Semester, Moed
-from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.QuestionDTO import QuestionDTO
 
 
 class TestExam(unittest.TestCase):
+
     def setUp(self):
-        """
-        Set up an Exam instance and a QuestionDTO instance for testing.
-        """
+        """ Set up a basic exam instance for the tests. """
         self.exam = Exam(
             exam_id=1,
-            course_name="Algorithms",
-            link="http://example.com/exam",
+            course_name="Math",
+            link="exam_link",
             year=2024,
-            semester="Spring",
-            moed="A"
-        )
-        self.question_dto = QuestionDTO(
-            question_id=1,
-            year=2024,
-            semester="Spring",
-            moed="A",
-            question_number=1,
-            question_topics=["Sorting Algorithms"],
-            is_american=False,
-            link_to_question="http://example.com/question1"
+            semester=Semester.FALL,
+            moed=Moed.A
         )
 
-    def test_add_question_success(self):
-        """
-        Test adding a question to the exam successfully.
-        """
-        self.exam.add_question(self.question_dto)
-        self.assertIn(self.question_dto.question_id, self.exam.questions_list)
+    def test_create_exam(self):
+        """ Test creating an exam and its basic attributes """
+        self.assertEqual(self.exam.course_name, "Math")
+        self.assertEqual(self.exam.year, 2024)
+        self.assertEqual(self.exam.semester, Semester.FALL)
+        self.assertEqual(self.exam.moed, Moed.A)
 
-    def test_add_question_duplicate(self):
-        """
-        Test adding a question with a duplicate ID raises an exception.
-        """
-        self.exam.add_question(self.question_dto)
-        with self.assertRaises(QuestionAlreadyInExam):
-            self.exam.add_question(self.question_dto)
+    def test_generate_question_id(self):
+        """ Test generating question IDs """
+        self.assertEqual(self.exam.generate_question_id(), 1)
 
-    def test_add_question_fields_matching(self):
-        """
-        Test adding a question with matching fields.
-        """
+    def test_add_question(self):
+        """ Test adding a question to the exam """
         question_dto = QuestionDTO(
-            question_id=2,
+            question_id=None,
             year=2024,
-            semester="Spring",  # Matching semester
-            moed="A",  # Matching moed
-            question_number=2,  # This is the key in the dictionary
-            question_topics=["Graphs"],
-            is_american=True,
-            link_to_question="http://example.com/question2"
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
         )
         self.exam.add_question(question_dto)
+        self.assertEqual(len(self.exam.questions_list), 1)
+        self.assertIn(1, self.exam.questions_list)
 
-        # Verify the question was added under the correct key (question_number)
-        self.assertIn(question_dto.question_number, self.exam.questions_list)
-        self.assertEqual(self.exam.questions_list[question_dto.question_number], question_dto)
-
-    def test_add_question_fields_not_matching(self):
-        """
-        Test adding a question with non-matching fields raises an exception.
-        """
-        question_dto_mismatch = QuestionDTO(
-            question_id=2,
+    def test_add_question_duplicate(self):
+        """ Test adding a duplicate question number raises an exception """
+        question_dto1 = QuestionDTO(
+            question_id=None,
             year=2024,
-            semester="Fall",  # Non-matching semester
-            moed="B",  # Non-matching moed
-            question_number=2,
-            question_topics=["Graphs"],
-            is_american=True,
-            link_to_question="http://example.com/question2"
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
         )
-        with self.assertRaises(QuestionDoesNotMeetExamFields) as context:
-            self.exam.add_question(question_dto_mismatch)
+        question_dto2 = QuestionDTO(
+            question_id=None,
+            year=2024,
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Geometry"],
+            is_american=False,
+            link_to_question="link2"
+        )
 
-    def test_remove_question_success(self):
-        """
-        Test removing a question successfully.
-        """
-        self.exam.add_question(self.question_dto)
-        self.exam.remove_question(self.question_dto.question_id)
-        self.assertNotIn(self.question_dto.question_id, self.exam.questions_list)
+        self.exam.add_question(question_dto1)
+
+        with self.assertRaises(QuestionAlreadyInExam):
+            self.exam.add_question(question_dto2)
+
+    def test_add_question_field_mismatch(self):
+        """ Test adding a question with mismatched fields raises an exception """
+        question_dto = QuestionDTO(
+            question_id=None,
+            year=2025,  # Mismatched year
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
+        )
+
+        with self.assertRaises(QuestionDoesNotMeetExamFields):
+            self.exam.add_question(question_dto)
+
+    def test_remove_question(self):
+        """ Test removing a question from the exam """
+        question_dto = QuestionDTO(
+            question_id=None,
+            year=2024,
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
+        )
+        self.exam.add_question(question_dto)
+        self.exam.remove_question(1)
+        self.assertNotIn(1, self.exam.questions_list)
 
     def test_remove_question_not_found(self):
-        """
-        Test removing a question that does not exist raises an exception.
-        """
+        """ Test removing a question that doesn't exist raises an exception """
         with self.assertRaises(QuestionNotFound):
-            self.exam.remove_question(999)
+            self.exam.remove_question(99)
 
-    def test_edit_exam_year(self):
-        """
-        Test editing the year of the exam.
-        """
+    def test_get_question(self):
+        """ Test getting a question by its number """
+        question_dto = QuestionDTO(
+            question_id=None,
+            year=2024,
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
+        )
+        self.exam.add_question(question_dto)
+        question = self.exam.get_question(1)
+        self.assertEqual(question.question_number, 1)
+        self.assertEqual(question.question_topics, ["Algebra"])
+
+    def test_get_question_not_found(self):
+        """ Test trying to get a non-existent question raises an exception """
+        with self.assertRaises(QuestionNotFound):
+            self.exam.get_question(99)
+
+    def test_to_dto(self):
+        """ Test converting Exam to DTO """
+        question_dto = QuestionDTO(
+            question_id=None,
+            year=2024,
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
+        )
+        self.exam.add_question(question_dto)
+        exam_dto = self.exam.to_dto()
+        self.assertEqual(exam_dto.exam_id, self.exam.id)
+        self.assertEqual(len(exam_dto.questions_list), 1)
+
+    def test_edit_course_name(self):
+        """ Test editing course name """
+        self.exam.edit_course_name("Advanced Math")
+        self.assertEqual(self.exam.course_name, "Advanced Math")
+
+    def test_edit_link(self):
+        """ Test editing exam link """
+        self.exam.edit_link("new_link")
+        self.assertEqual(self.exam.link, "new_link")
+
+    def test_edit_year(self):
+        """ Test editing exam year """
         self.exam.edit_year(2025)
         self.assertEqual(self.exam.year, 2025)
+        with self.assertRaises(ValueError):
+            self.exam.edit_year("2025")  # Invalid value
 
-    def test_edit_exam_semester(self):
-        """
-        Test editing the semester of the exam.
-        """
-        self.exam.edit_semester("Fall")
-        self.assertEqual(self.exam.semester, Semester("Fall"))
+    def test_edit_semester(self):
+        """ Test editing exam semester """
+        self.exam.edit_semester(Semester.SPRING)
+        self.assertEqual(self.exam.semester, Semester.SPRING)
+        with self.assertRaises(ValueError):
+            self.exam.edit_semester("WInter")  # Invalid value
 
-    def test_edit_exam_moed(self):
-        """
-        Test editing the moed of the exam.
-        """
-        self.exam.edit_moed("B")
-        self.assertEqual(self.exam.moed, Moed("B"))
-
-    def test_edit_exam_link(self):
-        """
-        Test editing the exam link.
-        """
-        new_link = "http://example.com/new_exam"
-        self.exam.edit_link(new_link)
-        self.assertEqual(self.exam.link, new_link)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_edit_moed(self):
+        """ Test editing exam moed """
+        self.exam.edit_moed('B')
+        self.assertEqual(self.exam.moed, Moed.B)
+        with self.assertRaises(ValueError):
+            self.exam.edit_moed("Z")  # Invalid moed

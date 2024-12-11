@@ -6,6 +6,11 @@ class NegevNerds:
         self.userFacade = user_facade
         self.courseFacade = course_facade
         self.fileManager = file_manager
+        self.system_managers = []
+
+    def is_system_manager(self, user_id):
+        """Checks if the user is a system manager."""
+        return user_id in self.system_managers
 
     def register(self, email, password, first_name, last_name):
         """Register a new user."""
@@ -64,6 +69,39 @@ class NegevNerds:
             else:
                 raise UserDoesnotExistsError(user_id)
             return "User successfully removed from the course."
+        except Exception as e:
+            return f"Error: {e}"
+
+    def open_course(self, user_id, course_id, name, syllabus_content, course_topics):
+        """Opens a new course in the system and saves the syllabus file."""
+        try:
+            # Check if the course already exists using CourseFacade
+            if self.courseFacade.open_course(course_id, name, course_topics):
+                # Save the syllabus to the course folder using FileManager
+                syllabus_file_path = self.fileManager.save_syllabus_file(course_id, syllabus_content)
+                self.courseFacade.set_syllabus_of_course(course_id, syllabus_file_path)
+                self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
+                self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student
+                return f"Course {name} opened successfully with syllabus at {syllabus_file_path}"
+            else:
+                raise Exception("Failed to create course.")
+        except Exception as e:
+            return f"Error: {e}"
+
+    def remove_course(self, course_id, user_id):
+        """Remove an existing course from the system and delete its corresponding folder."""
+        try:
+            # Check if the user is a system manager or the course manager
+            if self.is_system_manager(user_id) or self.courseFacade.is_course_manager(course_id, user_id):
+                # Remove the course using CourseFacade
+                if self.courseFacade.remove_course(course_id):
+                    # Delete the course folder using FileManager
+                    self.fileManager.delete_course_folder(course_id)
+                    return f"Course {course_id} removed successfully."
+                else:
+                    raise Exception("Failed to remove course.")
+            else:
+                raise UserIsNotCourseManager(course_id)
         except Exception as e:
             return f"Error: {e}"
 

@@ -1,4 +1,5 @@
 import os
+import shutil
 
 
 class FileManager:
@@ -15,6 +16,15 @@ class FileManager:
             os.makedirs(course_folder)
 
         return course_folder
+
+    def delete_course_folder(self, course_id):
+        """Deletes the folder for a course."""
+        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        if os.path.exists(course_folder):
+            shutil.rmtree(course_folder)  # Removes the directory and all its contents
+            return True
+        else:
+            return False
 
     def save_syllabus_file(self, course_id, syllabus_content):
         """Saves the syllabus file in the course folder, replacing the existing one if present."""
