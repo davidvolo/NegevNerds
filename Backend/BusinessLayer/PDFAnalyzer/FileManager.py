@@ -2,33 +2,79 @@ import os
 
 
 class FileManager:
-    def __init__(self, upload_folder):
-        self.upload_folder = upload_folder
-        os.makedirs(self.upload_folder, exist_ok=True)
+    def __init__(self, base_dir='./files'):
+        """Initialize the FileManager with a base directory for file storage"""
+        self.base_dir = base_dir
 
-    def save_file_question(self, file_content, course_name, year, semester, moed, question_number):
-        """
-        Save a file with a custom name based on course details and question number.
+    def create_course_folder(self, course_id):
+        """Creates a folder for the course if it doesn't exist."""
+        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
 
-        :param file_content: Content of the file to save.
-        :param course_name: Name of the course.
-        :param year: Year of the exam.
-        :param semester: Semester of the exam.
-        :param moed: Moed of the exam.
-        :param question_number: Question number.
-        :return: Path to the saved file.
-        """
-        filename = f"{course_name}_{year}_{semester}_{moed}_Q{question_number}.pdf"
-        filename = filename.replace(" ", "_")
+        # Create the course folder if it doesn't exist
+        if not os.path.exists(course_folder):
+            os.makedirs(course_folder)
 
-        # Define the full path
-        file_path = os.path.join(self.upload_folder, filename)
+        return course_folder
 
-        # Ensure the upload folder exists
-        os.makedirs(self.upload_folder, exist_ok=True)
+    def save_syllabus_file(self, course_id, syllabus_content):
+        """Saves the syllabus file in the course folder, replacing the existing one if present."""
 
-        # Save the file
-        with open(file_path, 'wb') as f:
-            f.write(file_content)
+        # Check if the syllabus content is empty
+        if not syllabus_content:
+            raise ValueError("Syllabus content cannot be empty.")  # Raise an exception if the content is empty
 
-        return file_path
+        # Create the course folder if it doesn't exist
+        course_folder = self.create_course_folder(course_id)
+
+        # Define the file path for the syllabus
+        syllabus_file_path = os.path.join(course_folder, f"syllabus_{course_id}.pdf")
+
+        # Check if the file already exists and remove it if so
+        if os.path.exists(syllabus_file_path):
+            os.remove(syllabus_file_path)  # Delete the existing syllabus file
+
+        # Save the new syllabus content as a PDF file
+        with open(syllabus_file_path, 'wb') as file:
+            file.write(syllabus_content)
+
+        return syllabus_file_path
+
+    def save_exam_file(self, course_id, year, semester, moed, exam_content):
+        """Saves the exam file in the course's year folder."""
+
+        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+
+        # Create the year folder if it doesn't exist
+        if not os.path.exists(year_folder):
+            os.makedirs(year_folder)
+
+        # Save the exam file in the year folder
+        exam_file_path = os.path.join(year_folder, f"exam_{course_id}_{year}_{semester}_{moed}.pdf")
+        with open(exam_file_path, 'wb') as file:
+            file.write(exam_content)
+
+        return exam_file_path
+
+    def save_question_file(self, course_id, year, semester, moed, question_content, question_number):
+        """Saves a question file inside the corresponding exam folder."""
+
+        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+
+        # Create the exam folder if it doesn't exist
+        if not os.path.exists(exam_folder):
+            os.makedirs(exam_folder)
+
+        # Create the questions folder inside the exam folder if it doesn't exist
+        question_folder = os.path.join(exam_folder, f"questions")
+        if not os.path.exists(question_folder):
+            os.makedirs(question_folder)
+
+        # Save the question file inside the questions folder
+        question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+        with open(question_file_path, 'wb') as file:
+            file.write(question_content)
+
+        return question_file_path
