@@ -1,12 +1,55 @@
+from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
+from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
+from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
 
 
+import threading
+
 class NegevNerds:
-    def __init__(self, user_facade, course_facade, file_manager):
-        self.userFacade = user_facade
-        self.courseFacade = course_facade
-        self.fileManager = file_manager
-        self.system_managers = []
+
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, mkdir):
+        if cls._instance is None:
+            with cls._lock:  # Ensure thread-safe instance creation
+                if cls._instance is None:  # Double-checked locking
+                    cls._instance = super().__new__(cls)
+                    # Initialize critical attributes in __new__
+                    cls._instance._user_facade = UserFacade()
+                    cls._instance._course_facade = CourseFacade()
+                    cls._instance._file_manager = FileManager(mkdir)
+                    cls._instance._system_managers = []
+                    cls._instance._initialized = True
+        return cls._instance
+
+    def __init__(self, mkdir):
+        # Prevent reinitialization
+        if not hasattr(self, '_initialized'):
+            self._user_facade = UserFacade()
+            self._course_facade = CourseFacade()
+            self._file_manager = FileManager(mkdir)
+            self._system_managers = []
+            self._initialized = True
+
+    # Getter methods for accessing the facades and file manager
+    @property
+    def userFacade(self):
+        return self._user_facade
+
+    @property
+    def courseFacade(self):
+        return self._course_facade
+
+    @property
+    def fileManager(self):
+        return self._file_manager
+
+    @property
+    def system_managers(self):
+        return self._system_managers
+
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""

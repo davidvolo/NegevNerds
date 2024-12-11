@@ -2,9 +2,28 @@ import json
 from Backend.BusinessLayer import NegevNerds
 
 
+import threading
+
+
 class ServiceLayer:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, negev_nerds: NegevNerds):
+        if cls._instance is None:
+            with cls._lock:  # Ensure thread-safe instance creation
+                if cls._instance is None:  # Double-checked locking
+                    cls._instance = super().__new__(cls)
+                    # Initialize attributes in __new__
+                    cls._instance.negev_nerds = negev_nerds
+                    cls._instance._initialized = True
+        return cls._instance
+
     def __init__(self, negev_nerds: NegevNerds):
-        self.negev_nerds = negev_nerds
+        # Prevent reinitialization
+        if not hasattr(self, '_initialized'):
+            self.negev_nerds = negev_nerds
+            self._initialized = True
 
     def register(self, email, password, first_name, last_name):
         """Handle user registration and return JSON."""
