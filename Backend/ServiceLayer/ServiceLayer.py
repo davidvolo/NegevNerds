@@ -136,10 +136,10 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def remove_course(self, course_id):
+    def remove_course(self, course_id, user_id):
         """Handle course removal and return JSON response."""
         try:
-            result = self.negev_nerds.remove_course(course_id)
+            result = self.negev_nerds.remove_course(course_id, user_id)
 
             if "Error" in result:
                 return json.dumps({
@@ -326,4 +326,3 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-
