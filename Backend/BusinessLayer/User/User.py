@@ -1,4 +1,4 @@
-from BusinessLayer.Util.Exceptions import *
+from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class User:

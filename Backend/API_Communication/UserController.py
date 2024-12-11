@@ -11,6 +11,14 @@ from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 user_controller = Blueprint('user_controller', __name__)
 
+CORS(user_controller, resources={
+    r"/api/*": {
+        "origins": "*",  # Or specify exact origin like "http://localhost:3000"
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
 
 serviceLayer = ServiceLayer(NegevNerds(UserFacade(), CourseFacade(), FileManager("../")))
 
