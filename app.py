@@ -21,7 +21,7 @@ def main():
     Entry point for the application.
     """
     print("Starting the Exam Preparation System API...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
 
 
 if __name__ == "__main__":
