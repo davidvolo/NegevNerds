@@ -6,6 +6,7 @@ import threading
 import os
 
 class FileManager:
+  
     _instance = None
     _lock = threading.Lock()
 
@@ -28,6 +29,7 @@ class FileManager:
             self._base_dir = base_dir
             self._initialized = True
             os.makedirs(self._base_dir, exist_ok=True)
+
 
     def create_course_folder(self, course_id):
         """Creates a folder for the course if it doesn't exist."""

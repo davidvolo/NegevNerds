@@ -7,6 +7,7 @@ from Backend.BusinessLayer.Util.Exceptions import *
 import threading
 
 class NegevNerds:
+
     _instance = None
     _lock = threading.Lock()
 
@@ -48,6 +49,7 @@ class NegevNerds:
     @property
     def system_managers(self):
         return self._system_managers
+
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""
