@@ -114,10 +114,10 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def open_course(self, course_id, name, syllabus_content, course_topics):
+    def open_course(self, user_id, course_id, name, syllabus_content, course_topics):
         """Handle course creation and save syllabus, return JSON response."""
         try:
-            result = self.negev_nerds.open_course(course_id, name, syllabus_content, course_topics)
+            result = self.negev_nerds.open_course(user_id, course_id, name, syllabus_content, course_topics)
 
             if "Error" in result:
                 return json.dumps({
