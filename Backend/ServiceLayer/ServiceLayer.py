@@ -25,6 +25,46 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+    
+    def register_authentication_part(self, email, auth_code):
+        """Handle user authentication code part in the registration and return JSON."""
+        try:
+            result = self.negev_nerds.register_authentication_part(email, auth_code)
+
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+        
+    def register_termOfUse_part(self, email, password, first_name, last_name, accept):
+        """Handle user acception of the term of use in the registration and return JSON."""
+        try:
+            result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name, accept)
+
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
 
     def login(self, email, password):
         """Handle user login and return JSON."""

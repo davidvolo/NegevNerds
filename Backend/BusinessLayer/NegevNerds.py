@@ -10,10 +10,22 @@ class NegevNerds:
     def register(self, email, password, first_name, last_name):
         """Register a new user."""
         try:
-            success = self.userFacade.register(email, password, first_name, last_name)
+            return self.userFacade.register(email, password, first_name, last_name)
 
-            if success:
-                return "User registered successfully."
+        except Exception as e:
+            return f"Error: {e}"
+        
+    def register_authentication_part(self, email, auth_code):
+        """Register a new user."""
+        try:
+            return self.userFacade.register_authentication_part(email, auth_code)
+        except Exception as e:
+            return f"Error: {e}"
+        
+    def register_termOfUse_part(self,email, password, first_name, last_name, accept):
+        """Register a new user."""
+        try:
+            return self.userFacade.register_termOfUse_part(email, password, first_name, last_name, accept)
         except Exception as e:
             return f"Error: {e}"
 

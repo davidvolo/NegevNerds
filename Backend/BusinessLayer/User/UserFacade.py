@@ -31,52 +31,57 @@ class UserFacade:
         - Completes the registration.
         """
         if email in self.users:
-            raise Exception("User already exists.")
+            raise Exception("המשתמש כבר קיים במערכת.")
 
         if not self.is_valid_email(email):
-            raise Exception("Invalid email")
-        
+            raise Exception("האימייל אינו תקין.")
+
         if not self.is_valid_password(password):
-            raise Exception("Invalid password")
+            raise Exception("הסיסמה אינה תקינה.")
 
         # Send authentication code
         self.send_auth_code(email, first_name)
+        return {"message": f"קוד אימות נשלח למייל {email}"}
 
+    
+    def register_authentication_part(self, email, auth_code):
         # Interactively verify the code
         for attempt in range(3):  # Allow up to 3 attempts
             try:
-                code = int(input(f"Enter the authentication code sent to {email}: "))
-                if code ==  self.pending_auth_codes[email][0]:
+                if auth_code == self.pending_auth_codes[email][0]:
                     if datetime.datetime.now() <= self.pending_auth_codes[email][1]:
-                        # Display Terms of Use
-                        with open("/Users/davidvolodarsky/Desktop/Semeters/Semester_G/NegevNerds/NegevNerds/Backend/terms_of_use.txt", "r", encoding="utf-8") as terms_file:
-                            terms = terms_file.read()
-                            print("\n" + terms + "\n")
-                        
-                        accept_terms = input("האם אתה מקבל את תנאי השימוש? (כן/לא): ").strip().lower()
-                        if accept_terms != "כן":
-                            logging.error("User did not accept the terms of use.")
-                            raise Exception("Registration aborted: terms of use not accepted.")
-
-                        id = self.generateUserId()
-                        user = User(id,email,password,first_name,last_name)
-                        user.login()
-                        self.users[email] = user
-                        logging.info(f"User {first_name} {last_name} registered successfully.")
-                        return {"message": f"User {first_name} {last_name} registered successfully."}
+                        return {"message": "עוברים למעבר על תנאי השימוש"}
                     else:
                         logging.error("Authentication failed. The code has expired.")
-                        raise Exception("Authentication code expired.")
+                        raise Exception("אימות נכשל. הקוד פג תוקף.")
                 else:
                     logging.error("Incorrect authentication code.")
-                    raise Exception("Incorrect authentication code.")
+                    raise Exception("קוד אימות שגוי.")
             except Exception as e:
                 logging.error(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == 2:
-                    raise Exception("Failed to authenticate. Registration aborted.")
-        return {"message": "Registration process failed."}
+                    raise Exception("האימות נכשל. הרשמה בוטלה.")
     
-    
+    def register_termOfUse_part(self, email, password, first_name, last_name, accept: bool):
+        # Interactively verify the code
+        try:
+            if accept:
+                    id = self.generateUserId()
+                    user = User(id, email, password, first_name, last_name)  
+                    user.login()
+                    self.users[email] = user
+                    logging.info(f"User {first_name} {last_name} registered successfully.")
+                    return {"message": f"User {first_name} {last_name} registered successfully."}
+                       
+            else:
+                logging.error("The user did not accept the term ou use. Registration failed")
+            raise Exception("חובה לאשר את תנאי השימוש. ההרשמה נכשלה.")
+
+        except Exception as e:
+                raise Exception("האישור נכשל. הרשמה בוטלה.")
+
+
+
     def is_valid_email(self,email):
         """Validate email domain."""
         return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
@@ -152,7 +157,8 @@ class UserFacade:
         
         user.login()
         logging.info(f"Login successful for user: {email}")
-        return "Login successful"
+        message = "התחברות בוצעה בהצלחה"
+        return message
  
     def logout(self, email):
         # Check if the user exists
@@ -164,7 +170,8 @@ class UserFacade:
         user.logout()
         
         logging.info(f"User {email} logged out successfully.")
-        return "Logout successful"
+        message = "התנתקות בוצעה בהצלחה"
+        return message
 
     def registerToCourse(self, courseId, userId):
         """Add user to course (through User object)."""

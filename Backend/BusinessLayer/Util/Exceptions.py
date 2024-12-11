@@ -41,7 +41,7 @@ class UserOrPasswordIncorrectError(BaseError):
     """Exception raised when password or email is incorrect."""
 
     def __init__(self):
-        message = f"Invalid email or password. Please try again."
+        message = f"אימייל או סיסמה שגויים. אנא נסה שוב."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
 
@@ -55,7 +55,7 @@ class UserDoesnotExistsError(BaseError):
 class UserIsNotLoggedInError(BaseError):
     """Exception raised when tring to log out a not logged in user."""
     def __init__(self, email):
-        message = f"Can't log out {email} since he is not logged in."
+        message = f"לא ניתן להתנתק {email} מכיוון שהוא אינו מחובר."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
         
 
