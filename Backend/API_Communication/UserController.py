@@ -20,7 +20,23 @@ CORS(user_controller, resources={
 })
 
 
-serviceLayer = ServiceLayer(NegevNerds(UserFacade(), CourseFacade(), FileManager("../")))
+serviceLayer = ServiceLayer(NegevNerds("../"))
+
+
+def parse_jsonify(parsed_result):
+    # Check the status and return appropriate response
+    if parsed_result['status'] == 'success':
+        return jsonify({
+            "success": True,
+            "message": parsed_result['message']
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "message": parsed_result['message']
+        }), 400
+
+
 
 
 @user_controller.route('/api/register', methods=['POST', 'OPTIONS'])
@@ -57,17 +73,7 @@ def register_user():
         # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        if parsed_result['status'] == 'success':
-            return jsonify({
-                "success": True,
-                "message": parsed_result['message']
-            }), 200
-        else:
-            return jsonify({
-                "success": False,
-                "message": parsed_result['message']
-            }), 400
+        return parse_jsonify(parsed_result)
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -117,16 +123,7 @@ def login_user():
         parsed_result = json.loads(result)
 
         # Check the status and return appropriate response
-        if parsed_result['status'] == 'success':
-            return jsonify({
-                "success": True,
-                "message": parsed_result['message']
-            }), 200
-        else:
-            return jsonify({
-                "success": False,
-                "message": parsed_result['message']
-            }), 400
+        return parse_jsonify(parsed_result)
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -174,17 +171,7 @@ def logout_user():
         # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        if parsed_result['status'] == 'success':
-            return jsonify({
-                "success": True,
-                "message": parsed_result['message']
-            }), 200
-        else:
-            return jsonify({
-                "success": False,
-                "message": parsed_result['message']
-            }), 400
+        return parse_jsonify(parsed_result)
 
     except json.JSONDecodeError:
         # Handle JSON decoding error

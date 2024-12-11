@@ -15,10 +15,21 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class UserFacade:
+
+    _instance = None  # Class-level attribute to hold the single instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
+
+
     def __init__(self):
-        self.users = {}
-        self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
-        self.auth_lock = threading.Lock()  # Lock for thread-safe access
+        if not hasattr(self, 'initialized'):
+            self.users = {}
+            self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
+            self.auth_lock = threading.Lock()  # Lock for thread-safe access
+            self.initialized = True
     
     def generateUserId(self):
         return str(len(self.users) + 1)

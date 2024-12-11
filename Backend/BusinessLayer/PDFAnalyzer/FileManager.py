@@ -2,10 +2,32 @@ import os
 import shutil
 
 
+import threading
+import os
+
 class FileManager:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, base_dir='./files'):
+        if not cls._instance:
+            with cls._lock:
+                # Double-checked locking pattern
+                if not cls._instance:
+                    cls._instance = super().__new__(cls)
+                    # Initialize attributes here
+                    cls._instance._base_dir = base_dir
+                    cls._instance._initialized = True
+                    # Ensure the base directory exists
+                    os.makedirs(base_dir, exist_ok=True)
+        return cls._instance
+
     def __init__(self, base_dir='./files'):
-        """Initialize the FileManager with a base directory for file storage"""
-        self.base_dir = base_dir
+        # This method might be called multiple times, so we use the _initialized check
+        if not hasattr(self, '_initialized'):
+            self._base_dir = base_dir
+            self._initialized = True
+            os.makedirs(self._base_dir, exist_ok=True)
 
     def create_course_folder(self, course_id):
         """Creates a folder for the course if it doesn't exist."""
