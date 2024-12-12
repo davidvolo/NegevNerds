@@ -65,10 +65,10 @@ class ServiceLayer:
                 "message": str(e)
             })
         
-    def register_termOfUse_part(self, email, password, first_name, last_name, accept):
+    def register_termOfUse_part(self, email, password, first_name, last_name):
         """Handle user acception of the term of use in the registration and return JSON."""
         try:
-            result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name, accept)
+            result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name)
 
             if "Error" in result:
                 return json.dumps({
