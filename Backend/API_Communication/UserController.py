@@ -105,16 +105,17 @@ def register_authentication_part():
         data = request.get_json()
 
         # Validate input
-        if not all(key in data for key in ['email', 'auth_code']):
+        if not all(key in data for key in ['auth_code', 'email']):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
             }), 400
 
         # Extract data
-        email = data.get('email')
         auth_code = data.get('auth_code')
-        
+
+        email = data.get('email')
+
 
         # Call the service layer's register method directly
         result = serviceLayer.register_authentication_part(email, auth_code)
@@ -164,7 +165,7 @@ def register_termOfUse_part():
         data = request.get_json()
 
         # Validate input
-        if not all(key in data for key in ['email', 'password', 'first_name', 'last_name', 'accept']):
+        if not all(key in data for key in ['email', 'password', 'first_name', 'last_name']):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
@@ -175,11 +176,10 @@ def register_termOfUse_part():
         password = data.get('password')
         first_name = data.get('first_name')
         last_name = data.get('last_name')
-        accept = data.get('accept')
         
 
         # Call the service layer's register method directly
-        result = serviceLayer.register_termOfUse_part(email, password, first_name, last_name, accept)
+        result = serviceLayer.register_termOfUse_part(email, password, first_name, last_name)
 
         # Parse the JSON string
         parsed_result = json.loads(result)

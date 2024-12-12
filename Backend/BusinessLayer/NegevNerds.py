@@ -70,10 +70,10 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
         
-    def register_termOfUse_part(self,email, password, first_name, last_name, accept):
+    def register_termOfUse_part(self,email, password, first_name, last_name):
         """Register a new user."""
         try:
-            return self.userFacade.register_termOfUse_part(email, password, first_name, last_name, accept)
+            return self.userFacade.register_termOfUse_part(email, password, first_name, last_name)
         except Exception as e:
             return f"Error: {e}"
 

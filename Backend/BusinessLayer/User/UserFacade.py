@@ -15,11 +15,19 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class UserFacade:
+    _instance = None  # Class-level attribute to hold the single instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self):
-        self.users = {}
-        self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
-        self.auth_lock = threading.Lock()  # Lock for thread-safe access
-    
+        if not hasattr(self, 'users'):  # Initialize only once
+            self.users = {}
+            self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
+            self.auth_lock = threading.Lock()  # Lock for thread-safe access
+
     def generateUserId(self):
         return str(len(self.users) + 1)
 
@@ -43,40 +51,33 @@ class UserFacade:
         self.send_auth_code(email, first_name)
         return {"message": f"קוד אימות נשלח למייל {email}"}
 
-    
-    def register_authentication_part(self, email, auth_code):
-        # Interactively verify the code
-        for attempt in range(3):  # Allow up to 3 attempts
-            try:
-                if auth_code == self.pending_auth_codes[email][0]:
-                    if datetime.datetime.now() <= self.pending_auth_codes[email][1]:
-                        return {"message": "עוברים למעבר על תנאי השימוש"}
-                    else:
-                        logging.error("Authentication failed. The code has expired.")
-                        raise Exception("אימות נכשל. הקוד פג תוקף.")
+    def register_authentication_part(self, email, auth_code: str):
+        # Interactively verify the code # Allow up to 3 attempts
+        try:
+            stored_code, expiry_time = self.pending_auth_codes[email]
+            if auth_code == stored_code:
+                if datetime.datetime.now() <= expiry_time:
+                    return {"message": "עוברים למעבר על תנאי השימוש"}
                 else:
-                    logging.error("Incorrect authentication code.")
-                    raise Exception("קוד אימות שגוי.")
-            except Exception as e:
-                logging.error(f"Attempt {attempt + 1} failed: {e}")
-                if attempt == 2:
-                    raise Exception("האימות נכשל. הרשמה בוטלה.")
-                
-    def register_termOfUse_part(self, email, password, first_name, last_name, accept: bool):
+                    logging.error("Authentication failed. The code has expired.")
+                    raise Exception("אימות נכשל. הקוד פג תוקף.")
+            else:
+                logging.error("Incorrect authentication code.")
+                raise Exception("קוד אימות שגוי.")
+        except Exception as e:
+            logging.error(f"Attempt  failed: {e}")
+            raise Exception("האימות נכשל. הרשמה בוטלה.")
+
+
+    def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
         try:
-            if accept:
-                    id = self.generateUserId()
-                    user = User(id, email, password, first_name, last_name)  
-                    user.login()
-                    self.users[email] = user
-                    logging.info(f"User {first_name} {last_name} registered successfully.")
-                    return {"message": f"User {first_name} {last_name} registered successfully."}
-                       
-            else:
-                logging.error("The user did not accept the term ou use. Registration failed")
-            raise Exception("חובה לאשר את תנאי השימוש. ההרשמה נכשלה.")
-
+                id = self.generateUserId()
+                user = User(id, email, password, first_name, last_name)
+                user.login()
+                self.users[email] = user
+                logging.info(f"User {first_name} {last_name} registered successfully.")
+                return {"message": f"User {first_name} {last_name} registered successfully."}
         except Exception as e:
                 raise Exception("האישור נכשל. הרשמה בוטלה.")
 
@@ -109,13 +110,12 @@ class UserFacade:
         # Return True only if all conditions are met
         return bool(has_uppercase and has_lowercase and has_number and has_special)
 
-
-
     def send_auth_code(self,email, first_name):
         """Generate and send an authentication code via email."""
         auth_code = random.randint(100000, 999999)
+        auth_code = str(auth_code)
         auth_code_expiry = datetime.datetime.now() + datetime.timedelta(minutes=3)
-        self.pending_auth_codes[email] = (auth_code,auth_code_expiry)
+        self.pending_auth_codes[email] =(auth_code, auth_code_expiry)
 
         sender_email = os.getenv("EMAIL_ADDRESS")
         sender_password = os.getenv("EMAIL_PASSWORD")
