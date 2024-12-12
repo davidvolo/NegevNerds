@@ -276,11 +276,14 @@ def logout_user():
         data = request.get_json()
 
         # Validate input
-        if not all(key in data for key in ['email']):
+
+
+        if 'email' not in data:
             return jsonify({
                 "success": False,
-                "message": "Missing required fields"
+                "message": "Email is required for logout"
             }), 400
+
 
         # Extract data
         email = data.get('email')
