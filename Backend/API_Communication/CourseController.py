@@ -242,3 +242,89 @@ def remove_student_from_course():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
+
+
+@course_controller.route('/api/course/get_all_courses', methods=[ 'GET', 'OPTIONS'])
+@cross_origin()
+def get_all_courses():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+
+        result = serviceLayer.get_all_courses()
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        # Check the status and return appropriate response
+        return parse_jsonify(parsed_result)
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500
+    except Exception as e:
+        print(f"Error in registration: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
+
+
+@course_controller.route('/api/course/get_course_topics', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_all_courses():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+
+        data = request.get_json()
+
+        # Validate input
+        if not all(key in data for key in ['course_id']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract data
+        course_id = data.get('course_id')
+
+        result = serviceLayer.get_course_topics(course_id)
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        # Check the status and return appropriate response
+        return parse_jsonify(parsed_result)
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500
+    except Exception as e:
+        print(f"Error in registration: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500

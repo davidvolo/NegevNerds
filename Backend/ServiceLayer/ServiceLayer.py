@@ -385,3 +385,55 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+
+
+    def get_user_courses(self, user_id):
+        """Editing exam's year """
+        try:
+            # Call the business layer method with the provided arguments
+            result = self.negev_nerds.get_user_courses(user_id)
+
+            return json.dumps({
+                "status": "success",
+                "data": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def get_course_topics(self, course_id):
+        """Editing exam's year """
+        try:
+            # Call the business layer method with the provided arguments
+            result = self.negev_nerds.get_course_topics(course_id)
+
+            return json.dumps({
+                "status": "success",
+                "data": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def get_all_courses(self):
+        """Editing exam's year """
+        try:
+            # Call the business layer method with the provided arguments
+            result = self.negev_nerds.get_all_courses()
+
+            return json.dumps({
+                "status": "success",
+                "data": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+

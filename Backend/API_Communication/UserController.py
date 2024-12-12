@@ -276,7 +276,7 @@ def logout_user():
         data = request.get_json()
 
         # Validate input
-        if not all(key in data for key in ['email', 'password']):
+        if not all(key in data for key in ['email']):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
@@ -306,5 +306,54 @@ def logout_user():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
+
+
+@user_controller.route('/api/get_user_courses', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_user_courses():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+
+        # Validate input
+        if not all(key in data for key in ['user_id']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract data
+        user_id = data.get('user_id')
+
+        # Call the service layer's login method directly
+        result = serviceLayer.get_user_courser(user_id)
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        return parse_jsonify(parsed_result)
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500
+    except Exception as e:
+        print(f"Error in logout: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
+
 
 

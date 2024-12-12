@@ -4,6 +4,7 @@ import datetime
 import os
 import re
 import threading
+import uuid
 from email.mime.text import MIMEText
 import logging
 from Backend.BusinessLayer.User.User import User
@@ -29,7 +30,7 @@ class UserFacade:
             self.auth_lock = threading.Lock()  # Lock for thread-safe access
 
     def generateUserId(self):
-        return str(len(self.users) + 1)
+        return "user" + str(uuid.uuid4())
 
     def register(self, email, password, first_name, last_name):
         """
@@ -81,6 +82,11 @@ class UserFacade:
         except Exception as e:
                 raise Exception("האישור נכשל. הרשמה בוטלה.")
 
+    def get_user_courses(self, user_id):
+        curr_user = self.users[user_id]
+        if curr_user is None:
+            return []
+        return curr_user.getCourses()
 
 
     def is_valid_email(self,email):
@@ -189,3 +195,7 @@ class UserFacade:
             return "Profile updated successfully"
         else:
             raise UserDoesnotExistsError()
+
+
+    def getUser(self, user_id):
+        return self.users[user_id]
