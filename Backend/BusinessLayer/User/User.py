@@ -42,3 +42,7 @@ class User:
         if last_name:
             self.last_name = last_name
         #print(f"Profile updated: {self.first_name} {self.last_name}, {self.email}")
+
+
+    def get_courses(self):
+        return self.courses

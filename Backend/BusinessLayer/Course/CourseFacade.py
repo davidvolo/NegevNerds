@@ -1,5 +1,6 @@
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
+from Backend.DataLayer.CourseDTO import CourseDTO
 
 
 class CourseFacade:
@@ -190,6 +191,9 @@ class CourseFacade:
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_topic_from_question(question_topic)
 
+
+
+
     def search_question_by_specifics(self, course_id, year, semester, moed, question_id):
         course = self.get_course(course_id)
         return course.get_question(year, semester, moed, question_id)
@@ -213,3 +217,26 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
+
+    def get_all_courses(self):
+        course_list = []
+        for course in self.courses.keys():
+            course_list.append(CourseDTO(course))
+
+    def get_course_DTO(self, course_id):
+        if self.get_course(course_id) is not None:
+            return CourseDTO(self.courses[course_id])
+        return None
+
+    def get_courses_DTO(self, courses_ids):
+        dtos = []
+        for course_id in courses_ids:
+            if self.get_course(course_id) is not None:
+                dtos.append(CourseDTO(self.get_course(course_id)))
+
+
+    def get_course_topics(self, course_id):
+        if self.get_course(course_id) is None:
+            return None
+        else:
+            return self.get_course(course_id).get_topics()
