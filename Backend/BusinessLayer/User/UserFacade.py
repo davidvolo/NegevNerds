@@ -41,6 +41,12 @@ class UserFacade:
         """
         if email in self.users:
             raise Exception("המשתמש כבר קיים במערכת.")
+        
+        if not self.is_valid_name(first_name):
+            raise Exception("השם הפרטי אינו תקין.")
+        
+        if not self.is_valid_name(last_name):
+            raise Exception("שם המשפחה אינו תקין.")
 
         if not self.is_valid_email(email):
             raise Exception("האימייל אינו תקין.")
@@ -92,6 +98,23 @@ class UserFacade:
     def is_valid_email(self,email):
         """Validate email domain."""
         return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
+    
+    
+    def is_valid_name(self, name):
+        """
+        Validates a name to ensure it contains only Hebrew characters, spaces, tabs, and hyphens.
+
+        Args:
+        name (str): The name to validate.
+
+        Returns:
+        bool: True if the name is valid, False otherwise.
+        """
+        # Regular expression to allow only Hebrew characters, spaces, tabs, and hyphens
+        hebrew_name_regex = r'^[\u0590-\u05FF]+([\s\t-][\u0590-\u05FF]+)*$'
+        
+        # Validate the name using regex
+        return bool(re.match(hebrew_name_regex, name))
 
     
     def is_valid_password(self,password):
@@ -207,3 +230,5 @@ class UserFacade:
 
     def getUser(self, user_id):
         return self.users[user_id]
+
+
