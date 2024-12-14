@@ -4,13 +4,12 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 
 
 class Course:
-    def __init__(self, course_id, name, syllabus, course_topics):
+    def __init__(self, course_id, name, course_topics):
         self.course_id = course_id
         self.name = name
-        self.syllabus = syllabus
         self.course_topics = course_topics if course_topics is not None else []  # Default to an empty list
         self.exams = {}  # Dictionary to store exams by years
-        self.managers = {}  # Dictionary to store managers with manager_id as key
+        self.managers = set() # Dictionary to store managers with manager_id as key
         self.students = []  # List of students for the course
 
     # Getters
@@ -163,10 +162,10 @@ class Course:
         else:
             raise ExamIsNotExist(year, semester, moed)
 
-    def add_manager(self, manager_id, manager):
+    def add_manager(self, manager_id):
         """Adds a manager to the course."""
         if manager_id not in self.managers:
-            self.managers[manager_id] = manager
+            self.managers.add(manager_id)
         else:
             raise ManagerAlreadyExists(manager_id)
 
