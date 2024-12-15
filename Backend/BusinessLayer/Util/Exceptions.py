@@ -90,6 +90,11 @@ class CourseAlreadyExists(BaseError):
         message = f"Course {course_id} is already exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
+class InvalidCourseIdFormat(BaseError):
+    """Exception raised when course Id is in invalid format."""
+    def __init__(self, course_id):
+        message = f"הפורמט של הקורס {course_id} אינו תקין"
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
 class ManagerIsNotExist(BaseError):
     """Exception raised when the manager is not exist."""

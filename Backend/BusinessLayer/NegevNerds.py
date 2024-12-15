@@ -2,6 +2,8 @@ from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
+from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
+
 
 
 import threading
@@ -19,6 +21,7 @@ class NegevNerds:
                     # Initialize critical attributes in __new__
                     cls._instance._user_facade = UserFacade()
                     cls._instance._course_facade = CourseFacade()
+                    cls._instance._pdfFacade = PDFAnalyzerFacade()
                     cls._instance._file_manager = FileManager(mkdir)
                     cls._instance._system_managers = []
                     cls._instance._initialized = True
@@ -29,6 +32,7 @@ class NegevNerds:
         if not hasattr(self, '_initialized'):
             self._user_facade = UserFacade()
             self._course_facade = CourseFacade()
+            self._pdfFacade = PDFAnalyzerFacade()
             self._file_manager = FileManager(mkdir)
             self._system_managers = []
             self._initialized = True
@@ -118,7 +122,7 @@ class NegevNerds:
             # Remove the user from the course using Coursefacade
             self.courseFacade.removeStudentFromCourse(course_id, user_id)
             # Remove the course from the user using Userfacade
-            user = self.userFacade.users.get(user_id)
+            user = self.userFacade.users_byEmail.get(user_id)
             if user:
                 user.removeCourse(course_id)
             else:
@@ -127,17 +131,19 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
 
-    def open_course(self, user_id, course_id, name, syllabus_content, course_topics):
+    def open_course(self, user_id, course_id, name, syllabus_content_pdf):
         """Opens a new course in the system and saves the syllabus file."""
         try:
             # Check if the course already exists using CourseFacade
-            if self.courseFacade.open_course(course_id, name, course_topics):
+            if self.courseFacade.open_course_possibility(course_id):
                 # Save the syllabus to the course folder using FileManager
-                syllabus_file_path = self.fileManager.save_syllabus_file(course_id, syllabus_content)
-                self.courseFacade.set_syllabus_of_course(course_id, syllabus_file_path)
+                syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
+                # syllabus_file_path = self.fileManager.save_syllabus_file(course_id, syllabus_content)
+                # self.courseFacade.set_syllabus_of_course(course_id, syllabus_file_path)
+                self.courseFacade.open_course(course_id,name,syllabus )
                 self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
                 self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student
-                return f"Course {name} opened successfully with syllabus at {syllabus_file_path}"
+                return f"Course {name} opened successfully "
             else:
                 raise Exception("Failed to create course.")
         except Exception as e:

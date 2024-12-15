@@ -68,16 +68,20 @@ class ServiceLayer:
     def register_termOfUse_part(self, email, password, first_name, last_name):
         """Handle user acception of the term of use in the registration and return JSON."""
         try:
-            result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name)
+            userid ,result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name)
 
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
-                    "message": result
+                    "message": result ,
+                    "user_id": userid
+            
                 })
             return json.dumps({
                 "status": "success",
-                "message": result
+                "message": result,
+                "user_id": userid
+
             })
         except Exception as e:
             return json.dumps({
@@ -173,10 +177,10 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def open_course(self, user_id, course_id, name, syllabus_content, course_topics):
+    def open_course(self, user_id, course_id, course_name, syllabus_content_pdf):
         """Handle course creation and save syllabus, return JSON response."""
         try:
-            result = self.negev_nerds.open_course(user_id, course_id, name, syllabus_content, course_topics)
+            result = self.negev_nerds.open_course(user_id, course_id, course_name, syllabus_content_pdf )
 
             if "Error" in result:
                 return json.dumps({

@@ -1,6 +1,7 @@
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.CourseDTO import CourseDTO
+import re
 
 
 class CourseFacade:
@@ -29,14 +30,23 @@ class CourseFacade:
             course.removeStudent(user_id)
         else:
             raise CourseIsNotExist(course_id)
+    
 
     def open_course(self, course_id, name, course_topics):
         """Opens a new course"""
 
+        course = Course(course_id, name, course_topics)
+        self.courses[course_id] = course
+
+    
+    def open_course_possibility(self, course_id):
+        """Opens a new course"""
+
         if course_id in self.courses:
             raise CourseAlreadyExists(course_id)
-        course = Course(course_id, name, [], course_topics)
-        self.courses[course_id] = course
+        
+        if not self.is_valid_courseID(course_id):
+            raise InvalidCourseIdFormat(course_id)
 
         return True
 
@@ -133,6 +143,20 @@ class CourseFacade:
         sorted_exams = self.sort_exams(exams)
 
         return sorted_exams
+    
+    def is_valid_courseID(self,courseId):
+        """
+        Validates if a course ID is in the correct format: xxx.x.xxxx
+        where x is a digit.
+
+        Args:
+            courseId (str): The course ID to validate.
+
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        pattern = r"^\d{3}\.\d\.\d{4}$"
+        return bool(re.match(pattern, courseId))
 
     def search_all_course_exams(self, course_id):
         """
