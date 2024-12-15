@@ -203,8 +203,8 @@ class TestUserController(unittest.TestCase):
         )
 
         # Assertions for step 2
-        self.assertIn(email, self.user_controller.users)  # User should be added
-        user = self.user_controller.users[email]
+        self.assertIn(email, self.user_controller.users_byEmail)  # User should be added
+        user = self.user_controller.users_byEmail[email]
         self.assertTrue(user.loggedIn)  # User should be logged in
         self.assertEqual(result_step2["message"], "User Test User registered successfully.")
 
@@ -217,7 +217,7 @@ class TestUserController(unittest.TestCase):
         last_name = "User"
         user_id = self.user_controller.generateUserId()
         user = User(user_id, email, password, first_name, last_name)
-        self.user_controller.users[email] = user
+        self.user_controller.users_byEmail[email] = user
 
         self.assertFalse(user.loggedIn)  # User should not be logged in
 
@@ -246,7 +246,7 @@ class TestUserController(unittest.TestCase):
         last_name = "User"
         user_id = self.user_controller.generateUserId()
         user = User(user_id, email, password, first_name, last_name)
-        self.user_controller.users[email] = user
+        self.user_controller.users_byEmail[email] = user
         message = f"אימייל או סיסמה שגויים. אנא נסה שוב."
         # Attempt to log in with the wrong password
         with self.assertRaises(UserOrPasswordIncorrectError) as context:
@@ -261,7 +261,7 @@ class TestUserController(unittest.TestCase):
         last_name = "User"
         user_id = self.user_controller.generateUserId()
         user = User(user_id, email, password, first_name, last_name)
-        self.user_controller.users[email] = user
+        self.user_controller.users_byEmail[email] = user
         user.login()
         self.assertTrue(user.loggedIn)  # User shoult be logged in
 
@@ -287,7 +287,7 @@ class TestUserController(unittest.TestCase):
         last_name = "User"
         user_id = self.user_controller.generateUserId()
         user = User(user_id, email, password, first_name, last_name)
-        self.user_controller.users[email] = user
+        self.user_controller.users_byEmail[email] = user
         self.assertFalse(user.loggedIn)  # User shoult not be logged in
         message = f"לא ניתן להתנתק {email} מכיוון שהוא אינו מחובר."
 

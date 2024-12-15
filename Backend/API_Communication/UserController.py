@@ -188,7 +188,8 @@ def register_termOfUse_part():
         if parsed_result['status'] == 'success':
             return jsonify({
                 "success": True,
-                "message": parsed_result['message']
+                "message": parsed_result['message'],
+                "user_id": parsed_result['user_id']  # Explicitly fetch user_id
             }), 200
         else:
             return jsonify({

@@ -122,7 +122,7 @@ class NegevNerds:
             # Remove the user from the course using Coursefacade
             self.courseFacade.removeStudentFromCourse(course_id, user_id)
             # Remove the course from the user using Userfacade
-            user = self.userFacade.users.get(user_id)
+            user = self.userFacade.users_byEmail.get(user_id)
             if user:
                 user.removeCourse(course_id)
             else:
@@ -135,7 +135,7 @@ class NegevNerds:
         """Opens a new course in the system and saves the syllabus file."""
         try:
             # Check if the course already exists using CourseFacade
-            if self.courseFacade.open_course_possibility(course_id,):
+            if self.courseFacade.open_course_possibility(course_id):
                 # Save the syllabus to the course folder using FileManager
                 syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
                 # syllabus_file_path = self.fileManager.save_syllabus_file(course_id, syllabus_content)

@@ -25,7 +25,8 @@ class UserFacade:
 
     def __init__(self):
         if not hasattr(self, 'users'):  # Initialize only once
-            self.users = {}
+            self.users_byEmail = {}
+            self.users_byId = {}
             self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
             self.auth_lock = threading.Lock()  # Lock for thread-safe access
 
@@ -39,7 +40,7 @@ class UserFacade:
         - Verifies the code interactively.
         - Completes the registration.
         """
-        if email in self.users:
+        if email in self.users_byEmail:
             raise Exception("המשתמש כבר קיים במערכת.")
         
         if not self.is_valid_name(first_name):
@@ -82,14 +83,15 @@ class UserFacade:
                 id = self.generateUserId()
                 user = User(id, email, password, first_name, last_name)
                 user.login()
-                self.users[email] = user
+                self.users_byEmail[email] = user
+                self.users_byId[id] = user
                 logging.info(f"User {first_name} {last_name} registered successfully.")
-                return {"message": f"User {first_name} {last_name} registered successfully."}
+                return id, {"message": f"User {first_name} {last_name} registered successfully."}
         except Exception as e:
                 raise Exception("האישור נכשל. הרשמה בוטלה.")
 
     def get_user_courses(self, user_id):
-        curr_user = self.users[user_id]
+        curr_user = self.users_byId[user_id]
         if curr_user is None:
             return []
         return curr_user.getCourses()
@@ -184,7 +186,7 @@ class UserFacade:
         """Authenticate the user by checking the email and password."""
         
         # Check if the email exists in the system
-        user = self.users.get(email)  # Use .get() to avoid KeyError
+        user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
         if user is None:
             raise UserOrPasswordIncorrectError()
         
@@ -199,7 +201,7 @@ class UserFacade:
  
     def logout(self, email):
         # Check if the user exists
-        user = self.users.get(email)
+        user = self.users_byEmail.get(email)
         if user is None:
             raise UserOrPasswordIncorrectError()
         if not user.loggedIn:
@@ -212,7 +214,7 @@ class UserFacade:
 
     def registerToCourse(self, courseId, userId):
         """Add user to course (through User object)."""
-        user = self.users.get(userId)
+        user = self.users_byId.get(userId)
         if user:
             user.registerToCourse(courseId)
         else:
@@ -220,7 +222,7 @@ class UserFacade:
         
     def editUserProfile(self, email, **kwargs):
         """Edit the user's profile details."""
-        user = self.users.get(email)
+        user = self.users_byEmail.get(email)
         if user:
             user.editProfile(**kwargs)
             return "Profile updated successfully"
@@ -229,6 +231,6 @@ class UserFacade:
 
 
     def getUser(self, user_id):
-        return self.users[user_id]
+        return self.users_byEmail[user_id]
 
 

@@ -30,6 +30,7 @@ class CourseFacade:
             course.removeStudent(user_id)
         else:
             raise CourseIsNotExist(course_id)
+    
 
     def open_course(self, course_id, name, course_topics):
         """Opens a new course"""

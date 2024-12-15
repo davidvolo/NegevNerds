@@ -88,11 +88,9 @@ def register_to_course():
             "error": str(e)
         }), 500
 
-
-@course_controller.route('/api/course/open_course', methods=['POST', 'GET', 'OPTIONS'])
+@course_controller.route('/api/course/open_course', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def open_course():
-    # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
@@ -101,40 +99,42 @@ def open_course():
         return response
 
     try:
-        # Extract data from the request
-        data = request.get_json()
+        print("Received a request to open_course.")
 
-        # Validate input
-        if not all(key in data for key in ['course_id', 'user_id',  'name', 'syllabus_content', 'course_topics']):
-            return jsonify({
-                "success": False,
-                "message": "Missing required fields"
-            }), 400
+        # Check if all required form data is present
+        if 'course_id' not in request.form or 'user_id' not in request.form or 'name' not in request.form:
+            print("Missing required form fields.")
+            return jsonify({"success": False, "message": "Missing required fields"}), 400
+
+        if 'syllabus_content_pdf' not in request.files:
+            print("Syllabus file not found in request.")
+            return jsonify({"success": False, "message": "Syllabus file is required"}), 400
 
         # Extract data
-        course_id = data.get('course_id')
-        user_id = data.get('user_id')
-        name = data.get('name')
-        syllabus_content = data.get('syllabus_content')
-        course_topics = data.get('course_topics')
+        course_id = request.form.get('course_id')
+        user_id = request.form.get('user_id')
+        name = request.form.get('name')
+        syllabus_file = request.files['syllabus_content_pdf']
 
-        # Call the service layer's register method directly
-        result = serviceLayer.open_course(user_id, course_id, name, syllabus_content, course_topics)
+        # Save file
+        file_path = f"/Users/davidvolodarsky/Desktop/Semeters/Semester_G/NegevNerds/sylbus_analyzer/uplods/{syllabus_file.filename}"
+        syllabus_file.save(file_path)
+        print(f"File saved to {file_path}")
+        print(f"user id {user_id}")
 
-        # Parse the JSON string
+        # Call the service layer
+        result = serviceLayer.open_course(user_id, course_id, name, file_path)
         parsed_result = json.loads(result)
+        print(f"Service layer response: {parsed_result}")
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
-
-    except json.JSONDecodeError:
-        # Handle JSON decoding error
+        # Construct and return response
         return jsonify({
-            "success": False,
-            "message": "Invalid JSON response from service"
-        }), 500
+            "success": parsed_result.get("status") == "success",  # Set success as boolean
+            "message": parsed_result.get("message")  # Return message from service layer
+        }), 200
+
     except Exception as e:
-        print(f"Error in registration: {str(e)}")
+        print(f"Error in open_course: {str(e)}")
         return jsonify({
             "success": False,
             "message": "An unexpected error occurred",
