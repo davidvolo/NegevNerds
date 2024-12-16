@@ -3,26 +3,26 @@
     {
       "email": "nadav@post.bgu.ac.il",
       "password": "Nadav111!!",
-      "first_name": "Nadav",
-      "last_name": "Ktalav"
+      "first_name": "נדב",
+      "last_name": "קטלב"
     },
     {
       "email": "David@post.bgu.ac.il",
       "password": "David222@@",
-      "first_name": "David",
-      "last_name": "Volodarski"
+      "first_name": "דוד",
+      "last_name": "וולודרסקי"
     },
     {
       "email": "Noa@bgu.ac.il",
-      "password": "Noa333##",
-      "first_name": "Noa",
-      "last_name": "Aboody"
+      "password": "Noa333()",
+      "first_name": "נועה",
+      "last_name": "עבודי"
     },
     {
       "email": "Shachar@bgu.ac.il",
       "password": "Shachar444$$",
-      "first_name": "Shachar",
-      "last_name": "Cohen"
+      "first_name": "שחר",
+      "last_name": "כהן"
     }
   ],
   "courses": [

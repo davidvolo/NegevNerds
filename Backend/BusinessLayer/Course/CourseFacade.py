@@ -21,7 +21,7 @@ class CourseFacade:
     def register_to_course(self, course_id, user_id):
         course = self.get_course(course_id)
         if course is not None:
-            self.courses[course_id].addStudent(user_id)
+            course.add_student(user_id)
 
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
@@ -61,7 +61,7 @@ class CourseFacade:
         """
         Retrieves a course by its ID.
         """
-        course = self.courses.get(course_id)
+        course = self.courses[course_id]
         if not course:
             raise CourseIsNotExist(course_id)
         return course
@@ -69,8 +69,8 @@ class CourseFacade:
     def set_syllabus_of_course(self, course_id, syllabus):
         """Set syllabus of an existing course"""
 
-        if course_id in self.courses:
-            self.courses.get(course_id).set_syllabus(syllabus)
+        if course_id in self.courses.keys():
+            self.get_course(course_id).set_syllabus(syllabus)
         else:
             raise CourseIsNotExist(course_id)
 
@@ -198,6 +198,9 @@ class CourseFacade:
         Delegates question addition to the specified Exam.
         """
         course = self.get_course(course_id)
+        currExam = course.get_exam(year, semester,moed)
+        if currExam is None:
+            self.add_exam_to_course(course_id,course.get_name(), None , year, semester, moed)
         course.get_exam(year, semester, moed).add_question(questionDTO)
 
     def remove_question(self, course_id, year, semester, moed, question_number):

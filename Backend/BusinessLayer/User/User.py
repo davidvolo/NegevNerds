@@ -2,14 +2,14 @@ from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class User:
-    def __init__(self, id, email, password, first_name, last_name, loggedIn = False, courses = []):
+    def __init__(self, id, email, password, first_name, last_name, loggedIn = False):
         self.id = id
         self.email = email
         self.password = password
         self.first_name = first_name
         self.last_name = last_name
         self.loggedIn = loggedIn
-        self.courses = courses
+        self.courses = []
     
     
     def login(self):
@@ -22,7 +22,7 @@ class User:
         if course_id not in self.courses:
             self.courses.append(course_id)
         else:
-           raise UserAlreadyRegisterToCourse()
+            raise UserAlreadyRegisterToCourse()
        
     def removeCourse(self, course_id):
         """Removes the user from a course."""

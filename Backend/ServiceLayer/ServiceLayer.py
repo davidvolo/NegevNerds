@@ -49,6 +49,27 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+    def registerWithoutAuth(self, email, password, first_name, last_name):
+        """Handle user registration and return JSON."""
+        user_id = None
+        try:
+            user_id, result = self.negev_nerds.registerWithoutAuth(email, password, first_name, last_name)
+
+            if "Error" in result:
+                return json.dumps({
+                    "status": "error",
+                    "message": result
+                })
+            return user_id, json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return user_id , json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
     
     def register_authentication_part(self, email, auth_code):
         """Handle user authentication code part in the registration and return JSON."""
@@ -384,7 +405,7 @@ class ServiceLayer:
         :return: JSON response indicating success or failure.
         """
         try:
-            result = self.negev_nerds.add_question(course_id, year, semester, moed, pdf_file_content, questionDTO)
+            result = self.negev_nerds.add_question_with_pdf(course_id, year, semester, moed, pdf_file_content, questionDTO)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -394,6 +415,8 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+
 
 
 
@@ -455,7 +478,7 @@ class ServiceLayer:
 
         # Load initialization data from the JSON file
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding='utf-8') as file:
                 init_data = json.load(file)
 
             # Extract users and courses
@@ -466,8 +489,8 @@ class ServiceLayer:
 
             # Register users
             for i in range(len(users)):
-                curr_user_id = self.register(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])
-                usersId[i] = curr_user_id
+                curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])
+                usersId.append(curr_user_id)
                 print(f"Registering user {users[i]['email']}: {curr_user_id}")
 
             # Create courses and enroll users
@@ -477,15 +500,25 @@ class ServiceLayer:
                 response = self.open_course(usersId[i], course['courseId'], course['name'], course['syllabus_content_pdf'])
                 print(f"Creating course {course['name']}: {response}")
 
-            self.register_to_course(courses[0]["courseId"], usersId[0])
-            self.register_to_course(courses[0]["courseId"], usersId[1])
-            self.register_to_course(courses[1]["courseId"], usersId[1])
-            self.register_to_course(courses[1]["courseId"], usersId[2])
-            self.register_to_course(courses[1]["courseId"], usersId[3])
-            self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
+            res = self.register_to_course(courses[1]["courseId"], usersId[0])
+            print(f"register {users[0]["first_name"]} to course  {courses[1]['name']}: {res}")
+
+            res = self.register_to_course(courses[0]["courseId"], usersId[1])
+            print(f"register {users[1]["first_name"]} to course  {courses[0]['name']}: {res}")
+
+            res = self.register_to_course(courses[0]["courseId"], usersId[3])
+            print(f"register {users[3]["first_name"]} to course  {courses[0]['name']}: {res}")
+
+            res = self.register_to_course(courses[1]["courseId"], usersId[2])
+            print(f"register {users[2]["first_name"]} to course  {courses[1]['name']}: {res}")
+
+            res = self.register_to_course(courses[1]["courseId"], usersId[3])
+            print(f"register {users[3]["first_name"]} to course  {courses[1]['name']}: {res}")
+
+            res = self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
                                        QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,
                                                    3, ["binaryTree, Math"], False, "ex2.pdf"))
-
+            print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:
             print(f"Error: Initialization file {file_path} not found.")

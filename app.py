@@ -23,9 +23,9 @@ def main():
     """
     print("Starting the Exam Preparation System API...")
     service_layer = ServiceLayer(NegevNerds("../"))
-    #service_layer.initialize_system()
+    service_layer.initialize_system()
 
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False)
 
 
 if __name__ == "__main__":

@@ -214,11 +214,11 @@ class UserFacade:
 
     def registerToCourse(self, courseId, userId):
         """Add user to course (through User object)."""
-        user = self.users_byId.get(userId)
+        user = self.getUser(userId)
         if user:
             user.registerToCourse(courseId)
         else:
-            raise UserDoesnotExistsError()
+            raise UserDoesnotExistsError(userId)
         
     def editUserProfile(self, email, **kwargs):
         """Edit the user's profile details."""
@@ -231,6 +231,39 @@ class UserFacade:
 
 
     def getUser(self, user_id):
-        return self.users_byEmail[user_id]
+        return self.users_byId[user_id]
+
+    def registerWithoutAuth(self, email, password, first_name, last_name):
+        """
+        Unified register function.
+        - Sends an authentication code.
+        - Verifies the code interactively.
+        - Completes the registration.
+        """
+        if email in self.users_byEmail:
+            raise Exception("המשתמש כבר קיים במערכת.")
+
+        if not self.is_valid_name(first_name):
+            raise Exception("השם הפרטי אינו תקין.")
+
+        if not self.is_valid_name(last_name):
+            raise Exception("שם המשפחה אינו תקין.")
+
+        if not self.is_valid_email(email):
+            raise Exception("האימייל אינו תקין.")
+
+        if not self.is_valid_password(password):
+            raise Exception("הסיסמה אינה תקינה.")
+
+        user_id = self.generateUserId()
+        user = User(user_id, email, password, first_name, last_name)
+        user.login()
+        self.users_byEmail[email] = user
+        self.users_byId[user_id] = user
+        logging.info(f"User {first_name} {last_name} registered successfully.")
+        return user_id, {"message": f"User {first_name} {last_name} registered successfully."}
+
+
+
 
 
