@@ -4,6 +4,9 @@ from Backend.BusinessLayer import NegevNerds
 
 import threading
 
+from Backend.BusinessLayer.Course import enums
+from Backend.DataLayer.QuestionDTO import QuestionDTO
+
 
 class ServiceLayer:
     _instance = None
@@ -19,9 +22,11 @@ class ServiceLayer:
                     cls._instance._initialized = True
         return cls._instance
 
-    def __init__(self, negev_nerds: NegevNerds):
+    def __init__(self, negev_nerds: NegevNerds = None):
         # Prevent reinitialization
         if not hasattr(self, '_initialized'):
+            if negev_nerds is None:
+                negev_nerds = NegevNerds.NegevNerds("../")
             self.negev_nerds = negev_nerds
             self._initialized = True
 
@@ -439,5 +444,55 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+    import json
+
+    def initialize_system(self, file_path="init.json"):
+        """
+        Initialize the system with predefined data from a JSON file.
+        """
+        print("Initializing the system with predefined data...")
+
+        # Load initialization data from the JSON file
+        try:
+            with open(file_path, 'r') as file:
+                init_data = json.load(file)
+
+            # Extract users and courses
+            users = init_data.get("users", [])
+            courses = init_data.get("courses", [])
+
+            usersId = []
+
+            # Register users
+            for i in range(len(users)):
+                curr_user_id = self.register(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])
+                usersId[i] = curr_user_id
+                print(f"Registering user {users[i]['email']}: {curr_user_id}")
+
+            # Create courses and enroll users
+            for i in range(len(courses)):
+                # Create the course
+                course = courses[i]
+                response = self.open_course(usersId[i], course['courseId'], course['name'], course['syllabus_content_pdf'])
+                print(f"Creating course {course['name']}: {response}")
+
+            self.register_to_course(courses[0]["courseId"], usersId[0])
+            self.register_to_course(courses[0]["courseId"], usersId[1])
+            self.register_to_course(courses[1]["courseId"], usersId[1])
+            self.register_to_course(courses[1]["courseId"], usersId[2])
+            self.register_to_course(courses[1]["courseId"], usersId[3])
+            self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
+                                       QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,
+                                                   3, ["binaryTree, Math"], False, "ex2.pdf"))
+
+            print("System initialization complete.")
+        except FileNotFoundError:
+            print(f"Error: Initialization file {file_path} not found.")
+        except json.JSONDecodeError:
+            print("Error: Failed to parse the initialization file.")
+        except Exception as e:
+            print(f"An unexpected error occurred during initialization: {e}")
+
 
 
