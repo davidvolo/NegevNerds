@@ -2,7 +2,8 @@ from flask import Flask
 from flask_cors import CORS
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
-
+from Backend.BusinessLayer.NegevNerds import NegevNerds
+from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -21,6 +22,9 @@ def main():
     Entry point for the application.
     """
     print("Starting the Exam Preparation System API...")
+    service_layer = ServiceLayer(NegevNerds("../"))
+    #service_layer.initialize_system()
+
     app.run(debug=True, host='0.0.0.0', port=5001)
 
 

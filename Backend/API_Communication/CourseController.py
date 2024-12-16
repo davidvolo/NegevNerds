@@ -283,7 +283,7 @@ def get_all_courses():
 
 @course_controller.route('/api/course/get_course_topics', methods=['GET', 'OPTIONS'])
 @cross_origin()
-def get_all_courses():
+def get_course_topics():
     # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':
         response = jsonify(success=True)
