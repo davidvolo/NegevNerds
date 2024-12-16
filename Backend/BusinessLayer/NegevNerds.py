@@ -66,7 +66,16 @@ class NegevNerds:
 
         except Exception as e:
             return f"Error: {e}"
-        
+
+    def registerWithoutAuth(self, email, password, first_name, last_name):
+        """Register a new user."""
+        try:
+            return self.userFacade.registerWithoutAuth(email, password, first_name, last_name)
+
+        except Exception as e:
+            return f"Error: {e}"
+
+
     def register_authentication_part(self, email, auth_code):
         """Register a new user."""
         try:
@@ -109,9 +118,10 @@ class NegevNerds:
         """Add the user to course and add the course to user."""
         try:
             # Register the user to the course using Coursefacade
-            self.courseFacade.registerToCourse(course_id, user_id)
+            self.courseFacade.register_to_course(course_id, user_id)
             # Register the course to the user using Userfacade
             self.userFacade.registerToCourse(course_id, user_id)
+            print("User successfully registered to the course", user_id, course_id)
             return "User successfully registered to the course."
         except Exception as e:
             return f"Error: {e}"
@@ -242,13 +252,13 @@ class NegevNerds:
             course_name = course.get_name()
 
             # Save the PDF file with a custom name
-            pdf_path = self.fileManager.save_file_question(
-                file_content=pdf_file_content,
-                course_name=course_name,
-                year=year,
-                semester=semester,
-                moed=moed,
-                question_number=question_dto.question_number
+            pdf_path = self.fileManager.save_question_file(
+                course_id,
+                year,
+                semester,
+                moed,
+                pdf_file_content,
+                question_dto.question_number
             )
 
             # Update the link_to_question in the QuestionDTO

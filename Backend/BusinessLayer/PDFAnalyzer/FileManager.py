@@ -33,7 +33,7 @@ class FileManager:
 
     def create_course_folder(self, course_id):
         """Creates a folder for the course if it doesn't exist."""
-        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
 
         # Create the course folder if it doesn't exist
         if not os.path.exists(course_folder):
@@ -43,7 +43,7 @@ class FileManager:
 
     def delete_course_folder(self, course_id):
         """Deletes the folder for a course."""
-        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         if os.path.exists(course_folder):
             shutil.rmtree(course_folder)  # Removes the directory and all its contents
             return True
@@ -76,7 +76,7 @@ class FileManager:
     def save_exam_file(self, course_id, year, semester, moed, exam_content):
         """Saves the exam file in the course's year folder."""
 
-        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
 
         # Create the year folder if it doesn't exist
@@ -93,7 +93,7 @@ class FileManager:
     def save_question_file(self, course_id, year, semester, moed, question_content, question_number):
         """Saves a question file inside the corresponding exam folder."""
 
-        course_folder = os.path.join(self.base_dir, f"course_{course_id}")
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
         exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
 
@@ -108,7 +108,7 @@ class FileManager:
 
         # Save the question file inside the questions folder
         question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
-        with open(question_file_path, 'wb') as file:
+        with open(question_file_path, 'w') as file:
             file.write(question_content)
 
         return question_file_path

@@ -14,7 +14,7 @@ class Course:
 
     # Getters
     def get_id(self):
-        return self.id
+        return self.course_id
 
     def get_name(self):
         return self.name
@@ -43,7 +43,7 @@ class Course:
     def get_questions_by_keywords(self, keywords):
         """get questions by keywords."""
         questions = []
-        for exam in self.get_all_exams:
+        for exam in self.get_all_exams():
             questions = questions + exam.get_questions_by_keywords(keywords)
         return questions
 
@@ -61,8 +61,8 @@ class Course:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
 
-        if raise_exception:
-            raise ExamIsNotExist(year, semester, moed)
+        # if raise_exception:
+        #     raise ExamIsNotExist(year, semester, moed)
         return None
 
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
@@ -172,7 +172,7 @@ class Course:
     def remove_manager(self, manager_id):
         """Removes a manager from the course."""
         if manager_id in self.managers:
-            del self.managers[manager_id]
+            self.managers.remove(manager_id)
         else:
             raise ManagerIsNotExist(manager_id)
 
