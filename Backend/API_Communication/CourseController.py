@@ -244,7 +244,7 @@ def remove_student_from_course():
         }), 500
 
 
-@course_controller.route('/api/course/get_all_courses', methods=[ 'GET', 'OPTIONS'])
+@course_controller.route('/api/course/get_all_courses', methods=['GET', 'OPTIONS'])
 @cross_origin()
 def get_all_courses():
     # Handle OPTIONS preflight request
@@ -252,28 +252,40 @@ def get_all_courses():
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, OPTIONS')
         return response
 
     try:
-        # Extract data from the request
-
+        # Get the result from the service layer
         result = serviceLayer.get_all_courses()
+        # Parse the JSON string into a dictionary
+        result_dict = json.loads(result)
+        # Ensure the response has the expected structure
+        if result_dict.get("status") != "success":
+            return jsonify({
+                "success": False,
+                "message": result_dict.get("message", "Unknown error")
+            }), 500
 
-        # Parse the JSON string
-        parsed_result = json.loads(result)
+        # Process the data
+        parsed_result = result_dict["data"]
+        print(parsed_result)  # Debugging
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        # Final response
+        return jsonify({
+            "success": True,
+            "data": parsed_result
+        })
 
     except json.JSONDecodeError:
-        # Handle JSON decoding error
+        # Handle JSON decoding errors
         return jsonify({
             "success": False,
             "message": "Invalid JSON response from service"
         }), 500
     except Exception as e:
-        print(f"Error in registration: {str(e)}")
+        # Handle unexpected errors
+        print(f"Error: {str(e)}")
         return jsonify({
             "success": False,
             "message": "An unexpected error occurred",
@@ -289,42 +301,44 @@ def get_course_topics():
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
         return response
 
     try:
-        # Extract data from the request
+        # Extract course_id from query parameters
+        course_id = request.args.get('course_id')
 
-        data = request.get_json()
-
-        # Validate input
-        if not all(key in data for key in ['course_id']):
+        if not course_id:
             return jsonify({
-                "success": False,
-                "message": "Missing required fields"
+                "status": "error",
+                "message": "Course ID is required"
             }), 400
 
-        # Extract data
-        course_id = data.get('course_id')
-
+        # Get course topics
         result = serviceLayer.get_course_topics(course_id)
 
         # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        # Check if the result has a success status
+        if parsed_result.get('status') == 'success':
+            return jsonify({
+                "status": "success",
+                "data": parsed_result.get('data', [])
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": parsed_result.get('message', 'Unknown error')
+            }), 400
 
     except json.JSONDecodeError:
-        # Handle JSON decoding error
         return jsonify({
-            "success": False,
-            "message": "Invalid JSON response from service"
+            "status": "error",
+            "message": "Invalid JSON response"
         }), 500
     except Exception as e:
-        print(f"Error in registration: {str(e)}")
         return jsonify({
-            "success": False,
-            "message": "An unexpected error occurred",
-            "error": str(e)
+            "status": "error",
+            "message": str(e)
         }), 500

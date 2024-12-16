@@ -442,10 +442,11 @@ class ServiceLayer:
             # Call the business layer method with the provided arguments
             result = self.negev_nerds.get_course_topics(course_id)
 
+            print("res", result)
             return json.dumps({
                 "status": "success",
-                "data": result
-            })
+                "data": list(result)
+            }, ensure_ascii= False)
         except Exception as e:
             return json.dumps({
                 "status": "error",
@@ -453,22 +454,24 @@ class ServiceLayer:
             })
 
     def get_all_courses(self):
-        """Editing exam's year """
+        """Fetches all courses and returns them in JSON format."""
         try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.get_all_courses()
+            # Call the business layer to get the list of courses
+            courses = self.negev_nerds.get_all_courses()
 
+            # Return the result as a dictionary, serialized to JSON
             return json.dumps({
                 "status": "success",
-                "data": result
+                "data": [course.to_dict() for course in courses]
             })
         except Exception as e:
+            # Return an error response as a JSON string
             return json.dumps({
                 "status": "error",
                 "message": str(e)
             })
 
-    import json
+
 
     def initialize_system(self, file_path="init.json"):
         """
@@ -501,19 +504,19 @@ class ServiceLayer:
                 print(f"Creating course {course['name']}: {response}")
 
             res = self.register_to_course(courses[1]["courseId"], usersId[0])
-            print(f"register {users[0]["first_name"]} to course  {courses[1]['name']}: {res}")
+            print(f"register {users[0]['first_name']} to course  {courses[1]['name']}: {res}")
 
             res = self.register_to_course(courses[0]["courseId"], usersId[1])
-            print(f"register {users[1]["first_name"]} to course  {courses[0]['name']}: {res}")
+            print(f"register {users[1]['first_name']} to course  {courses[0]['name']}: {res}")
 
             res = self.register_to_course(courses[0]["courseId"], usersId[3])
-            print(f"register {users[3]["first_name"]} to course  {courses[0]['name']}: {res}")
+            print(f"register {users[3]['first_name']} to course  {courses[0]['name']}: {res}")
 
             res = self.register_to_course(courses[1]["courseId"], usersId[2])
-            print(f"register {users[2]["first_name"]} to course  {courses[1]['name']}: {res}")
+            print(f"register {users[2]['first_name']} to course  {courses[1]['name']}: {res}")
 
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
-            print(f"register {users[3]["first_name"]} to course  {courses[1]['name']}: {res}")
+            print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
             res = self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
                                        QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,

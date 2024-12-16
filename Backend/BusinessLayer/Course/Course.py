@@ -7,7 +7,7 @@ class Course:
     def __init__(self, course_id, name, course_topics):
         self.course_id = course_id
         self.name = name
-        self.course_topics = course_topics if course_topics is not None else []  # Default to an empty list
+        self.course_topics = course_topics if course_topics is not None else set()  # Default to an empty list
         self.exams = {}  # Dictionary to store exams by years
         self.managers = set() # Dictionary to store managers with manager_id as key
         self.students = []  # List of students for the course
