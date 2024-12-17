@@ -133,7 +133,7 @@ class Course_syllabus:
 
         try:
             # Extract tables using Tabula
-            tables = read_pdf(pdf_path, pages=pages, multiple_tables=True, pandas_options={"header": None})
+            tables = read_pdf(pdf_path, pages=pages, multiple_tables=True, pandas_options={"header": None}, encoding="ISO-8859-8")
 
             if not tables:
                 return matching_data
