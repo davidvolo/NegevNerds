@@ -280,9 +280,11 @@ class CourseFacade:
     def get_courses_DTO(self, courses_ids):
         dtos = []
         for course_id in courses_ids:
-            if self.get_course(course_id) is not None:
-                dtos.append(CourseDTO(self.get_course(course_id)))
-
+            course = self.get_course(course_id)
+            if course is not None:
+                course_dto = CourseDTO(course_id, course.get_name())
+                dtos.append(course_dto)
+        return dtos
 
     def get_course_topics(self, course_id):
         if self.get_course(course_id) is None:

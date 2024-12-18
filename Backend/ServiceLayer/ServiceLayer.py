@@ -99,7 +99,7 @@ class ServiceLayer:
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
-                    "message": result ,
+                    "message": result,
                     "user_id": userid
             
                 })
@@ -118,16 +118,20 @@ class ServiceLayer:
     def login(self, email, password):
         """Handle user login and return JSON."""
         try:
-            result = self.negev_nerds.login(email, password)
+            userid, result = self.negev_nerds.login(email, password)
 
-            if "Error" in result:
+            if result.get('status') == 'error':
                 return json.dumps({
                     "status": "error",
-                    "message": result
+                    "message": result['message'],
+                    "user_id": None
+
                 })
             return json.dumps({
                 "status": "success",
-                "message": result
+                "message": result,
+                "user_id": userid
+
             })
         except Exception as e:
             return json.dumps({
@@ -416,19 +420,19 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-
-
-
-
     def get_user_courses(self, user_id):
         """Editing exam's year """
         try:
             # Call the business layer method with the provided arguments
             result = self.negev_nerds.get_user_courses(user_id)
 
+            result_dict = [dto.to_dict() for dto in result]
+
+            print(f"Courses result from NegevNerds: {result_dict}")  # לוג להראות מה חזר
+
             return json.dumps({
                 "status": "success",
-                "data": result
+                "data": result_dict
             })
         except Exception as e:
             return json.dumps({
@@ -470,8 +474,6 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-
-
 
     def initialize_system(self, file_path="init.json"):
         """

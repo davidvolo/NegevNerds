@@ -244,7 +244,17 @@ def login_user():
         parsed_result = json.loads(result)
 
         # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        if parsed_result['status'] == 'success':
+            return jsonify({
+                "success": True,
+                "message": parsed_result['message'],
+                "user_id": parsed_result['user_id']  # Explicitly fetch user_id
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result['message']
+            }), 400
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -278,13 +288,11 @@ def logout_user():
 
         # Validate input
 
-
         if 'email' not in data:
             return jsonify({
                 "success": False,
                 "message": "Email is required for logout"
             }), 400
-
 
         # Extract data
         email = data.get('email')
@@ -320,30 +328,41 @@ def get_user_courses():
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
         return response
 
     try:
-        # Extract data from the request
-        data = request.get_json()
+        # Extract user_id from query parameters
+        user_id = request.args.get('user_id')  # Use request.args for query params
 
         # Validate input
-        if not all(key in data for key in ['user_id']):
+        if not user_id:
             return jsonify({
                 "success": False,
-                "message": "Missing required fields"
-            }), 400
+                "message": "User ID is required"
+            }), 400  # Return 400 if user_id is missing
 
-        # Extract data
-        user_id = data.get('user_id')
+        # Fetch the user courses from the service layer
+        result = serviceLayer.get_user_courses(user_id)
 
-        # Call the service layer's login method directly
-        result = serviceLayer.get_user_courser(user_id)
+        result = json.loads(result)  # Convert the JSON string to a Python dict
 
-        # Parse the JSON string
-        parsed_result = json.loads(result)
+        if 'data' in result:
+            parsed_result = result["data"]  # Now we're getting only the courses list
 
-        return parse_jsonify(parsed_result)
+        # Return the courses as JSON response
+        return jsonify({
+            "success": True,
+            "courses": parsed_result
+        }), 200
+
+    except Exception as e:
+        print(f"Error in getting user courses: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -358,6 +377,3 @@ def get_user_courses():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
-
-
-
