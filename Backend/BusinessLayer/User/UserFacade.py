@@ -94,7 +94,7 @@ class UserFacade:
         curr_user = self.users_byId[user_id]
         if curr_user is None:
             return []
-        return curr_user.getCourses()
+        return curr_user.courses
 
 
     def is_valid_email(self,email):
@@ -180,25 +180,24 @@ class UserFacade:
         except Exception as e:
             logging.error(f"Failed to send authentication code: {e}")
             raise Exception("Failed to send authentication code.")
-    
-    
+
     def login(self, email, password):
         """Authenticate the user by checking the email and password."""
-        
+
         # Check if the email exists in the system
         user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
         if user is None:
             raise UserOrPasswordIncorrectError()
-        
+
         # Check if the password matches
         if user.password != password:
             raise UserOrPasswordIncorrectError()
-        
-        user.login()
+
+        user_id = user.id
         logging.info(f"Login successful for user: {email}")
         message = "התחברות בוצעה בהצלחה"
-        return message
- 
+        return user_id, {"message": message}  # Return user_id and message
+
     def logout(self, email):
         # Check if the user exists
         user = self.users_byEmail.get(email)

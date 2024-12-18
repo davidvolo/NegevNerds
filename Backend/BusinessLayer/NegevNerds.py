@@ -93,10 +93,10 @@ class NegevNerds:
     def login(self, email, password):
         """Log the user in."""
         try:
-            result = self.userFacade.login(email, password)
-            return result  # Return the result from the facade
+            # Get the login result from the user facade
+            return self.userFacade.login(email, password)
         except Exception as e:
-            return f"Error: {e}"
+            return None, {"status": "error", "message": str(e)}  # Return None and error message in case of exception
 
     def logout(self, email):
         """Log the user out."""
@@ -275,8 +275,8 @@ class NegevNerds:
 
     def get_user_courses(self, user_id):
         courses_ids = self.userFacade.get_user_courses(user_id)
-        return self._course_facade.get_courses_DTO(courses_ids)
-
+        ans = self._course_facade.get_courses_DTO(courses_ids)
+        return ans
 
     def get_course_topics(self, course_id):
         return self._course_facade.get_course_topics(course_id)
