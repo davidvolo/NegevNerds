@@ -39,7 +39,7 @@ class CourseFacade:
         self.courses[course_id] = course
 
     
-    def open_course_possibility(self, course_id):
+    def open_course_possibility(self, course_id, course_name):
         """Opens a new course"""
 
         if course_id in self.courses:
@@ -47,8 +47,29 @@ class CourseFacade:
         
         if not self.is_valid_courseID(course_id):
             raise InvalidCourseIdFormat(course_id)
+        
+        if not self.is_valid_course_name(course_name):
+            raise Exception("שם  קורס אינו תקין.")
 
         return True
+    
+
+    def is_valid_course_name(self, name):
+        """
+        Validates a name to ensure it contains only Hebrew characters, digits, spaces, hyphens, and double quotes.
+
+        Args:
+        name (str): The name to validate.
+
+        Returns:
+        bool: True if the name is valid, False otherwise.
+        """
+        # Regular expression to allow Hebrew letters, digits, spaces, hyphens, and double quotes
+        hebrew_name_regex = r'^[\u0590-\u05FF0-9\s"\-]+$'
+
+        # Validate the name using regex
+        return bool(re.match(hebrew_name_regex, name))
+
 
     def remove_course(self, course_id):
         """Remove an existing course along with its folder."""
