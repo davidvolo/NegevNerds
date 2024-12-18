@@ -1,4 +1,4 @@
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, PdfWriter
 import re
 import os
 import pdfplumber
@@ -24,13 +24,14 @@ class Course_syllabus:
         topics_table = ["נושאי השיעור", "נושא השיעור","Topics", "Outline"]  # List of column headers to search for
 
         topics = set()
-        has_table = self.has_valid_table_with_pdfplumber(pdf_path)
+        cropped_pdf_path = self.crop_pdf_top_margin(pdf_path)
+        has_table = self.has_valid_table_with_pdfplumber(cropped_pdf_path)
         if not has_table:
-            topics = self.extract_syllabus_topics_with_pdfplumber(pdf_path,topic_patterns)
+            topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path,topic_patterns)
             if len(topics)==0:
-                topics = self.extract_syllabus_topics_with_pdfplumber(pdf_path,topic_patterns1)
+                topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path,topic_patterns1)
         else:
-            topics = self.extract_table_with_topics_final(pdf_path,topics_table )
+            topics = self.extract_table_with_topics_final(cropped_pdf_path,topics_table )
         cleaned_topics = set()
         for topic in topics:
             # Remove leading numbers (e.g., "1.", "2. ", etc.)
@@ -39,6 +40,10 @@ class Course_syllabus:
             topic = topic.lstrip("•* ").strip()
             if topic:  # Only keep non-empty topics
                 cleaned_topics.add(topic)
+
+        # Delete the cropped PDF file
+        if os.path.exists(cropped_pdf_path):
+            os.remove(cropped_pdf_path)
         
 
         return cleaned_topics
@@ -133,7 +138,8 @@ class Course_syllabus:
 
         try:
             # Extract tables using Tabula
-            tables = read_pdf(pdf_path, pages=pages, multiple_tables=True, pandas_options={"header": None}, encoding="ISO-8859-8")
+            # tables = read_pdf(pdf_path, pages=pages, multiple_tables=True, pandas_options={"header": None}, encoding="ISO-8859-8")
+            tables = read_pdf(pdf_path, pages=pages, multiple_tables=True, pandas_options={"header": None})
 
             if not tables:
                 return matching_data
@@ -159,3 +165,47 @@ class Course_syllabus:
             print(f"Error during table extraction: {e}")
 
         return matching_data
+    
+
+
+    def crop_pdf_top_margin(self, pdf_path, margin_cm=4.0):
+        """
+        Crops a specified top margin (in centimeters) from all pages of a PDF,
+        saves the result in the same directory with '_cropped' appended to the file name,
+        and returns the path to the new PDF.
+        
+        :param pdf_path: Path to the original PDF file.
+        :param margin_cm: Top margin to crop, specified in centimeters.
+        :return: Path to the cropped PDF.
+        """
+        # Convert centimeters to points (1 cm = 28.35 points)
+        cm_to_points = margin_cm * 28.35
+
+        # Prepare output file path (same directory, _cropped appended)
+        dir_name = os.path.dirname(pdf_path)
+        base_name = os.path.basename(pdf_path).replace('.pdf', '_cropped.pdf')
+        output_path = os.path.join(dir_name, base_name)
+
+        # Initialize PDF writer
+        pdf_writer = PdfWriter()
+
+        with pdfplumber.open(pdf_path) as pdf:
+            for i, page in enumerate(pdf.pages):
+                width, height = page.width, page.height
+                # Crop the top margin
+                cropped_page_bbox = (0, cm_to_points, width, height)
+
+                # Use PyPDF2 to adjust page size
+                reader = PdfReader(pdf_path)
+                page_to_write = reader.pages[i]
+                page_to_write.mediabox.upper_left = (0, height - cm_to_points)
+
+                # Add the adjusted page to the writer
+                pdf_writer.add_page(page_to_write)
+
+        # Save the cropped PDF to the same directory
+        with open(output_path, "wb") as out_file:
+            pdf_writer.write(out_file)
+
+        print(f"Cropped PDF saved to: {output_path}")
+        return output_path
