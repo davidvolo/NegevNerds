@@ -181,22 +181,66 @@ class UserFacade:
             logging.error(f"Failed to send authentication code: {e}")
             raise Exception("Failed to send authentication code.")
 
+    # def login(self, email, password):
+    #     """Authenticate the user by checking the email and password."""
+
+    #     # Check if the email exists in the system
+    #     user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
+    #     if user is None:
+    #         raise UserOrPasswordIncorrectError()
+
+    #     # Check if the password matches
+    #     if user.password != password:
+    #         raise UserOrPasswordIncorrectError()
+
+    #     user_id = user.id
+    #     user_firstName = user.first_name
+    #     user_lastName = user.last_name
+    #     user.login()
+    #     logging.info(f"Login successful for user: {email}")
+    #     # message = "התחברות בוצעה בהצלחה"
+    #     # message = {"message": "התחברות בוצעה בהצלחה"}  # Return message as a dictionary
+    #     message = "התחברות בוצעה בהצלחה"  # Return message as a string
+    #      # Add debug prints before the return
+    #     print(f"user_id: {user_id}")
+    #     print(f"message: {message}")
+    #     print(f"user_firstName: {user_firstName}")
+    #     print(f"user_lastName: {user_lastName}")
+        
+
+    #     return user_firstName, user_lastName, user_id,  message  # Return user_id and message
+    
     def login(self, email, password):
         """Authenticate the user by checking the email and password."""
+        try:
+            # Check if the email exists in the system
+            user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
+            if user is None:
+                raise UserOrPasswordIncorrectError()
 
-        # Check if the email exists in the system
-        user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
-        if user is None:
-            raise UserOrPasswordIncorrectError()
+            # Check if the password matches
+            if user.password != password:
+                raise UserOrPasswordIncorrectError()
 
-        # Check if the password matches
-        if user.password != password:
-            raise UserOrPasswordIncorrectError()
+            user_id = user.id
+            user_firstName = user.first_name
+            user_lastName = user.last_name
+            user.login()
+            logging.info(f"Login successful for user: {email}")
 
-        user_id = user.id
-        logging.info(f"Login successful for user: {email}")
-        message = "התחברות בוצעה בהצלחה"
-        return user_id, {"message": message}  # Return user_id and message
+            # Debug prints before return
+            print(f"user_id: {user_id}")
+            print(f"message: {'התחברות בוצעה בהצלחה'}")
+            print(f"user_firstName: {user_firstName}")
+            print(f"user_lastName: {user_lastName}")
+
+            return user_firstName, user_lastName, user_id, "התחברות בוצעה בהצלחה"
+
+        except UserOrPasswordIncorrectError:
+            # Log the error
+            print(f"Login failed: Incorrect email or password for {email}")
+            return None, None, None, "אימייל או סיסמה שגויים. אנא נסה שוב."
+
 
     def logout(self, email):
         # Check if the user exists
