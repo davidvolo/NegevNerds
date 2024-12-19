@@ -274,8 +274,9 @@ class CourseFacade:
 
     def get_course_DTO(self, course_id):
         if self.get_course(course_id) is not None:
-            return CourseDTO(self.courses[course_id])
-        return None
+            course = self.courses[course_id]
+            return CourseDTO(course_id, course.get_name())
+        raise CourseIsNotExist(course_id)
 
     def get_courses_DTO(self, courses_ids):
         dtos = []
