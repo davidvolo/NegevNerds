@@ -211,10 +211,135 @@ def register_termOfUse_part():
             "error": str(e)
         }), 500
 
+# @user_controller.route('/api/login', methods=['POST', 'OPTIONS'])
+# @cross_origin()
+# def login_user():
+#     # Handle OPTIONS preflight request
+#     if request.method == 'OPTIONS':
+#         response = jsonify(success=True)
+#         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST')
+#         return response
+
+#     try:
+#         # Extract data from the request
+#         data = request.get_json()
+
+#         # Validate input
+#         if not all(key in data for key in ['email', 'password']):
+#             return jsonify({
+#                 "success": False,
+#                 "message": "Missing required fields"
+#             }), 400
+
+#         # Extract data
+#         email = data.get('email')
+#         password = data.get('password')
+
+#         # Call the service layer's login method directly
+#         result = serviceLayer.login(email, password)
+
+#         # Parse the JSON string
+#         parsed_result = json.loads(result)
+
+#         # Check the status and return appropriate response
+#         if parsed_result['status'] == 'success':
+#             return jsonify({
+#                 "success": True,
+#                 "message": parsed_result['message'],
+#                 "user_id": parsed_result['user_id'] , # Explicitly fetch user_id
+#                 "first_name": parsed_result['first_name'],
+#                 "last_name": parsed_result['last_name'],
+#             }), 200
+#         else:
+#             return jsonify({
+#                 "success": False,
+#                 "message": parsed_result['message']
+#             }), 400
+
+#     except json.JSONDecodeError:
+#         # Handle JSON decoding error
+#         return jsonify({
+#             "success": False,
+#             "message": "Invalid JSON response from service"
+#         }), 500
+#     except Exception as e:
+#         print(f"Error in login: {str(e)}")
+#         return jsonify({
+#             "success": False,
+#             "message": "An unexpected error occurred",
+#             "error": str(e)
+#         }), 500
+# @user_controller.route('/api/login', methods=['POST', 'OPTIONS'])
+# @cross_origin()
+# def login_user():
+#     # Handle OPTIONS preflight request
+#     if request.method == 'OPTIONS':
+#         response = jsonify(success=True)
+#         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST')
+#         return response
+
+#     try:
+#         # Extract data from the request
+#         data = request.get_json()
+
+#         # Validate input
+#         if not data or not all(key in data for key in ['email', 'password']):
+#             print("Login failed: Missing required fields")
+#             return jsonify({
+#                 "success": False,
+#                 "message": "Missing required fields"
+#             }), 400
+
+#         # Extract email and password
+#         email = data.get('email')
+#         password = data.get('password')
+
+#         # Log the login attempt
+#         print(f"Login attempt: email={email}")
+
+#         # Call the service layer's login method
+#         result = serviceLayer.login(email, password)
+
+#         # Parse the JSON string
+#         parsed_result = json.loads(result)
+
+#         # Check the status and return appropriate response
+#         if parsed_result.get('status') == 'success':
+#             print(f"Login successful for user: {email}")
+#             return jsonify({
+#                 "success": True,
+#                 "message": parsed_result.get('message'),
+#                 "user_id": parsed_result.get('user_id'),
+#                 "first_name": parsed_result.get('first_name'),
+#                 "last_name": parsed_result.get('last_name'),
+#             }), 200
+#         else:
+#             print(f"Login failed for user: {email} - Reason: {parsed_result.get('message')}")
+#             return jsonify({
+#                 "success": False,
+#                 "message": parsed_result.get('message', 'Login failed')
+#             }), 400
+
+#     except json.JSONDecodeError as e:
+#         print(f"JSON Decode Error in login: {str(e)}")
+#         return jsonify({
+#             "success": False,
+#             "message": "Invalid JSON response from service"
+#         }), 500
+#     except Exception as e:
+#         print(f"Unexpected error in login: {str(e)}")
+#         return jsonify({
+#             "success": False,
+#             "message": "An unexpected error occurred",
+#             "error": str(e)
+#         }), 500
 @user_controller.route('/api/login', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def login_user():
-    # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
@@ -223,7 +348,6 @@ def login_user():
         return response
 
     try:
-        # Extract data from the request
         data = request.get_json()
 
         # Validate input
@@ -233,35 +357,30 @@ def login_user():
                 "message": "Missing required fields"
             }), 400
 
-        # Extract data
         email = data.get('email')
         password = data.get('password')
 
-        # Call the service layer's login method directly
+        # Call service layer
         result = serviceLayer.login(email, password)
 
-        # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        if parsed_result['status'] == 'success':
-            return jsonify({
-                "success": True,
-                "message": parsed_result['message'],
-                "user_id": parsed_result['user_id']  # Explicitly fetch user_id
-            }), 200
-        else:
+        # Validate parsed_result structure
+        if not parsed_result or parsed_result.get('status') != 'success':
             return jsonify({
                 "success": False,
-                "message": parsed_result['message']
+                "message": parsed_result.get('message', 'Login failed')
             }), 400
 
-    except json.JSONDecodeError:
-        # Handle JSON decoding error
+        # Successful login response
         return jsonify({
-            "success": False,
-            "message": "Invalid JSON response from service"
-        }), 500
+            "success": True,
+            "message": parsed_result.get('message'),
+            "user_id": parsed_result.get('user_id'),
+            "first_name": parsed_result.get('first_name'),
+            "last_name": parsed_result.get('last_name'),
+        }), 200
+
     except Exception as e:
         print(f"Error in login: {str(e)}")
         return jsonify({

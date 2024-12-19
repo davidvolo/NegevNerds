@@ -114,30 +114,78 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+        
+    # def login(self, email, password):
+    #     """Handle user login and return JSON."""
+    #     try:
+    #         user_firstName, user_lastName, user_id, message = self.negev_nerds.login(email, password)
 
+    #         return json.dumps({
+    #             "status": "success",
+    #             "message": message,  # Pass the string message
+    #             "user_id": user_id,
+    #             "first_name": user_firstName,
+    #             "last_name": user_lastName
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
     def login(self, email, password):
-        """Handle user login and return JSON."""
         try:
-            userid, result = self.negev_nerds.login(email, password)
+            user_firstName, user_lastName, user_id, result = self.negev_nerds.login(email, password)
 
-            if result.get('status') == 'error':
+            if result.get("status") == "error" or user_firstName is None or user_id is None:
                 return json.dumps({
                     "status": "error",
-                    "message": result['message'],
+                    "message": result["message"],
                     "user_id": None
-
                 })
+
             return json.dumps({
                 "status": "success",
-                "message": result,
-                "user_id": userid
-
+                "message": result["message"],
+                "user_id": user_id,
+                "first_name": user_firstName,
+                "last_name": user_lastName
             })
+
         except Exception as e:
             return json.dumps({
                 "status": "error",
-                "message": str(e)
+                "message": str(e),
+                "user_id": None
             })
+
+
+
+    # def login(self, email, password):
+    #     """Handle user login and return JSON."""
+    #     try:
+    #         user_firstName, user_lastName, userid, result = self.negev_nerds.login(email, password)
+
+    #         if result.get('status') == 'error':
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": result['message'],
+    #                 "user_id": None
+
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "message": result,
+    #             "user_id": userid,
+    #             "first_name": user_firstName,
+    #             "last_name":user_lastName
+                
+
+    #         })
+        # except Exception as e:
+        #     return json.dumps({
+        #         "status": "error",
+        #         "message": str(e)
+        #     })
 
     def logout(self, email):
         """Handle user logout and return JSON."""

@@ -90,13 +90,38 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
 
+    # def login(self, email, password):
+    #     """Log the user in."""
+    #     try:
+    #         user_firstName, user_lastName, user_id, message = self.userFacade.login(email, password)
+    #         return user_firstName, user_lastName, user_id, message  # Return the result from the facade
+    #     except Exception as e:
+    #         return f"Error: {e}"
+
+    # def login(self, email, password):
+    #     """Log the user in."""
+    #     try:
+    #         user_firstName, user_lastName, user_id, message = self.userFacade.login(email, password)
+    #         return user_firstName, user_lastName, user_id, {"status": "success", "message": message}
+    #     except Exception as e:
+    #         # logging.error(f"Unexpected error during login: {str(e)}")
+    #         return None, None, None, {"status": "error", "message": str(e)}
+    
     def login(self, email, password):
-        """Log the user in."""
         try:
-            # Get the login result from the user facade
-            return self.userFacade.login(email, password)
+            user_firstName, user_lastName, user_id, message = self.userFacade.login(email, password)
+            if user_firstName is None or user_lastName is None or user_id is None:
+                return None, None, None, {"status": "error", "message": "Incorrect email or password."}
+
+            return user_firstName, user_lastName, user_id, {"status": "success", "message": message}
+        except UserOrPasswordIncorrectError:
+            # return None, None, None, {"status": "error", "message": "Incorrect email or password."}
+            return None, None, None, {"status": "error", "message": message}
+
         except Exception as e:
-            return None, {"status": "error", "message": str(e)}  # Return None and error message in case of exception
+            return None, None, None, {"status": "error", "message": str(e)}
+
+
 
     def logout(self, email):
         """Log the user out."""
@@ -275,8 +300,8 @@ class NegevNerds:
 
     def get_user_courses(self, user_id):
         courses_ids = self.userFacade.get_user_courses(user_id)
-        ans = self._course_facade.get_courses_DTO(courses_ids)
-        return ans
+        return self._course_facade.get_courses_DTO(courses_ids)
+
 
     def get_course_topics(self, course_id):
         return self._course_facade.get_course_topics(course_id)
