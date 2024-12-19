@@ -302,14 +302,14 @@ class NegevNerds:
         courses_ids = self.userFacade.get_user_courses(user_id)
         return self._course_facade.get_courses_DTO(courses_ids)
 
-
     def get_course_topics(self, course_id):
         return self._course_facade.get_course_topics(course_id)
 
     def get_all_courses(self):
         return self._course_facade.get_all_courses()
 
-
+    def get_course(self, course_id):
+        return self._course_facade.get_course_DTO(course_id)
 
     # def add_question(self, course_id, year, semester, moed, questionDTO):
     #     """Adds a question to an exam in the specified course.

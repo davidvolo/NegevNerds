@@ -342,3 +342,59 @@ def get_course_topics():
             "status": "error",
             "message": str(e)
         }), 500
+
+
+@course_controller.route('/api/course/get_course/<course_id>', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_course(course_id):
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+
+    try:
+        # Extract course_id from query parameters
+        # course_id = request.args.get('course_id')
+
+        print(f"Received course_id from URL: {course_id}")
+
+        if not course_id:
+            return jsonify({
+                "status": "error",
+                "message": "Course ID is required"
+            }), 400
+
+        # Get course details from the service layer
+        result = serviceLayer.get_course(course_id)
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        print(f"Received course details: {parsed_result}")
+
+        # Check if the result has a success status
+        if parsed_result.get('status') == 'success':
+            return jsonify({
+                "status": "success",
+                "data": parsed_result.get('data', {})
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": parsed_result.get('message', 'Unknown error')
+            }), 400
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+

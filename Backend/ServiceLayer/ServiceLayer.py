@@ -523,6 +523,24 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def get_course(self, course_id):
+        """Fetches all courses and returns them in JSON format."""
+        try:
+            # Call the business layer to get the course
+            course = self.negev_nerds.get_course(course_id)
+
+            # Return the result as a dictionary, serialized to JSON
+            return json.dumps({
+                "status": "success",
+                "data": course.to_dict()
+            })
+        except Exception as e:
+            # Return an error response as a JSON string
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def initialize_system(self, file_path="init.json"):
         """
         Initialize the system with predefined data from a JSON file.
