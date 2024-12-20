@@ -13,6 +13,15 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
+
+@app.route('/api/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    response = app.make_response('')
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
+
 # Register controllers
 app.register_blueprint(user_controller)
 app.register_blueprint(course_controller)

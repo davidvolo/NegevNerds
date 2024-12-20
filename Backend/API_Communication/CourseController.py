@@ -7,6 +7,7 @@ from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
+from Backend.DataLayer.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 course_controller = Blueprint('course_controller', __name__)
@@ -397,4 +398,84 @@ def get_course(course_id):
             "status": "error",
             "message": str(e)
         }), 500
+
+
+@course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
+@cross_origin()
+def search_question_by_specifics():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+
+        # הדפסת המידע שהתקבל מהלקוח
+        print("Received data:", data)
+
+        # Validate input
+        if not all(key in data for key in ['course_id']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract the data
+        course_id = data.get('course_id')
+        year = data.get('year')
+        semester = data.get('semester') if data.get('semester') else None
+        moed = data.get('moed') if data.get('moed') else None
+        question_number = data.get('question_number') if data.get('question_number') else None
+
+        # טיפול עם None על מנת למנוע שגיאות
+
+        # הדפסת הנתונים שמתקבלים
+        print(
+            f"Extracted values: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}")
+
+        # Call the service layer's search_question_by_specifics method
+        if question_number is not None:
+            question_number = int(question_number)  # המרת מספר אם קיים
+        else:
+            question_number = None  # או להשתמש בערך ברירת מחדל אם אין
+
+        if year is not None:
+            year = int(year)  # המרת מספר אם קיים
+        else:
+            year = None  # או להשתמש בערך ברירת מחדל אם אין
+        result = serviceLayer.search_question_by_specifics(course_id, year, semester, moed, question_number)
+        print(f"Service Layer Result: {result}")
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [question.to_dict() if isinstance(question, QuestionDTO) else question for question in result]
+        else:
+            result = result.to_dict() if isinstance(result, QuestionDTO) else result
+
+        # Return the response
+        print(f"Formatted result: {result}")
+
+        # Return the response
+        return jsonify({
+            "success": True,
+            "data": result
+        }), 200
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        print(f"Error: {str(e)}")  # הדפסת שגיאה אם התרחשה
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 
