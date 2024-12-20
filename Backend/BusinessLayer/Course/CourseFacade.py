@@ -2,6 +2,10 @@ from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.CourseDTO import CourseDTO
 import re
+from Backend.BusinessLayer.Course.enums import *
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 
 class CourseFacade:
@@ -214,15 +218,67 @@ class CourseFacade:
 
     """--------------question functionality--------------"""
 
-    def add_question(self, course_id, year, semester, moed, questionDTO):
+    def valid_question_parameters(self, year, semester, moed, question_number):
+        """Validates question parameters to ensure they are correct and relevant."""
+        moeds = ['א','ב','ג','ד']
+        semesters =['סתיו','אביב','קיץ']
+        if moed not in moeds:
+            logging.error(f"{Moed} is not a valid Moed.")
+            raise ValueError(f"Invalid Moed: {moed}")
+        if semester not in semesters:
+            logging.error(f"{semester} is not a valid Semester.")
+            raise ValueError(f"Invalid Semester: {semester}")
+        # Validate year
+        if year < 1960:
+            logging.error(f"{year} is not a valid year. Must be 1960 or later.")
+            raise ValueError(f"Invalid year: {year}")
+
+        # Validate question number
+        if question_number < 0:
+            logging.error(f"{question_number} is not a question number. Must be non-negative.")
+            raise ValueError(f"Invalid question number: {question_number}")
+
+        return True
+
+
+    
+    # def check_valid_question(self,course_id,year,semester, moed, question_number,pdf_question):
+    #     if self.valid_question_parameters(year, semester,moed ,question_number):
+    #         course = self.get_course(course_id)
+    #         return course.check_valid_question(course_id,year,semester, moed, question_number,pdf_question)
+    def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
+        # Step 1: Validate parameters
+        self.valid_question_parameters(year, semester, moed, question_number)
+        semester = Semester(semester)
+        moed = Moed(moed)
+
+        # Step 2: Get the course
+        course = self.get_course(course_id)
+        if not course:
+            raise ValueError(f"Course with ID {course_id} does not exist.")
+
+        # Step 3: Delegate further validation to the course
+        return course.check_valid_question(course_id, year, semester, moed, question_number, pdf_question)
+
+
+
+    
+    def add_question(self, course_id, year, semester, moed, question_number,is_american, 
+                     question_topics,pdf_question_path, pdf_answer_path ):
         """
         Delegates question addition to the specified Exam.
         """
-        course = self.get_course(course_id)
-        currExam = course.get_exam(year, semester,moed)
-        if currExam is None:
-            self.add_exam_to_course(course_id,course.get_name(), None , year, semester, moed)
-        course.get_exam(year, semester, moed).add_question(questionDTO)
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            logging.info(f"Question: {year} {semester} {moed} {question_number} was added successfully.")
+            return course.add_question(year, semester, moed, question_number, is_american, question_topics, pdf_question_path, pdf_answer_path)
+        except Exception as e:
+            logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
+            raise Exception(f"CourseFacade Error: {str(e)}")
+        
+
 
     def remove_question(self, course_id, year, semester, moed, question_number):
         """

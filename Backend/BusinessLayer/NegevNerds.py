@@ -3,6 +3,8 @@ from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
+from Backend.BusinessLayer.Course.enums import Semester, Moed
+
 
 
 
@@ -259,38 +261,44 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
-    def add_question_with_pdf(self, course_id, year, semester, moed, pdf_file_content, question_dto):
+    def add_question(self, course_id, year, semester, moed,question_number,is_american,question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.
 
-        :param course_id: ID of the course.
-        :param year: Year of the exam.
-        :param semester: Semester of the exam.
-        :param moed: Moed of the exam.
-        :param pdf_file_content: Content of the PDF file.
-        :param question_dto: QuestionDTO containing question details.
+        ining question details.
         :return: Path to the saved PDF file.
         """
         try:
             # Get course name for filename generation
-            course = self.courseFacade.get_course(course_id)
-            course_name = course.get_name()
+            
+            if self.courseFacade.check_valid_question(course_id,year,semester, moed, question_number,pdf_question):
 
-            # Save the PDF file with a custom name
-            pdf_path = self.fileManager.save_question_file(
-                course_id,
-                year,
-                semester,
-                moed,
-                pdf_file_content,
-                question_dto.question_number
-            )
+                # Save the PDF file with a custom name
+                pdf__question_path = self.fileManager.save_question_file(
+                    course_id,
+                    year,
+                    semester,
+                    moed,
+                    question_number,
+                    pdf_question
+                )
+                pdf__answer_path = None
+                if pdf_answer is not None:
+                    pdf__answer_path = self.fileManager.save_answer_file(
+                    course_id,
+                    year,
+                    semester,
+                    moed,
+                    question_number,
+                    pdf_answer
+                )
 
-            # Update the link_to_question in the QuestionDTO
-            question_dto.link_to_question = pdf_path
-
-            # Add the question to the course
-            self.courseFacade.add_question(course_id, year, semester, moed, question_dto)
+                # Add the question to the course
+                question_dto =self.courseFacade.add_question(course_id, year, semester, moed, question_number,
+                                            is_american, question_topics,pdf__question_path, pdf__answer_path )
+                
+                self._pdfFacade.perform_information_retrival_question(pdf__question_path,question_dto)
+            
 
             return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:

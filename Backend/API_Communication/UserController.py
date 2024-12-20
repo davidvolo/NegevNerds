@@ -337,6 +337,7 @@ def register_termOfUse_part():
 #             "message": "An unexpected error occurred",
 #             "error": str(e)
 #         }), 500
+
 @user_controller.route('/api/login', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def login_user():

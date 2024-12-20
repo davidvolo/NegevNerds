@@ -8,6 +8,7 @@ from Backend.BusinessLayer.Course import enums
 from Backend.DataLayer.QuestionDTO import QuestionDTO
 
 
+
 class ServiceLayer:
     _instance = None
     _lock = threading.Lock()
@@ -451,13 +452,18 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def add_question_with_pdf(self, course_id, year, semester, moed, pdf_file_content, questionDTO):
+    def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
+                     question_topics
+                     ,pdf_question, 
+                     pdf_answer = None):
         """
         Handles adding a question to an exam.
         :return: JSON response indicating success or failure.
         """
         try:
-            result = self.negev_nerds.add_question_with_pdf(course_id, year, semester, moed, pdf_file_content, questionDTO)
+            
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, questionNumber
+                                                   ,is_american,question_topics, pdf_question,pdf_answer )
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -586,9 +592,9 @@ class ServiceLayer:
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
-                                       QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,
-                                                   3, ["binaryTree, Math"], False, "ex2.pdf"))
+            # res = self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
+            #                            QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,
+            #                                        3, ["binaryTree, Math"], False, "ex2.pdf"))
             print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:

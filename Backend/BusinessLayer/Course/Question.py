@@ -6,19 +6,21 @@ from Backend.BusinessLayer.Util.Exceptions import *
 
 
 class Question:
-    def __init__(self, year, question_id, semester, moed, question_number, question_topics, is_american, link_to_question, link_to_exam, comments=None):
+    def __init__(self, year, semester, moed, question_number, is_american,question_topics, 
+                  link_to_question, link_to_answer,link_to_exam, question_id=None, comments=None):
         """
         Initialize a Question instance.
         """
         self.year = year
-        self.id = question_id
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
         self.question_number = question_number
         self.is_american = is_american
         self.question_topics = question_topics if question_topics is not None else []  # Default to an empty list
         self.link_to_question = link_to_question
+        self.link_to_answer = link_to_answer
         self.link_to_exam = link_to_exam
+        self.id = question_id
         self.comments = comments if comments is not None else []  # Default to an empty list
 
     def to_dto(self):

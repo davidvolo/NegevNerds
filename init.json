@@ -20,9 +20,9 @@
     },
     {
       "email": "Shachar@bgu.ac.il",
-      "password": "Shachar444$$",
-      "first_name": "שחר",
-      "last_name": "כהן"
+      "password": "Shachar444$$", 
+      "first_name": "שחר", 
+      "last_name": "כהן" 
     }
   ],
   "courses": [
