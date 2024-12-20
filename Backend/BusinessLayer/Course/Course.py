@@ -33,12 +33,30 @@ class Course:
                 all_exams.append(exam)
         return all_exams
 
-    def get_question(self, year, semester, moed, question_id):
-        """get a specific question."""
-        exam = self.get_exam(year, semester, moed)
-        if exam is None:
-            raise ExamIsNotExist
-        return exam.get_question(question_id)
+    def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
+        """Get specific questions."""
+        print ("in course")
+        question_dtos = []
+        if year is None:
+            all_exams = self.get_all_exams()
+            for exam in all_exams:
+                # Only include the questions that match the specific number
+                question_dtos.extend(exam.get_questions_by_specific(question_number))
+        else:
+            if year in self.exams:
+                year_exams = self.exams[year]
+                if semester is None:
+                    for exam in year_exams:
+                        question_dtos.extend(exam.get_questions_by_specific(question_number))
+                elif semester is not None and moed is None:
+                    for exam in year_exams:
+                        if exam.semester == semester:
+                            question_dtos.extend(exam.get_questions_by_specific(question_number))
+                else:
+                    exam = self.get_exam(year, semester, moed)
+                    if exam is not None:
+                        question_dtos.extend(exam.get_questions_by_specific(question_number))
+        return question_dtos
 
     def get_questions_by_keywords(self, keywords):
         """get questions by keywords."""
@@ -142,7 +160,6 @@ class Course:
         semester = Semester(semester)
         moed = Moed(moed)
 
-        # Check if exam already exists
         exam = self.get_exam(year, semester, moed, raise_exception=False)
         if exam is None:
             exam_id = self.generate_exam_id()

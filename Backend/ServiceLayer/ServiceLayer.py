@@ -298,6 +298,32 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
+        """Search for questions by specific criteria."""
+        try:
+            print("in service layer")
+            result = self.negev_nerds.search_question_by_specifics(course_id, year, semester, moed, question_number)
+            print(result)
+
+            questions_dict = [question.to_dict() for question in result]
+
+            if not questions_dict:
+                return json.dumps({
+                    "status": "error",
+                    "message": "No questions found for the given criteria."
+                })
+
+            return json.dumps({
+                "status": "success",
+                "data": questions_dict  # מחזירים את רשימת השאלות כ-JSON
+            })
+
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
         try:

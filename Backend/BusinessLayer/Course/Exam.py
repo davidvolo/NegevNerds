@@ -17,13 +17,14 @@ class Exam:
         self.moed = moed
         self.questions_list = {}  # <Question number, Question>
 
+
     def to_dto(self):
         """
         Converts the Exam instance to an ExamDTO.
         :return: ExamDTO instance.
         """
         # Change this line to use 'to_dict' instead of 'to_dto' for questions
-        question_dtos = [question.to_dict() for question in self.questions_list.values()]
+        question_dtos = [question.to_dict() for question in self.questions_dict.values()]
         return ExamDTO(
             exam_id=self.id,
             course_name=self.course_name,
@@ -31,11 +32,11 @@ class Exam:
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            questions_list=question_dtos
+            questions_dict=question_dtos
         )
 
     def generate_question_id(self):
-        return len(self.questions_list) + 1
+        return len(self.questions_dict) + 1
 
     
     # def check_add_question_possibility(self, year, semester, moed, question_number, pdf_question):
@@ -77,12 +78,13 @@ class Exam:
         self.questions_list[question_number] = question_dto
         return question_dto
 
+
     def remove_question(self, question_number):
         """
         Remove a question from the questions list if it exists.
         """
-        if question_number in self.questions_list:
-            del self.questions_list[question_number]  # Remove the question completely
+        if question_number in self.questions_dict:
+            del self.questions_dict[question_number]  # Remove the question completely
         else:
             raise QuestionNotFound(question_number)
 
@@ -90,15 +92,37 @@ class Exam:
         """
         Retrieve a question by its number.
         """
-        if question_number in self.questions_list:
-            return self.questions_list[question_number]
+        if question_number in self.questions_dict:
+            return self.questions_dict[question_number]
         else:
-            raise QuestionNotFound(question_number)
+            return None  # Return None instead of raising an exception
+
+    def get_all_questions(self):
+        """
+        Retrieve all question dto from questions_dict.
+        """
+        questionDTOs = []
+        for question_number in self.questions_dict:
+            questionDTOs.append(self.questions_dict[question_number])
+        return questionDTOs
+
+    def get_questions_by_specific(self, question_number=None):
+        """
+        Return list of questions dtos.
+        """
+        questions = []
+        if question_number is None:
+            return self.get_all_questions()  # Return all questions if no specific number is given
+        else:
+            question = self.get_question(question_number)
+            if question:  # If the question exists, append it to the list
+                questions.append(question)
+        return questions  # Will return an empty list if no question was found
 
     def get_questions_by_keywords(self, keywords):
         questions = []
         for keyword in keywords:
-            for question in self.questions_list.values():
+            for question in self.questions_dict.values():
                 if keyword in question.get_question_topics():
                     questions.append(question)
         return questions
@@ -114,14 +138,6 @@ class Exam:
     #     Remove a comment from the comments list of a specific question.
     #     """
     #     self.get_question(question_number).remove_comment(comment_id)
-
-    def __str__(self):
-        """
-        String representation of the Exam instance.
-        """
-        return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
-                f"Semester: {self.semester}, Moed: {self.moed}, "
-                f"Questions: {len(self.questions_list)})")
     
     def edit_course_name(self, new_course_name):
         """Edit the course name."""
@@ -156,3 +172,11 @@ class Exam:
             self.moed = Moed(new_moed)
         else:
             raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
+
+    def __str__(self):
+        """
+        String representation of the Exam instance.
+        """
+        return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
+                f"Semester: {self.semester}, Moed: {self.moed}, "
+                f"Questions: {len(self.questions_dict)})")

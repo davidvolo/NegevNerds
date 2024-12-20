@@ -295,12 +295,10 @@ class CourseFacade:
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_topic_from_question(question_topic)
 
-
-
-
-    def search_question_by_specifics(self, course_id, year, semester, moed, question_id):
+    def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         course = self.get_course(course_id)
-        return course.get_question(year, semester, moed, question_id)
+        print ("in course facade")
+        return course.get_questions_by_specific(year, semester, moed, question_number)
 
     def get_questions_by_keywords(self, course_id, keywords):
         course = self.get_course(course_id)
