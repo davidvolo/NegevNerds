@@ -1,6 +1,7 @@
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
 from Backend.DataLayer.ExamDTO import ExamDTO
+from Backend.BusinessLayer.Course.Question import *
 
 
 class Exam:
@@ -12,9 +13,10 @@ class Exam:
         self.course_name = course_name
         self.link = link
         self.year = year
-        self.semester = Semester(semester)  # Ensuring semester is an Enum
-        self.moed = Moed(moed)
-        self.questions_dict = {}  # <Question number, QuestionDTO>
+        self.semester = semester  # Ensuring semester is an Enum
+        self.moed = moed
+        self.questions_list = {}  # <Question number, Question>
+
 
     def to_dto(self):
         """
@@ -36,20 +38,46 @@ class Exam:
     def generate_question_id(self):
         return len(self.questions_dict) + 1
 
-    def add_question(self, questionDTO):
-        """
-        Add a question to the exam.
-        """
-        # Check if the fields match
-        if questionDTO.year != self.year or questionDTO.semester != self.semester or questionDTO.moed != self.moed:
-            raise QuestionDoesNotMeetExamFields(questionDTO.question_number)
-        # Check if the question already exists
-        if questionDTO.question_number in self.questions_dict:
-            raise QuestionAlreadyInExam(questionDTO.question_number)
+    
+    # def check_add_question_possibility(self, year, semester, moed, question_number, pdf_question):
+    #     # Check if the fields match
+    #     if year != self.year or semester != self.semester or moed != self.moed:
+    #         raise QuestionDoesNotMeetExamFields(question_number)
+    #     # Check if the question already exists
+    #     if question_number in self.questions_list: 
+    #         # TODO: Compare text function // 
+    #         raise QuestionAlreadyInExam(question_number)
+    #     return True
+    
+    def check_add_question_possibility(self, year, semester, moed, question_number, pdf_question):
+        # Ensure exam details match
+        if year != self.year or semester != self.semester or moed != self.moed:
+            raise QuestionDoesNotMeetExamFields(question_number)
 
-        # Add the question to the list
-        questionDTO.question_id = self.generate_question_id()
-        self.questions_dict[questionDTO.question_number] = questionDTO
+        # Ensure the question does not already exist
+        if question_number in self.questions_list:
+            raise QuestionAlreadyInExam(f"Question {question_number} already exists in this exam.")
+
+        return True
+
+    # def add_question(self, questionDTO):
+    #     """
+    #     Add a question to the exam.
+    #     """
+    #     if self.check_add_question_possibility():
+
+    #         # Add the question to the list
+    #         question = Question(year,)
+    #         questionDTO.question_id = self.generate_question_id()
+    #         self.questions_list[questionDTO.question_number] = questionDTO
+
+    def add_question(self,question_number,is_american,question_topics, pdf__question_path, pdf__answer_path):
+        question = Question(self.year, self.semester, self.moed, question_number, 
+                            is_american,question_topics,pdf__question_path,pdf__answer_path, self.link ) 
+        question_dto = question.to_dto()
+        self.questions_list[question_number] = question_dto
+        return question_dto
+
 
     def remove_question(self, question_number):
         """

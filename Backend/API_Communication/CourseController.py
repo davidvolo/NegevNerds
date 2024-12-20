@@ -398,6 +398,115 @@ def get_course(course_id):
             "status": "error",
             "message": str(e)
         }), 500
+    
+
+# @course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
+# @cross_origin()
+# def add_question():
+#     if request.method == 'OPTIONS':
+#         response = jsonify(success=True)
+#         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST')
+#         return response
+
+#     try:
+#         # Parse the JSON data from the request
+#         data = request.get_json()
+
+#         # Validate input fields
+#         required_fields = ['course_id', 'year', 'semester', 'moed', 'question_number', 'is_american', 'question_topics', 'pdf_question']
+#         missing_fields = [field for field in required_fields if field not in data]
+#         if missing_fields:
+#             return jsonify({
+#                 "success": False,
+#                 "message": f"Missing required fields: {', '.join(missing_fields)}"
+#             }), 400
+
+#         # Extract the fields
+#         course_id = data.get('course_id')
+#         year = data.get('year')
+#         semester = data.get('semester')
+#         moed = data.get('moed')
+#         question_number = data.get('question_number')
+#         is_american = data.get('is_american')
+#         question_topics = data.get('question_topics')
+#         pdf_question = data.get('pdf_question')
+#         pdf_answer = data.get('pdf_answer')  # Optional
+
+#         # Call the service layer function
+#         result = serviceLayer.add_question(
+#             course_id, year, semester, moed, question_number,
+#             is_american, question_topics, pdf_question, pdf_answer
+#         )
+
+#         # Parse the service response
+#         parsed_result = json.loads(result)
+#         return parse_jsonify(parsed_result)
+
+#     except json.JSONDecodeError:
+#         return jsonify({
+#             "success": False,
+#             "message": "Invalid JSON in request or response"
+#         }), 500
+#     except Exception as e:
+#         return jsonify({
+#             "success": False,
+#             "message": "An unexpected error occurred",
+#             "error": str(e)
+#         }), 500
+
+@course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def add_question():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        is_american = request.form.get('is_american')
+        question_topics = request.form.get('question_topics')
+        pdf_question = request.files.get('pdf_question')
+        pdf_answer = request.files.get('pdf_answer')  # Optional
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, is_american, question_topics, pdf_question]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.add_question(
+            course_id, year, semester, moed, question_number,
+            is_american, question_topics, pdf_question, pdf_answer
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in add_question: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
 
 
 @course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])

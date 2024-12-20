@@ -206,3 +206,54 @@ class Course:
             self.exams[new_year].append(exam)
         else:
             raise ExamIsNotExist(year, semester, moed)
+        
+        
+    # def check_valid_question(self, course_id,year,semester, moed, question_number,pdf_question):
+    #     currExam = self.get_exam(year,semester,moed)
+    #     if currExam is None:
+    #         self.add_exam(self.name,pdf_question,  year, semester, moed)
+    #         return True
+    #     else:
+    #         if currExam.semester == semester and currExam.moed == moed:
+    #             return currExam.check_add_question_possibility(year, semester, moed, question_number,pdf_question )
+    
+    # def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
+    #     # Get or create the exam
+    #     currExam = self.get_exam(year, semester, moed)
+    #     if currExam is None:
+    #         # Create the exam if it doesn't exist
+    #         self.add_exam(self.name, pdf_question, year, semester, moed)
+    #         return True
+    #     else:
+    #         # Validate the question within the exam
+    #         # if currExam.semester == semester and currExam.moed == moed:
+    #         #     return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
+    #         # raise ValueError(f"No matching exam for semester {semester} and moed {moed}.")
+    #         normalized_semester = Semester.get(currExam.semester, currExam.semester)
+    #         normalized_moed = Moed.get(currExam.moed, currExam.moed)
+
+    #         if normalized_semester == semester and normalized_moed == moed:
+    #             return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
+    #         else:
+    #             raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
+
+    def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
+        # Get or create the exam
+        currExam = self.get_exam(year, semester, moed)
+        if currExam is None:
+            # Create the exam if it doesn't exist
+            self.add_exam(self.name, pdf_question, year, semester, moed)
+            return True
+        else:
+            # Compare normalized values
+            if currExam.semester == semester and currExam.moed == moed:
+                return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
+            else:
+                raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
+
+            
+                
+    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path):
+        exam = self.get_exam(year, semester, moed)
+        return exam.add_question(question_number,is_american,question_topics, pdf__question_path, pdf__answer_path)
+

@@ -90,25 +90,91 @@ class FileManager:
 
         return exam_file_path
 
-    def save_question_file(self, course_id, year, semester, moed, question_content, question_number):
-        """Saves a question file inside the corresponding exam folder."""
+    # def save_question_file(self, course_id, year, semester, moed, question_number, question_content_pdf):
+    #     """Saves a question file inside the corresponding exam folder."""
 
+    #     course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+    #     year_folder = os.path.join(course_folder, str(year))
+    #     exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+
+        # Create the exam folder if it doesn't exist
+        # if not os.path.exists(exam_folder):
+        #     os.makedirs(exam_folder)
+
+        # # Create the questions folder inside the exam folder if it doesn't exist
+        # question_folder = os.path.join(exam_folder, f"questions")
+        # if not os.path.exists(question_folder):
+        #     os.makedirs(question_folder)
+
+        # # Save the question file inside the questions folder
+        # question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+        # with open(question_file_path, 'w') as file:
+        #     file.write(question_content_pdf)
+
+        # return question_file_path
+
+
+    # def save_answer_file(self, course_id, year, semester, moed, question_number, answer_content_pdf):
+        # """Saves an answer file corresponding to a question inside the corresponding exam folder."""
+
+        # course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+        # year_folder = os.path.join(course_folder, str(year))
+        # exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+
+        # # Create the exam folder if it doesn't exist
+        # if not os.path.exists(exam_folder):
+        #     os.makedirs(exam_folder)
+
+        # # Create the answers folder inside the exam folder if it doesn't exist
+        # answer_folder = os.path.join(exam_folder, f"answers")
+        # if not os.path.exists(answer_folder):
+        #     os.makedirs(answer_folder)
+
+        # # Save the answer file inside the answers folder
+        # answer_file_path = os.path.join(answer_folder, f"answer_{question_number}.pdf")
+        # with open(answer_file_path, 'w') as file:
+        #     file.write(answer_content_pdf)
+
+        # return answer_file_path
+
+    def save_question_file(self, course_id, year, semester, moed, question_number, pdf_question):
+        """
+        Saves the question PDF file to the appropriate directory.
+        """
+        # Construct the file path
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
         exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        question_folder = os.path.join(exam_folder, "questions")
 
-        # Create the exam folder if it doesn't exist
-        if not os.path.exists(exam_folder):
-            os.makedirs(exam_folder)
+        # Create directories if they do not exist
+        os.makedirs(question_folder, exist_ok=True)
 
-        # Create the questions folder inside the exam folder if it doesn't exist
-        question_folder = os.path.join(exam_folder, f"questions")
-        if not os.path.exists(question_folder):
-            os.makedirs(question_folder)
-
-        # Save the question file inside the questions folder
+        # Define the file path
         question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
-        with open(question_file_path, 'w') as file:
-            file.write(question_content)
+
+        # Save the file using FileStorage's save() method
+        pdf_question.save(question_file_path)
 
         return question_file_path
+
+    def save_answer_file(self, course_id, year, semester, moed, question_number, pdf_answer):
+        """
+        Saves the answer PDF file to the appropriate directory.
+        """
+        # Construct the file path
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        answer_folder = os.path.join(exam_folder, "answers")
+
+        # Create directories if they do not exist
+        os.makedirs(answer_folder, exist_ok=True)
+
+        # Define the file path
+        answer_file_path = os.path.join(answer_folder, f"answer_{question_number}.pdf")
+
+        # Save the file using FileStorage's save() method
+        pdf_answer.save(answer_file_path)
+
+        return answer_file_path
