@@ -1,19 +1,19 @@
 from enum import Enum
 
 class Moed(Enum):
-    A = "A"
-    B = "B"
-    C = "C"
-    D = "D"
+    A = "א"
+    B = "ב"
+    C = "ג"
+    D = "ד"
 
 
     def __str__(self):
         return self.value
 
 class Semester(Enum):
-    FALL = "Fall"
-    SPRING = "Spring"
-    SUMMER = "Summer"
+    FALL = "סתיו"
+    SPRING = "אביב"
+    SUMMER = "קיץ"
 
     def __str__(self):
         return self.value

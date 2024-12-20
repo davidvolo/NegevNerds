@@ -89,6 +89,43 @@ class TestExam(unittest.TestCase):
         with self.assertRaises(QuestionDoesNotMeetExamFields):
             self.exam.add_question(question_dto)
 
+    def test_get_questions_by_specific(self):
+        """ Test searching for questions with specific criteria (year, semester, moed, question_number) """
+
+        # Adding multiple questions to the exam
+        question_dto1 = QuestionDTO(
+            question_id=None,
+            year=2024,
+            semester=Semester.FALL,
+            moed=Moed.A,
+            question_number=1,
+            question_topics=["Algebra"],
+            is_american=False,
+            link_to_question="link1"
+        )
+        question_dto2 = QuestionDTO(
+            question_id=None,
+            year=2024,  # Same year as question_dto1
+            semester=Semester.FALL,  # Same semester as question_dto1
+            moed=Moed.A,  # Same moed as question_dto1
+            question_number=2,
+            question_topics=["Geometry"],
+            is_american=False,
+            link_to_question="link2"
+        )
+
+        self.exam.add_question(question_dto1)  # Adding the first question
+        self.exam.add_question(question_dto2)  # Adding the second question
+
+        # Test search for specific question by number
+        result = self.exam.get_questions_by_specific(question_number=1)
+        self.assertEqual(len(result), 1)  # Should return exactly 1 question
+        self.assertEqual(result[0].question_number, 1)  # Ensure it's the right question
+
+        # Test search for all questions (no filter)
+        result_all = self.exam.get_questions_by_specific()
+        self.assertEqual(len(result_all), 2)  # Should return 2 questions
+
     def test_remove_question(self):
         """ Test removing a question from the exam """
         question_dto = QuestionDTO(

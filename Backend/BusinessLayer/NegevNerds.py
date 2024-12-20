@@ -320,3 +320,19 @@ class NegevNerds:
     #         return "Question added successfully."
     #     except Exception as e:
     #         raise Exception(f"Failed to add question: {e}")
+
+    def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
+        """Search for questions based on the provided specifics for the course."""
+        try:
+            print(
+                f"Received data: {{'course_id': '{course_id}', 'year': '{year}', 'semester': '{semester}', 'moed': '{moed}', 'question_number': '{question_number}'}}")
+
+            # Fetch questions based on the specifics from the course
+            questions = self._course_facade.search_question_by_specifics(course_id,year, semester, moed, question_number)
+
+            print(f"Found questions: {questions}")
+
+            return questions
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            raise Exception(f"Failed to search questions: {e}")
