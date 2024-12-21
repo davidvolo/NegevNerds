@@ -37,7 +37,7 @@ class UserFacade:
         - Verifies the code interactively.
         - Completes the registration.
         """
-        if email in self.users_byEmail:
+        if self.getUser_by_email(email) is not None:
             raise Exception("המשתמש כבר קיים במערכת.")
         
         if not self.is_valid_name(first_name):
@@ -78,7 +78,7 @@ class UserFacade:
         # Interactively verify the code
         try:
                 id = self.generateUserId()
-                user = User(id, email, password, first_name, last_name)
+                user = User.create(id, email, password, first_name, last_name)
                 user.login()
                 self.users_byEmail[email] = user
                 self.users_byId[id] = user
@@ -88,7 +88,7 @@ class UserFacade:
                 raise Exception("האישור נכשל. הרשמה בוטלה.")
 
     def get_user_courses(self, user_id):
-        curr_user = self.users_byId[user_id]
+        curr_user = self.getUser_by_id(user_id=user_id)
         if curr_user is None:
             return []
         return curr_user.courses
@@ -211,7 +211,9 @@ class UserFacade:
         """Authenticate the user by checking the email and password."""
         try:
             # Check if the email exists in the system
-            user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
+            #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
+            user_repo = UserRepository()
+            user = user_repo.get_user_by_email(email)
             if user is None:
                 raise UserOrPasswordIncorrectError()
 
@@ -241,7 +243,7 @@ class UserFacade:
 
     def logout(self, email):
         # Check if the user exists
-        user = self.users_byEmail.get(email)
+        user = self.getUser_by_email(email)
         if user is None:
             raise UserOrPasswordIncorrectError()
         if not user.loggedIn:
@@ -254,7 +256,7 @@ class UserFacade:
 
     def registerToCourse(self, courseId, userId):
         """Add user to course (through User object)."""
-        user = self.getUser(userId)
+        user = self.getUser_by_id(userId)
         if user:
             user.registerToCourse(courseId)
         else:
@@ -262,7 +264,7 @@ class UserFacade:
         
     def editUserProfile(self, email, **kwargs):
         """Edit the user's profile details."""
-        user = self.users_byEmail.get(email)
+        user = self.getUser_by_email(email)
         if user:
             user.editProfile(**kwargs)
             return "Profile updated successfully"
@@ -270,8 +272,20 @@ class UserFacade:
             raise UserDoesnotExistsError()
 
 
-    def getUser(self, user_id):
-        return self.users_byId[user_id]
+    def getUser_by_id(self, user_id):
+        user = self.users_byEmail.get(user_id)
+        if user is not None:
+            return user
+        user_repo = UserRepository()
+        return user_repo.get_user_by_id(user_id=user_id)
+
+
+    def getUser_by_email(self, email):
+        user = self.users_byEmail.get(email)
+        if user is not None:
+            return user
+        user_repo = UserRepository()
+        return user_repo.get_user_by_email(email=email)
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """
@@ -280,7 +294,7 @@ class UserFacade:
         - Verifies the code interactively.
         - Completes the registration.
         """
-        if email in self.users_byEmail:
+        if self.getUser_by_email(email) is not None:
             raise Exception("המשתמש כבר קיים במערכת.")
 
         if not self.is_valid_name(first_name):
@@ -297,7 +311,7 @@ class UserFacade:
 
         user_id = self.generateUserId()
         user = User.create(user_id, email, password, first_name, last_name)
-        user.login()
+        #user.login()
         self.users_byEmail[email] = user
         self.users_byId[user_id] = user
         logging.info(f"User {first_name} {last_name} registered successfully.")

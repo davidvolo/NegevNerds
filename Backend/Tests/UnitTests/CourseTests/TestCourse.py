@@ -12,8 +12,8 @@ class TestCourse(unittest.TestCase):
         """Create a course instance for testing"""
         self.course = Course(course_id=1, name="Math", course_topics=["Algebra", "Calculus"])
         # Create two exams for testing
-        self.course.add_exam(course_name="Midterm", link="midterm_link", year=2024, semester=Semester.FALL, moed=Moed.A)
-        self.course.add_exam(course_name="Final", link="final_link", year=2024, semester=Semester.SPRING, moed=Moed.B)
+        self.course.add_exam( link="midterm_link", year=2024, semester=Semester.FALL, moed=Moed.A)
+        self.course.add_exam( link="final_link", year=2024, semester=Semester.SPRING, moed=Moed.B)
 
         # Add questions to exams
         question1 = QuestionDTO(question_id=None, year=2024, semester=Semester.FALL, moed=Moed.A,
@@ -55,7 +55,7 @@ class TestCourse(unittest.TestCase):
         """Test adding an exam to the course"""
         self.course.remove_exam(2024, Semester.FALL, Moed.A)
 
-        self.course.add_exam(course_name="Midterm", link="exam_link", year=2024, semester=Semester.FALL, moed=Moed.A)
+        self.course.add_exam( link="exam_link", year=2024, semester=Semester.FALL, moed=Moed.A)
 
         exams = self.course.get_exams(2024, Semester.FALL, Moed.A)
         self.assertEqual(len(exams), 1)
@@ -119,10 +119,10 @@ class TestCourse(unittest.TestCase):
         """Test adding a duplicate exam raises an exception"""
         self.course.remove_exam(2024, Semester.FALL, Moed.A)
 
-        self.course.add_exam(course_name="Midterm", link="exam_link", year=2024, semester=Semester.FALL, moed=Moed.A)
+        self.course.add_exam( link="exam_link", year=2024, semester=Semester.FALL, moed=Moed.A)
 
         with self.assertRaises(ExamAlreadyExists):
-            self.course.add_exam(course_name="Midterm", link="exam_link", year=2024, semester=Semester.FALL,
+            self.course.add_exam( link="exam_link", year=2024, semester=Semester.FALL,
                                  moed=Moed.A)
 
     def test_get_questions_by_specific_no_criteria(self):

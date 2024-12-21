@@ -1,7 +1,10 @@
 
-from sqlalchemy import Column, Integer, String, Boolean, PickleType
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, PickleType, ForeignKey
+from sqlalchemy.orm import relationship
+
 from ..Base import Base
+from ...BusinessLayer.Course.enums import Semester, Moed
+from Backend.DataLayer.Comment.CommentModel import CommentModel
 
 
 class QuestionModel(Base):
@@ -18,6 +21,15 @@ class QuestionModel(Base):
     is_american = Column(Boolean, nullable=False)
     link_to_question = Column(String, nullable=True)
     link_to_exam = Column(String, nullable=True)
+    link_to_answer = Column(String, nullable=True)
+    exam_id = Column(String, ForeignKey('exams.exam_id'))
+
+    topics = relationship('QuestionTopicsModel', back_populates='question', cascade='all, delete')
+    exam = relationship('ExamModel', back_populates='questions')
+
+    comments = relationship('CommentModel',
+                          back_populates='question',
+                          cascade='all, delete')
 
 
 
@@ -30,15 +42,15 @@ class QuestionModel(Base):
             is_american=self.is_american,
             link_to_question=self.link_to_question,
             link_to_exam=self.link_to_question,
-            semester=self.semester,
-            moed=self.moed,
+            link_to_answer=self.link_to_answer,
+            semester=Semester(self.semester),
+            moed=Moed(self.moed),
             question_number=self.question_number,
-            question_topics=None
         )
         return question
 
     @classmethod
-    def from_business_model(cls, question):
+    def from_business_model(cls, question, exam_id):
 
         return cls(
             question_id=question.question_id,
@@ -46,8 +58,9 @@ class QuestionModel(Base):
             is_american=question.is_american,
             link_to_question=question.link_to_question,
             link_to_exam=question.link_to_question,
-            semester=question.semester,
-            moed=question.moed,
+            semester=question.semester.value,
+            moed=question.moed.value,
             question_number=question.question_number,
-            question_topics=None
+            link_to_answer=question.link_to_answer,
+            exam_id=exam_id
         )

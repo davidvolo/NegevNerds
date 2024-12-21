@@ -1,7 +1,7 @@
-from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, PickleType
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, PickleType, ForeignKey
+from sqlalchemy.orm import relationship
+
 from ..Base import Base
 
 
@@ -16,7 +16,10 @@ class CommentModel(Base):
     date = Column(String, nullable=False)
     prev_id = Column(String, nullable=False)
     text = Column(String, nullable=False)
+    question_id = Column(String, ForeignKey('questions.question_id'), nullable=False)
 
+    question = relationship('QuestionModel',
+                            back_populates='comments')
 
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Comment import Comment

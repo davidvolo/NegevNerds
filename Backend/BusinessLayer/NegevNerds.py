@@ -157,7 +157,7 @@ class NegevNerds:
         """Remove the user from the course and remove the course from user."""
         try:
             # Remove the user from the course using Coursefacade
-            self.courseFacade.removeStudentFromCourse(course_id, user_id)
+            self.courseFacade.remove_student_from_course(course_id, user_id)
             # Remove the course from the user using Userfacade
             user = self.userFacade.users_byEmail.get(user_id)
             if user:
@@ -301,12 +301,12 @@ class NegevNerds:
                 pdf__answer_path = None
                 if pdf_answer is not None:
                     pdf__answer_path = self.fileManager.save_answer_file(
-                    course_id,
-                    year,
-                    semester,
-                    moed,
-                    question_number,
-                    pdf_answer
+                        course_id,
+                        year,
+                        semester,
+                        moed,
+                        question_number,
+                        pdf_answer
                 )
 
                 # Add the question to the course
