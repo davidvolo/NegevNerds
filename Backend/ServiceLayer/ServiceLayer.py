@@ -500,6 +500,24 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def get_question_path(self, course_id, year, semester, moed, questionNumber):
+        try:
+            return self.negev_nerds.get_question_path(course_id, year, semester, moed, questionNumber)
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def get_answer_path(self, course_id, year, semester, moed, questionNumber):
+        try:
+            return self.negev_nerds.get_answer_path(course_id, year, semester, moed, questionNumber)
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def get_user_courses(self, user_id):
         """Editing exam's year """
         try:
