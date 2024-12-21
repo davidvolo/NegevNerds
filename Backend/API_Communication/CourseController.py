@@ -7,7 +7,7 @@ from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
-from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 course_controller = Blueprint('course_controller', __name__)

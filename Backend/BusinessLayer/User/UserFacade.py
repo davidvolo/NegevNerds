@@ -296,7 +296,7 @@ class UserFacade:
             raise Exception("הסיסמה אינה תקינה.")
 
         user_id = self.generateUserId()
-        user = User(user_id, email, password, first_name, last_name)
+        user = User.create(user_id, email, password, first_name, last_name)
         user.login()
         self.users_byEmail[email] = user
         self.users_byId[user_id] = user
