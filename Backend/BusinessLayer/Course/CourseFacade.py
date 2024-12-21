@@ -40,7 +40,7 @@ class CourseFacade:
         """Removes a student from the course."""
         course = self.courses.get(course_id)
         if course:
-            course(user_id)
+            course.remove_student(user_id)
         else:
             raise CourseIsNotExist(course_id)
     

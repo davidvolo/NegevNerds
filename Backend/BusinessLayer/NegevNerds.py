@@ -159,7 +159,7 @@ class NegevNerds:
             # Remove the user from the course using Coursefacade
             self.courseFacade.remove_student_from_course(course_id, user_id)
             # Remove the course from the user using Userfacade
-            user = self.userFacade.users_byEmail.get(user_id)
+            user = self.userFacade.users_byId.get(user_id)
             if user:
                 user.removeCourse(course_id)
             else:
