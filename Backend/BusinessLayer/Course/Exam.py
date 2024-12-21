@@ -1,7 +1,6 @@
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
-from Backend.DataLayer.ExamDTO import ExamDTO
-from Backend.BusinessLayer.Course.Question import *
+from Backend.DataLayer.DTOs.ExamDTO import ExamDTO
 
 
 class Exam:
@@ -13,10 +12,9 @@ class Exam:
         self.course_name = course_name
         self.link = link
         self.year = year
-        self.semester = semester  # Ensuring semester is an Enum
-        self.moed = moed
+        self.semester = Semester(semester)  # Ensuring semester is an Enum
+        self.moed = Moed(moed)
         self.questions_list = {}  # <Question number, Question>
-
 
     def to_dto(self):
         """
@@ -32,52 +30,26 @@ class Exam:
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            questions_dict=question_dtos
+            questions_list=question_dtos
         )
 
     def generate_question_id(self):
         return len(self.questions_list) + 1
 
-    
-    # def check_add_question_possibility(self, year, semester, moed, question_number, pdf_question):
-    #     # Check if the fields match
-    #     if year != self.year or semester != self.semester or moed != self.moed:
-    #         raise QuestionDoesNotMeetExamFields(question_number)
-    #     # Check if the question already exists
-    #     if question_number in self.questions_list: 
-    #         # TODO: Compare text function // 
-    #         raise QuestionAlreadyInExam(question_number)
-    #     return True
-    
-    def check_add_question_possibility(self, year, semester, moed, question_number, pdf_question):
-        # Ensure exam details match
-        if year != self.year or semester != self.semester or moed != self.moed:
-            raise QuestionDoesNotMeetExamFields(question_number)
+    def add_question(self, questionDTO):
+        """
+        Add a question to the exam.
+        """
+        # Check if the fields match
+        if questionDTO.year != self.year or questionDTO.semester != self.semester or questionDTO.moed != self.moed:
+            raise QuestionDoesNotMeetExamFields(questionDTO.question_number)
+        # Check if the question already exists
+        if questionDTO.question_number in self.questions_list:
+            raise QuestionAlreadyInExam(questionDTO.question_number)
 
-        # Ensure the question does not already exist
-        if question_number in self.questions_list:
-            raise QuestionAlreadyInExam(f"Question {question_number} already exists in this exam.")
-
-        return True
-
-    # def add_question(self, questionDTO):
-    #     """
-    #     Add a question to the exam.
-    #     """
-    #     if self.check_add_question_possibility():
-
-    #         # Add the question to the list
-    #         question = Question(year,)
-    #         questionDTO.question_id = self.generate_question_id()
-    #         self.questions_list[questionDTO.question_number] = questionDTO
-
-    def add_question(self,question_number,is_american,question_topics, pdf__question_path, pdf__answer_path):
-        question = Question(self.year, self.semester, self.moed, question_number, 
-                            is_american,question_topics,pdf__question_path,pdf__answer_path, self.link ) 
-        question_dto = question.to_dto()
-        self.questions_list[question_number] = question_dto
-        return question_dto
-
+        # Add the question to the list
+        questionDTO.question_id = self.generate_question_id()
+        self.questions_list[questionDTO.question_number] = questionDTO
 
     def remove_question(self, question_number):
         """
@@ -95,29 +67,7 @@ class Exam:
         if question_number in self.questions_list:
             return self.questions_list[question_number]
         else:
-            return None  # Return None instead of raising an exception
-
-    def get_all_questions(self):
-        """
-        Retrieve all question dto from questions_dict.
-        """
-        questionDTOs = []
-        for question_number in self.questions_list:
-            questionDTOs.append(self.questions_list[question_number])
-        return questionDTOs
-
-    def get_questions_by_specific(self, question_number=None):
-        """
-        Return list of questions dtos.
-        """
-        questions = []
-        if question_number is None:
-            return self.get_all_questions()  # Return all questions if no specific number is given
-        else:
-            question = self.get_question(question_number)
-            if question:  # If the question exists, append it to the list
-                questions.append(question)
-        return questions  # Will return an empty list if no question was found
+            raise QuestionNotFound(question_number)
 
     def get_questions_by_keywords(self, keywords):
         questions = []
@@ -129,15 +79,23 @@ class Exam:
 
     # def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
     #     """
-    #     Add a comment to the comments list of a specific question.
+    #     Add a Comment to the comments list of a specific question.
     #     """
     #     self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
     # def remove_comment(self, question_number, comment_id):
     #     """
-    #     Remove a comment from the comments list of a specific question.
+    #     Remove a Comment from the comments list of a specific question.
     #     """
     #     self.get_question(question_number).remove_comment(comment_id)
+
+    def __str__(self):
+        """
+        String representation of the Exam instance.
+        """
+        return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
+                f"Semester: {self.semester}, Moed: {self.moed}, "
+                f"Questions: {len(self.questions_list)})")
     
     def edit_course_name(self, new_course_name):
         """Edit the course name."""
@@ -172,11 +130,3 @@ class Exam:
             self.moed = Moed(new_moed)
         else:
             raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
-
-    def __str__(self):
-        """
-        String representation of the Exam instance.
-        """
-        return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
-                f"Semester: {self.semester}, Moed: {self.moed}, "
-                f"Questions: {len(self.questions_list)})")

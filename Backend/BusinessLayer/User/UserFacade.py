@@ -7,16 +7,13 @@ import threading
 import uuid
 from email.mime.text import MIMEText
 import logging
-from Backend.BusinessLayer.User.User import User
+from Backend.BusinessLayer.User.User import User  # Adjusted import
 from Backend.BusinessLayer.Util.Exceptions import *
-
-# from Util.Exceptions import *
-# from BusinessLayer.User.User import User
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from Backend.DataLayer.User.UserRepository import UserRepository  # Import the SQLAlchemy repository
 
 
 class UserFacade:
-    _instance = None  # Class-level attribute to hold the single instance
+    _instance = None  # Singleton pattern
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -206,10 +203,10 @@ class UserFacade:
     #     print(f"message: {message}")
     #     print(f"user_firstName: {user_firstName}")
     #     print(f"user_lastName: {user_lastName}")
-        
+
 
     #     return user_firstName, user_lastName, user_id,  message  # Return user_id and message
-    
+
     def login(self, email, password):
         """Authenticate the user by checking the email and password."""
         try:

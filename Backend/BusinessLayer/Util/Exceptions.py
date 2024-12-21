@@ -48,8 +48,8 @@ class UserOrPasswordIncorrectError(BaseError):
 class UserDoesnotExistsError(BaseError):
     """Exception raised when the user is not exist."""
 
-    def __init__(self, email):
-        message = f"User with email {email} not exists."
+    def __init__(self, user_id):
+        message = f"User with user_id {user_id} not exists."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
 class UserIsNotLoggedInError(BaseError):
@@ -185,7 +185,7 @@ class TopicNotFound(BaseError):
 
 
 class CommentNotFound(BaseError):
-    """Exception raised when a comment is not found in the list."""
+    """Exception raised when a Comment is not found in the list."""
 
     def __init__(self, comment_id):
         message = f"Comment with ID '{comment_id}' not found in the list."
@@ -193,7 +193,7 @@ class CommentNotFound(BaseError):
 
 
 class UserIsNotCourseManager(BaseError):
-    """Exception raised when a comment is not found in the list."""
+    """Exception raised when a Comment is not found in the list."""
 
     def __init__(self, course_id):
         message = f"User is not manager of course{course_id}"

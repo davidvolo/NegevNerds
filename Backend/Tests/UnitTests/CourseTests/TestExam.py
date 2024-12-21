@@ -2,7 +2,7 @@ import unittest
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util.Exceptions import QuestionDoesNotMeetExamFields, QuestionAlreadyInExam, QuestionNotFound
 from Backend.BusinessLayer.Course.enums import Semester, Moed
-from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 
 
 class TestExam(unittest.TestCase):

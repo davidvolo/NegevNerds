@@ -14,7 +14,7 @@ class TestComment(unittest.TestCase):
             writer_name="TestUser",
             date=datetime(2024, 1, 1, 10, 0, 0),
             prev_id=None,
-            text="This is a test comment."
+            text="This is a test Comment."
         )
 
     def test_add_emoji_success(self):
@@ -34,7 +34,7 @@ class TestComment(unittest.TestCase):
 
     def test_remove_emoji_success(self):
         """
-        Test removing an emoji from the comment successfully.
+        Test removing an emoji from the Comment successfully.
         """
         self.comment.add_emoji("like", "user1")
         self.comment.remove_emoji("like", "user1")  # Pass the userId as well
@@ -49,15 +49,15 @@ class TestComment(unittest.TestCase):
 
     def test_edit_text(self):
         """
-        Test editing the text of a comment.
+        Test editing the text of a Comment.
         """
-        new_text = "Updated comment text."
+        new_text = "Updated Comment text."
         self.comment.edit_text(new_text)
         self.assertEqual(self.comment.text, new_text)
 
     def test_get_score(self):
         """
-        Test the score calculation of the comment based on likes and dislikes.
+        Test the score calculation of the Comment based on likes and dislikes.
         """
         self.comment.add_emoji("like", "user1")
         self.comment.add_emoji("like", "user2")

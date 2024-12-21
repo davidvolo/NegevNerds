@@ -17,7 +17,7 @@ class Comment:
 
     def add_emoji(self, emoji, userId):
         """
-        Add an emoji to the comment, incrementing its count.
+        Add an emoji to the Comment, incrementing its count.
         """
         # Ensure the emoji exists in the counter map
         if emoji not in self.emoji_counter_map:
@@ -38,7 +38,7 @@ class Comment:
 
     def remove_emoji(self, emoji, userId):
         """
-        Remove an emoji from the comment for a specific user.
+        Remove an emoji from the Comment for a specific user.
         """
         if emoji in self.emoji_counter_map and userId in self.emoji_counter_map[emoji]:
             self.emoji_counter_map[emoji].remove(userId)
@@ -50,7 +50,7 @@ class Comment:
 
     def get_score(self):
         """
-        Calculate and return the score of the comment.
+        Calculate and return the score of the Comment.
         The score is the count of 'like' emojis minus the count of 'dislike' emojis.
         """
         return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])

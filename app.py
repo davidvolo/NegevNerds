@@ -1,11 +1,20 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 app = Flask(__name__)
+
+db = SQLAlchemy()
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # For SQLite
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+migrate = Migrate(app, db)
+
 CORS(app, resources={
     r"/api/*": {
         "origins": "*",  # Or specify exact origin like "http://localhost:3000"
@@ -26,10 +35,20 @@ def handle_options(path):
 app.register_blueprint(user_controller)
 app.register_blueprint(course_controller)
 
+
+
+
+
 def main():
     """
     Entry point for the application.
     """
+
+    db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
     print("Starting the Exam Preparation System API...")
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
