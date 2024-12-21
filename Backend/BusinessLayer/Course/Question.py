@@ -1,7 +1,7 @@
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
-from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.BusinessLayer.Util.Exceptions import *
 
 
@@ -57,15 +57,15 @@ class Question:
         
     def add_comment(self, comment_id, writer_name, prev_id, comment_text):
         """
-        Add a comment to the comments list.
+        Add a Comment to the comments list.
         """
         comment = Comment(comment_id, writer_name, datetime.now(), prev_id, comment_text)
         self.comments.append(comment)
 
     def remove_comment(self, comment_id):
         """
-        Remove a comment from the comments list if it exists.
-        Raise an exception if the comment is not found.
+        Remove a Comment from the comments list if it exists.
+        Raise an exception if the Comment is not found.
         """
         for comment in self.comments:
             if comment.id == comment_id:

@@ -1,7 +1,10 @@
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.DataLayer.CourseDTO import CourseDTO
+from Backend.DataLayer.Course.CourseRepository import CourseRepository
+from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
+
+from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
 
 class CourseFacade:
@@ -15,6 +18,9 @@ class CourseFacade:
     def __init__(self):
         if not hasattr(self, 'courses'):
             self.courses = {}  # courseId, Course
+            #self.course_repository = CourseRepository()
+            #self.user_courses_repository = UserCoursesRepository()
+
 
     """--------------course functionality--------------"""
 
@@ -22,6 +28,9 @@ class CourseFacade:
         course = self.get_course(course_id)
         if course is not None:
             course.add_student(user_id)
+            #user_courses_rep = UserCoursesRepository()
+            #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+
 
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
@@ -35,7 +44,7 @@ class CourseFacade:
     def open_course(self, course_id, name, course_topics):
         """Opens a new course"""
 
-        course = Course(course_id, name, course_topics)
+        course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
         self.courses[course_id] = course
 
     
@@ -250,18 +259,18 @@ class CourseFacade:
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
 
-    """--------------comment functionality--------------"""
+    """--------------Comment functionality--------------"""
 
     def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, prev_id, comment_text):
         """
-        Delegates comment addition to the specified Exam and Question.
+        Delegates Comment addition to the specified Exam and Question.
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
     def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """
-        Delegates comment removal to the specified Exam and Question.
+        Delegates Comment removal to the specified Exam and Question.
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)

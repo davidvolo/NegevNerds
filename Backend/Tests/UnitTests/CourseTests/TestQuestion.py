@@ -1,10 +1,8 @@
 import unittest
-from datetime import datetime
 from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.Comment import Comment
-from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 
 class TestQuestion(unittest.TestCase):
     def setUp(self):
@@ -62,34 +60,34 @@ class TestQuestion(unittest.TestCase):
 
     def test_add_comment(self):
         """
-        Test adding a comment to the question.
+        Test adding a Comment to the question.
         """
         self.question.add_comment(
             comment_id=1,
             writer_name="User1",
             prev_id=None,
-            comment_text="This is a test comment."
+            comment_text="This is a test Comment."
         )
         self.assertEqual(len(self.question.comments), 1)
         self.assertIsInstance(self.question.comments[0], Comment)
 
     def test_remove_comment(self):
         """
-        Test removing a comment from the question.
+        Test removing a Comment from the question.
         """
         self.question.add_comment(
             comment_id=1,
             writer_name="User1",
             prev_id=None,
-            comment_text="This is a test comment."
+            comment_text="This is a test Comment."
         )
-        # Remove the comment and ensure it is removed
+        # Remove the Comment and ensure it is removed
         self.question.remove_comment(1)
         self.assertEqual(len(self.question.comments), 0)
 
     def test_remove_comment_not_found(self):
         """
-        Test removing a non-existent comment raises CommentNotFound exception.
+        Test removing a non-existent Comment raises CommentNotFound exception.
         """
         with self.assertRaises(CommentNotFound) as context:
             self.question.remove_comment(999)  # ID that does not exist
@@ -97,10 +95,10 @@ class TestQuestion(unittest.TestCase):
 
     def test_remove_nonexistent_comment(self):
         """
-        Test removing a nonexistent comment raises CommentNotFound exception.
+        Test removing a nonexistent Comment raises CommentNotFound exception.
         """
         with self.assertRaises(CommentNotFound) as context:
-            self.question.remove_comment(999)  # Nonexistent comment ID
+            self.question.remove_comment(999)  # Nonexistent Comment ID
         self.assertIn("Comment with ID '999' not found", str(context.exception))
 
     def test_str_representation(self):

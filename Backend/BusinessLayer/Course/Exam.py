@@ -1,6 +1,6 @@
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
-from Backend.DataLayer.ExamDTO import ExamDTO
+from Backend.DataLayer.DTOs.ExamDTO import ExamDTO
 
 
 class Exam:
@@ -79,13 +79,13 @@ class Exam:
 
     # def add_comment(self, question_number, comment_id, writer_name, prev_id, comment_text):
     #     """
-    #     Add a comment to the comments list of a specific question.
+    #     Add a Comment to the comments list of a specific question.
     #     """
     #     self.get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
     # def remove_comment(self, question_number, comment_id):
     #     """
-    #     Remove a comment from the comments list of a specific question.
+    #     Remove a Comment from the comments list of a specific question.
     #     """
     #     self.get_question(question_number).remove_comment(comment_id)
 

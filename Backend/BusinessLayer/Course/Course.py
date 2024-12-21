@@ -1,16 +1,37 @@
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
+from Backend.DataLayer.Course.CourseRepository import CourseRepository
 
 
 class Course:
-    def __init__(self, course_id, name, course_topics):
+    def __init__(self, course_id, name, course_topics=None):
         self.course_id = course_id
         self.name = name
         self.course_topics = course_topics if course_topics is not None else set()  # Default to an empty list
         self.exams = {}  # Dictionary to store exams by years
         self.managers = set() # Dictionary to store managers with manager_id as key
         self.students = []  # List of students for the course
+        self.course_repository = CourseRepository()
+
+    @classmethod
+    def create(cls, course_id, name, course_topics=None):
+        """
+        Class method to create a new user and save to database
+
+
+        Returns:
+            User: Newly created user instance
+        """
+        course = cls(
+            course_id=course_id,
+            course_topics=course_topics,
+            name=name
+        )
+        course_repository = CourseRepository()
+        course_repository.add_course(course)
+
+        return course
 
     # Getters
     def get_id(self):

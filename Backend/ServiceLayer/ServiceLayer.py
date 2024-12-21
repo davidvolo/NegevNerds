@@ -5,7 +5,7 @@ from Backend.BusinessLayer import NegevNerds
 import threading
 
 from Backend.BusinessLayer.Course import enums
-from Backend.DataLayer.QuestionDTO import QuestionDTO
+from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 
 
 class ServiceLayer:
@@ -66,7 +66,7 @@ class ServiceLayer:
                 "message": result
             })
         except Exception as e:
-            return user_id , json.dumps({
+            return user_id, json.dumps({
                 "status": "error",
                 "message": str(e)
             })
