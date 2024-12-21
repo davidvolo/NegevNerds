@@ -1,10 +1,10 @@
 class ExamDTO:
-    def __init__(self, exam_id, course_name, link, year, semester, moed, questions_list):
+    def __init__(self, exam_id, course_id, link, year, semester, moed, questions_list):
         """
         Data Transfer Object for the Exam class."""
 
         self.exam_id = exam_id
-        self.course_name = course_name
+        self.course_id = course_id
         self.link = link
         self.year = year
         self.semester = semester
@@ -19,7 +19,7 @@ class ExamDTO:
         """
         return {
             "exam_id": self.exam_id,
-            "course_name": self.course_name,
+            "course_id": self.course_id,
             "link": self.link,
             "year": self.year,
             "semester": self.semester,
@@ -34,8 +34,8 @@ class ExamDTO:
     def get_exam_id(self):
         return self.exam_id
 
-    def get_course_name(self):
-        return self.course_name
+    def get_course_id(self):
+        return self.course_id
 
     def get_link(self):
         return self.link
@@ -56,8 +56,8 @@ class ExamDTO:
     def set_exam_id(self, exam_id):
         self.exam_id = exam_id
 
-    def set_course_name(self, course_name):
-        self.course_name = course_name
+    def set_course_id(self, course_id):
+        self.course_id= course_id
 
     def set_link(self, link):
         self.link = link

@@ -3,6 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Questions.QuestionModel import Base, QuestionModel
 
 
@@ -31,7 +32,11 @@ class QuestionRepository:
 
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
-    def add_question(self, question):
+    def add_question(self, question, exam_id):
+        if isinstance(question.semester,Semester):
+            question.semester =question.semester.value
+        if isinstance(question.moed, Moed):
+            question.moed =question.moed.value
 
         session = self.Session()
         try:
@@ -45,6 +50,7 @@ class QuestionRepository:
                 semester=question.semester,
                 moed=question.moed,
                 question_number=question.question_number,
+                exam_id=exam_id
             )
 
             session.add(question_model)
@@ -69,7 +75,10 @@ class QuestionRepository:
 
 
     def update_question(self, question):
-
+        if isinstance(question.semester,Semester):
+            question.semester =question.semester.value
+        if isinstance(question.moed, Moed):
+            question.moed =question.moed.value
         session = self.Session()
         try:
             question_model = session.query(QuestionModel).filter_by(question_id=question.question_id).first()

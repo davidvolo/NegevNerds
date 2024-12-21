@@ -1,20 +1,41 @@
+from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
 from Backend.DataLayer.DTOs.ExamDTO import ExamDTO
+from Backend.DataLayer.Exam.ExamRepository import ExamRepository
 
 
 class Exam:
-    def __init__(self, exam_id, course_name, link, year, semester, moed):
+    def __init__(self, exam_id, course_id, link, year, semester, moed):
         """
         Initialize an Exam instance.
         """
         self.id = exam_id
-        self.course_name = course_name
+        self.course_id = course_id
         self.link = link
         self.year = year
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
         self.questions_list = {}  # <Question number, Question>
+
+    @classmethod
+    def create(cls, exam_id, course_id, link, year , semester , moed):
+        """
+        Class method to create a new user and save to database
+        Returns:
+            User: Newly created user instance
+        """
+        exam = cls(
+            exam_id=exam_id,
+            course_id=course_id,
+            link=link,
+            year=year,
+            semester=semester,
+            moed=moed,
+        )
+        exam_repo = ExamRepository()
+        exam_repo.add_exam(exam)
+
 
     def to_dto(self):
         """
@@ -25,7 +46,7 @@ class Exam:
         question_dtos = [question.to_dict() for question in self.questions_list.values()]
         return ExamDTO(
             exam_id=self.id,
-            course_name=self.course_name,
+            course_id=self.course_id,
             link=self.link,
             year=self.year,
             semester=self.semester,
@@ -49,7 +70,19 @@ class Exam:
 
         # Add the question to the list
         questionDTO.question_id = self.generate_question_id()
-        self.questions_list[questionDTO.question_number] = questionDTO
+        self.questions_list[questionDTO.question_number] = Question.create(year=questionDTO.year,
+                                                                           semester=questionDTO.semester,
+                                                                           moed=questionDTO.moed,
+                                                                           question_number=questionDTO.question_number,
+                                                                           is_american=questionDTO.is_american,
+                                                                           link_to_question=questionDTO.link_to_question,
+                                                                           link_to_answer=questionDTO.link_to_answer,
+                                                                           link_to_exam=questionDTO.link_to_exam,
+                                                                           question_id=questionDTO.question_id,
+                                                                           question_topics=questionDTO.question_topics
+                                                                           )
+
+
 
     def remove_question(self, question_number):
         """
@@ -93,13 +126,13 @@ class Exam:
         """
         String representation of the Exam instance.
         """
-        return (f"Exam(ID: {self.id}, Course: {self.course_name}, Year: {self.year}, "
+        return (f"Exam(ID: {self.id}, Course: {self.course_id}, Year: {self.year}, "
                 f"Semester: {self.semester}, Moed: {self.moed}, "
                 f"Questions: {len(self.questions_list)})")
     
-    def edit_course_name(self, new_course_name):
-        """Edit the course name."""
-        self.course_name = new_course_name
+    # def edit_course_name(self, new_course_name):
+    #     """Edit the course name."""
+    #     self.course_name = new_course_name
 
     def edit_link(self, new_link):
         """Edit the exam link."""

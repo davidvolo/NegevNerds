@@ -2,6 +2,8 @@ from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
+from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
 class Course:
@@ -12,14 +14,11 @@ class Course:
         self.exams = {}  # Dictionary to store exams by years
         self.managers = set() # Dictionary to store managers with manager_id as key
         self.students = []  # List of students for the course
-        self.course_repository = CourseRepository()
 
     @classmethod
     def create(cls, course_id, name, course_topics=None):
         """
         Class method to create a new user and save to database
-
-
         Returns:
             User: Newly created user instance
         """
@@ -30,7 +29,11 @@ class Course:
         )
         course_repository = CourseRepository()
         course_repository.add_course(course)
+        topics_repo = CourseTopicsRepository()
 
+        for topic in course_topics:
+            if not topics_repo.is_exist(topic=topic, course_id=course_id):
+                topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
         return course
 
     # Getters
@@ -167,13 +170,15 @@ class Course:
         """Removes a student from the course."""
         if user_id in self.students:
             self.students.remove(user_id)
+            course_repo = CourseRepository()
+            course_repo.update_course(self)
         else:
             raise UserIsNotRegisterToCourse()
 
     def generate_exam_id(self):
         return len(self.exams) + 1
 
-    def add_exam(self, course_name, link, year, semester, moed):
+    def add_exam(self, link, year, semester, moed):
         """
         Adds an exam to the course.
         """
@@ -184,7 +189,7 @@ class Course:
         exam = self.get_exam(year, semester, moed, raise_exception=False)
         if exam is None:
             exam_id = self.generate_exam_id()
-            exam = Exam(exam_id, course_name, link, year, semester, moed)
+            exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
 
             if year not in self.exams:
                 self.exams[year] = []
@@ -200,17 +205,26 @@ class Course:
         else:
             raise ExamIsNotExist(year, semester, moed)
 
+    def exist_manager(self, manager_id):
+
+        manager_repo = CourseManagersRepository()
+        return manager_id in self.managers or manager_repo.is_exist(user_id=manager_id, course_id=self.course_id)
+
     def add_manager(self, manager_id):
         """Adds a manager to the course."""
-        if manager_id not in self.managers:
+        if not self.exist_manager(manager_id):
             self.managers.add(manager_id)
+            manager_repo = CourseManagersRepository()
+            manager_repo.add_manager_to_course(user_id=manager_id, course_id=self.course_id)
         else:
             raise ManagerAlreadyExists(manager_id)
 
     def remove_manager(self, manager_id):
         """Removes a manager from the course."""
-        if manager_id in self.managers:
+        if self.exist_manager(manager_id):
             self.managers.remove(manager_id)
+            manager_repo = CourseManagersRepository()
+            manager_repo.remove_manager_from_course(user_id=manager_id, course_id=self.course_id)
         else:
             raise ManagerIsNotExist(manager_id)
 
@@ -258,12 +272,12 @@ class Course:
     #         else:
     #             raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-    def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
+    def check_valid_question(self, year, semester, moed, question_number, pdf_question):
         # Get or create the exam
         currExam = self.get_exam(year, semester, moed)
         if currExam is None:
             # Create the exam if it doesn't exist
-            self.add_exam(self.name, pdf_question, year, semester, moed)
+            self.add_exam(pdf_question, year, semester, moed)
             return True
         else:
             # Compare normalized values

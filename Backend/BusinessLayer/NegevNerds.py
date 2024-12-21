@@ -301,12 +301,12 @@ class NegevNerds:
                 pdf__answer_path = None
                 if pdf_answer is not None:
                     pdf__answer_path = self.fileManager.save_answer_file(
-                    course_id,
-                    year,
-                    semester,
-                    moed,
-                    question_number,
-                    pdf_answer
+                        course_id,
+                        year,
+                        semester,
+                        moed,
+                        question_number,
+                        pdf_answer
                 )
 
                 # Add the question to the course

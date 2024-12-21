@@ -15,7 +15,10 @@ class CourseModel(Base):
     name = Column(String,nullable=False)
 
     users = relationship('UserCoursesModel', back_populates='course', cascade='all, delete-orphan')
+    topics = relationship('CourseTopicsModel', back_populates='course')
+    managers = relationship('CourseManagersModel', back_populates='course')
 
+    exams = relationship('ExamModel', back_populates='course')
 
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Course import Course
@@ -24,6 +27,9 @@ class CourseModel(Base):
             course_id=self.course_id,
             name=self.name,
         )
+        course.users = [user.user_id for user in self.users]
+        course.course_topics = [topic.to_business_model() for topic in self.topics]
+        course.managers = [manager.user_id for manager in self.managers]
         return course
 
     @classmethod

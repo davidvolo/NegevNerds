@@ -40,9 +40,6 @@ app.register_blueprint(course_controller)
 
 
 def main():
-    """
-    Entry point for the application.
-    """
 
     db.init_app(app)
 

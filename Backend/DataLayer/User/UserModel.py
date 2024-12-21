@@ -23,6 +23,7 @@ class UserModel(Base):
 
     # Define the relationship
     courses = relationship('UserCoursesModel', back_populates='user', cascade='all, delete-orphan')
+    course_managers = relationship('CourseManagersModel', back_populates='manager')
     def to_business_model(self):
         from Backend.BusinessLayer.User.User import User
         """
@@ -40,7 +41,7 @@ class UserModel(Base):
             loggedIn=self.logged_in
         )
         #user.courses = self.courses
-        user.courses = [course.course.to_business_model() for course in self.courses]
+        user.courses = [course.course_id for course in self.courses]
         return user
 
     @classmethod
@@ -61,4 +62,5 @@ class UserModel(Base):
             first_name=user.first_name,
             last_name=user.last_name,
             logged_in=user.loggedIn,
+
         )

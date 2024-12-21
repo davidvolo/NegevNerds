@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, PickleType
+from sqlalchemy import Column, Integer, String, Boolean, PickleType, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 from ..Base import Base
+from ...BusinessLayer.Course.enums import Moed, Semester
 
 
 class ExamModel(Base):
@@ -13,8 +15,12 @@ class ExamModel(Base):
     moed = Column(String, primary_key=True)
 
     exam_id = Column(String, unique=True)
-    course_name = Column(String, nullable=False)
+    course_id = Column(String, ForeignKey('courses.course_id'),  nullable=False)
     link = Column(String, nullable=True)
+
+    course = relationship('CourseModel', back_populates='exams')
+    questions = relationship('QuestionModel', back_populates='exam', cascade='all, delete')
+
 
 
 
@@ -23,11 +29,11 @@ class ExamModel(Base):
 
         exam = Exam(
             exam_id=self.exam_id,
-            semester=self.semester,
-            moed=self.moed,
+            semester=Semester(self.semester),
+            moed=Moed(self.moed),
             year=self.year,
             link=self.link,
-            course_name=self.course_name
+            course_id=self.course_id
         )
         return exam
 
@@ -35,9 +41,9 @@ class ExamModel(Base):
     def from_business_model(cls, exam):
         return cls(
             exam_id=exam.exam_id,
-            semester=exam.semester,
-            moed=exam.moed,
+            semester=exam.semester.value,
+            moed=exam.moed.value,
             year=exam.year,
             link=exam.link,
-            course_name=exam.course_name
+            course_id=exam.course_id
         )

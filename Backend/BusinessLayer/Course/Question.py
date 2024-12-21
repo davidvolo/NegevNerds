@@ -3,11 +3,13 @@ from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.BusinessLayer.Util.Exceptions import *
+from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
+from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 
 class Question:
-    def __init__(self, year, semester, moed, question_number, is_american,question_topics, 
-                  link_to_question, link_to_answer,link_to_exam, question_id=None, comments=None):
+    def __init__(self, year, semester, moed, question_number, is_american,
+                 link_to_question, link_to_answer, link_to_exam, question_topics=None, question_id=None, comments=None):
         """
         Initialize a Question instance.
         """
@@ -21,7 +23,36 @@ class Question:
         self.link_to_answer = link_to_answer
         self.link_to_exam = link_to_exam
         self.id = question_id
-        self.comments = comments if comments is not None else []  # Default to an empty list
+        self.comments = comments if comments is not None else []# Default to an empty list
+
+    @classmethod
+    def create(cls, year, semester, moed, question_number, is_american,
+               link_to_question, link_to_answer, link_to_exam,exam_id, question_id=None,
+               question_topics=None):
+        """
+        Class method to create a new user and save to database
+        Returns:
+            User: Newly created user instance
+        """
+
+        question = cls(
+            year=year,
+            semester=semester,
+            moed=moed,
+            question_number=question_number,
+            is_american=is_american,
+            link_to_question=link_to_question,
+            link_to_exam=link_to_exam,
+            link_to_answer=link_to_answer,
+            question_id=question_id,
+            question_topics=question_topics
+        )
+        question_repo = QuestionRepository()
+        question_repo.add_question(question, exam_id)
+        question_topics_repo = QuestionTopicsRepository()
+        for topic in question_topics:
+            if not question_topics_repo.is_exist(topic=topic, question_id=question_id):
+                question_topics_repo.add_Topic_to_Question(topic=topic, question_id=question_id)
 
     def to_dto(self):
         """
@@ -47,7 +78,7 @@ class Question:
         Add a topic for the question from it's course_topics.
         """
         self.question_topics.append(question_topic)
-        
+
     def remove_question_topic(self, question_topic):
         """
         Remove a topic.
@@ -56,7 +87,7 @@ class Question:
             self.question_topics.remove(question_topic)
         else:
             print(f"Keyword '{question_topic}' not found in the list.")
-        
+
     def add_comment(self, comment_id, writer_name, prev_id, comment_text):
         """
         Add a Comment to the comments list.

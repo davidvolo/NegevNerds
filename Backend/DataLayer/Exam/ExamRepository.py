@@ -3,6 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Exam.ExamModel import Base, ExamModel
 
 
@@ -41,6 +42,10 @@ class ExamRepository:
         Returns:
             int: ID of the newly created exam
         """
+        if isinstance(exam.semester,Semester):
+            exam.semester =exam.semester.value
+        if isinstance(exam.moed, Moed):
+            exam.moed = exam.moed.value
         session = self.Session()
         try:
             # Convert business model to SQLAlchemy model
@@ -50,7 +55,7 @@ class ExamRepository:
                 semester=exam.semester,
                 year=exam.year,
                 link=exam.link,
-                course_name=exam.course_name,
+                course_id=exam.course_id,
             )
 
             session.add(exam_model)
@@ -92,6 +97,10 @@ class ExamRepository:
         Returns:
             exam: Business layer exam object or None if not found
         """
+        if isinstance(semester,Semester):
+            semester =semester.value
+        if isinstance(moed, Moed):
+            moed =moed.value
         session = self.Session()
         try:
             exam_model = session.query(ExamModel).filter_by(year=year, moed=moed, semester=semester).first()
@@ -110,6 +119,11 @@ class ExamRepository:
         Args:
             exam (exam): Business layer exam object with updated information
         """
+        if isinstance(exam.semester, Semester):
+            exam.semester = exam.semester.value
+        if isinstance(exam.moed, Moed):
+            exam.moed = exam.moed.value
+
         session = self.Session()
         try:
             # Find the existing exam
@@ -120,7 +134,7 @@ class ExamRepository:
 
             # Update fields
             exam_model.exam_id = exam.id
-            exam_model.course_name = exam.course_name
+            exam_model.course_id = exam.course_id
             exam_model.semester = exam.semester
             exam_model.moed = exam.moed
             exam_model.year = exam.year
@@ -138,6 +152,11 @@ class ExamRepository:
         Delete a exam from the database
 
         """
+        if isinstance(semester,Semester):
+            semester =semester.value
+        if isinstance(moed, Moed):
+            moed =moed.value
+
         session = self.Session()
         try:
             exam_model = session.query(ExamModel).filter_by(year=year, semester=semester, moed=moed).first()

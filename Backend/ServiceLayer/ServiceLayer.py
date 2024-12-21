@@ -636,9 +636,9 @@ class ServiceLayer:
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            # res = self.add_question_with_pdf(courses[0]["courseId"], 2023, enums.Semester.SPRING, enums.Moed.B, "ex2.pdf",
-            #                            QuestionDTO("question1", 2023, enums.Semester.SPRING, enums.Moed.B,
-            #                                        3, ["binaryTree, Math"], False, "ex2.pdf"))
+            res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
+                                    False, ["math", "algebra"],"ex2.pdf",None)
+
             print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:

@@ -3,10 +3,11 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from Backend.DataLayer.CourseManagers.CourseManagersModel import CourseManagersModel
 from Backend.DataLayer.UserCourses.UserCoursesModel import Base, UserCoursesModel
 
 
-class UserCoursesRepository:
+class CourseManagersRepository:
     """Repository for handling User database operations"""
     def __init__(self, db_path=None):
         """
@@ -31,7 +32,7 @@ class UserCoursesRepository:
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
-    def add_user_to_course(self, user_id, course_id):
+    def add_manager_to_course(self, user_id, course_id):
         """
         Add a user to a course
 
@@ -41,7 +42,7 @@ class UserCoursesRepository:
         """
         session = self.Session()
         try:
-            association = UserCoursesModel(user_id=user_id, course_id=course_id)
+            association = CourseManagersModel(user_id=user_id, course_id=course_id)
             session.add(association)
             session.commit()
         except Exception as e:
@@ -50,7 +51,7 @@ class UserCoursesRepository:
         finally:
             session.close()
 
-    def remove_user_from_course(self, user_id, course_id):
+    def remove_manager_from_course(self, user_id, course_id):
         """
         Remove a user from a course
 
@@ -60,7 +61,7 @@ class UserCoursesRepository:
         """
         session = self.Session()
         try:
-            association = session.query(UserCoursesModel).filter_by(user_id=user_id, course_id=course_id).first()
+            association = session.query(CourseManagersModel).filter_by(user_id=user_id, course_id=course_id).first()
             if association:
                 session.delete(association)
                 session.commit()
@@ -70,24 +71,7 @@ class UserCoursesRepository:
         finally:
             session.close()
 
-    def get_courses_for_user(self, user_id):
-        """
-        Get all courses for a given user
-
-        Args:
-            user_id (str): ID of the user
-
-        Returns:
-            List[Course]: List of business layer Course objects
-        """
-        session = self.Session()
-        try:
-            associations = session.query().filter_by(user_id=user_id).all()
-            return [association.course.to_business_model() for association in associations]
-        finally:
-            session.close()
-
-    def get_users_for_course(self, course_id):
+    def get_managers_for_course(self, course_id):
         """
         Get all users for a given course
 
@@ -99,7 +83,7 @@ class UserCoursesRepository:
         """
         session = self.Session()
         try:
-            associations = session.query(UserCoursesModel).filter_by(course_id=course_id).all()
+            associations = session.query(CourseManagersModel).filter_by(course_id=course_id).all()
             return [association.user.to_business_model() for association in associations]
         finally:
             session.close()
@@ -109,9 +93,7 @@ class UserCoursesRepository:
 
         session = self.Session()
         try:
-            user = session.query(UserCoursesModel).filter_by(user_id=user_id, course_id=course_id).first()
-            return user is not None
+            manager = session.query(CourseManagersModel).filter_by(user_id=user_id, course_id=course_id).first()
+            return manager is not None
         finally:
             session.close()
-
-

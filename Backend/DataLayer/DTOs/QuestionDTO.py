@@ -1,7 +1,8 @@
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 
 class QuestionDTO:
-    def __init__(self, question_id, year, semester, moed, question_number, question_topics, is_american, link_to_question):
+    def __init__(self, question_id, year, semester, moed, question_number, question_topics,
+                 is_american, link_to_question):
         """
         Data Transfer Object for the Question class.
         """

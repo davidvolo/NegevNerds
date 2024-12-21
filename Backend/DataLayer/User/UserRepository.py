@@ -9,6 +9,13 @@ from Backend.DataLayer.UserCourses.UserCoursesModel import UserCoursesModel
 
 
 class UserRepository:
+
+    _instance = None  # Singleton pattern
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
     """Repository for handling User database operations"""
     def __init__(self, db_path=None):
         """

@@ -86,8 +86,11 @@ class CourseFacade:
 
     def remove_course(self, course_id):
         """Remove an existing course along with its folder."""
-        if course_id in self.courses:
+        course = self.get_course(course_id)
+        if  course is not None:
             del self.courses[course_id]
+            course_repo = CourseRepository()
+            course_repo.delete_course(course_id=course_id)
         else:
             raise CourseIsNotExist(course_id)
 
@@ -97,7 +100,10 @@ class CourseFacade:
         """
         course = self.courses[course_id]
         if not course:
-            raise CourseIsNotExist(course_id)
+            course_repo = CourseRepository()
+            course = course_repo.get_course_by_id(course_id=course_id)
+            if not course:
+                return None
         return course
 
     def set_syllabus_of_course(self, course_id, syllabus):
@@ -267,7 +273,7 @@ class CourseFacade:
             raise ValueError(f"Course with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
-        return course.check_valid_question(course_id, year, semester, moed, question_number, pdf_question)
+        return course.check_valid_question(year, semester, moed, question_number, pdf_question)
 
 
 
@@ -337,7 +343,7 @@ class CourseFacade:
 
     def get_course_DTO(self, course_id):
         if self.get_course(course_id) is not None:
-            course = self.courses[course_id]
+            course = self.get_course(course_id)
             return CourseDTO(course_id, course.get_name())
         raise CourseIsNotExist(course_id)
 

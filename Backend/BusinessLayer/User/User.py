@@ -80,27 +80,20 @@ class User:
         Raises:
             UserAlreadyRegisterToCourse: If user is already registered
         """
-        if course_id not in self.courses:
+        user_courses_repo = UserCoursesRepository()
+        if course_id not in self.courses and not user_courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
             self.courses.append(course_id)
-            user_courses_repo = UserCoursesRepository()
             user_courses_repo.add_user_to_course(user_id=self.user_id, course_id=course_id)
             self._repo.update_user(self)
         else:
             raise UserAlreadyRegisterToCourse()
 
     def removeCourse(self, course_id):
-        """
-        Remove user from a course and update the database
-
-        Args:
-            course_id (int): ID of the course to remove
-
-        Raises:
-            UserIsNotRegisterToCourse: If user is not registered to the course
-        """
-        if course_id in self.courses:
+        courses_repo = UserCoursesRepository()
+        if course_id in self.courses or courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
             self.courses.remove(course_id)
             self._repo.update_user(self)
+            courses_repo.remove_user_from_course(user_id=self.user_id, course_id=course_id)
         else:
             raise UserIsNotRegisterToCourse()
 
