@@ -221,19 +221,19 @@ class UserFacade:
             if user.password != password:
                 raise UserOrPasswordIncorrectError()
 
-            user_id = user.id
-            user_firstName = user.first_name
-            user_lastName = user.last_name
+            user_id = user.get_user_id()
+            user_first_name = user.get_first_name()
+            user_last_name = user.get_last_name()
             user.login()
             logging.info(f"Login successful for user: {email}")
 
             # Debug prints before return
             print(f"user_id: {user_id}")
             print(f"message: {'התחברות בוצעה בהצלחה'}")
-            print(f"user_firstName: {user_firstName}")
-            print(f"user_lastName: {user_lastName}")
+            print(f"user_firstName: {user_first_name}")
+            print(f"user_lastName: {user_last_name}")
 
-            return user_firstName, user_lastName, user_id, "התחברות בוצעה בהצלחה"
+            return user_first_name, user_last_name, user_id, "התחברות בוצעה בהצלחה"
 
         except UserOrPasswordIncorrectError:
             # Log the error

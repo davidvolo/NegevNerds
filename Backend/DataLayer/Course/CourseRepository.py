@@ -64,6 +64,14 @@ class CourseRepository:
         finally:
             session.close()
 
+    def get_all_courses(self):
+        session = self.Session()
+        try:
+            course_model = session.query(CourseModel).all()
+            return [course.to_business_model() for course in course_model]
+        finally:
+            session.close()
+
 
 
     def update_course(self, course):
@@ -103,3 +111,13 @@ class CourseRepository:
             raise e
         finally:
             session.close()
+
+    def is_exist(self, course_id):
+
+        session = self.Session()
+        try:
+            course = session.query(CourseModel).filter_by(course_id=course_id).first()
+            return course is not None
+        finally:
+            session.close()
+

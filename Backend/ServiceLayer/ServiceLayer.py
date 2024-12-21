@@ -613,6 +613,10 @@ class ServiceLayer:
                 curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])
                 usersId.append(curr_user_id)
                 print(f"Registering user {users[i]['email']}: {curr_user_id}")
+                res = self.login(users[i]['email'],users[i]['password'])
+                print("logIn " ,res)
+                res = self.logout(users[i]['email'])
+                print("logOut ", res)
 
             # Create courses and enroll users
             for i in range(len(courses)):
