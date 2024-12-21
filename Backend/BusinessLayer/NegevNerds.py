@@ -261,6 +261,22 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
+    def get_question_path(self, course_id, year, semester, moed, question_number):
+        try:
+            return self.fileManager.get_question_path(course_id, year, semester, moed, question_number)
+        except (CourseIsNotExist, ExamIsNotExist) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to get path: {e}")
+
+    def get_answer_path(self, course_id, year, semester, moed, question_number):
+        try:
+            return self.fileManager.get_answer_path(course_id, year, semester, moed, question_number)
+        except (CourseIsNotExist, ExamIsNotExist) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to get path: {e}")
+
     def add_question(self, course_id, year, semester, moed,question_number,is_american,question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.
