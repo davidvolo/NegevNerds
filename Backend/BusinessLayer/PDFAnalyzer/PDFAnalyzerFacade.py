@@ -18,7 +18,7 @@ class PDFAnalyzerFacade:
             self.course_syllabus = Course_syllabus()
         common_words_en = ["the", "is", "in", "and", "of"]  # Replace with actual common words
         common_words_he = ["של", "על", "זה", "עם", "את"]   # Replace with actual common words
-        self.inforamtion_retrival =  WordIndex(common_words_en,common_words_he)
+        self.inforamtion_retrival =  WordIndexController(common_words_en,common_words_he)
 
 
     def extract_syllabus_topic_total(self, pdf_path):
