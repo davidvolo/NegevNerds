@@ -28,7 +28,7 @@ class CourseModel(Base):
             name=self.name,
         )
         course.users = [user.user_id for user in self.users]
-        course.course_topics = [topic.to_business_model() for topic in self.topics]
+        course.course_topics = [topic.topic for topic in self.topics]
         course.managers = [manager.user_id for manager in self.managers]
         return course
 

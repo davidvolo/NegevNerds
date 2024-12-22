@@ -38,9 +38,9 @@ class CourseFacade:
 
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
-        course = self.courses.get(course_id)
-        if course:
-            course.remove_student(user_id)
+        course = self.get_course(course_id)
+        if course is not None:
+            course(user_id)
         else:
             raise CourseIsNotExist(course_id)
     
@@ -55,7 +55,7 @@ class CourseFacade:
     def open_course_possibility(self, course_id, course_name):
         """Opens a new course"""
 
-        if course_id in self.courses:
+        if self.get_course(course_id) is not None:
             raise CourseAlreadyExists(course_id)
         
         if not self.is_valid_courseID(course_id):
@@ -87,7 +87,7 @@ class CourseFacade:
     def remove_course(self, course_id):
         """Remove an existing course along with its folder."""
         course = self.get_course(course_id)
-        if  course is not None:
+        if course is not None:
             del self.courses[course_id]
             course_repo = CourseRepository()
             course_repo.delete_course(course_id=course_id)
@@ -98,18 +98,18 @@ class CourseFacade:
         """
         Retrieves a course by its ID.
         """
-        course = self.courses[course_id]
-        if not course:
-            course_repo = CourseRepository()
-            course = course_repo.get_course_by_id(course_id=course_id)
-            if not course:
-                return None
-        return course
+        if course_id in self.courses.keys():
+            return self.courses[course_id]
+
+        course_repo = CourseRepository()
+        if course_repo.is_exist(course_id=course_id):
+            return course_repo.get_course_by_id(course_id=course_id)
+        return None
 
     def set_syllabus_of_course(self, course_id, syllabus):
         """Set syllabus of an existing course"""
 
-        if course_id in self.courses.keys():
+        if self.get_course(course_id) is not None:
             self.get_course(course_id).set_syllabus(syllabus)
         else:
             raise CourseIsNotExist(course_id)
@@ -337,7 +337,8 @@ class CourseFacade:
 
     def get_all_courses(self):
         course_list = []
-        for course in self.courses.values():
+        course_repo = CourseRepository()
+        for course in course_repo.get_all_courses():
             course_list.append(CourseDTO(course=course))
         return course_list
 
