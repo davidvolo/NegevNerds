@@ -79,7 +79,8 @@ class Exam:
                                                                            link_to_answer=questionDTO.link_to_answer,
                                                                            link_to_exam=questionDTO.link_to_exam,
                                                                            question_id=questionDTO.question_id,
-                                                                           question_topics=questionDTO.question_topics
+                                                                           question_topics=questionDTO.question_topics,
+                                                                           exam_id=self.id
                                                                            )
 
 
