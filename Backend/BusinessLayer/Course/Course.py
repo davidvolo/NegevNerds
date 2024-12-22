@@ -4,6 +4,7 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
+from Backend.DataLayer.Exam.ExamRepository import ExamRepository
 
 
 class Course:
@@ -102,10 +103,11 @@ class Course:
             for exam in self.exams[year]:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
-
+        exam_repo = ExamRepository()
+        exam= exam_repo.get_exam_by_date(year, semester, moed)
+        return exam
         # if raise_exception:
         #     raise ExamIsNotExist(year, semester, moed)
-        return None
 
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
     def get_exams(self, year: int, semester=None, moed=None):

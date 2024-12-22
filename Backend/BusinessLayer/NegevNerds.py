@@ -345,6 +345,24 @@ class NegevNerds:
     #     except Exception as e:
     #         raise Exception(f"Failed to add question: {e}")
 
+    def upload_answer(self, course_id, year, semester, moed, question_number, pdf_answer):
+        try:
+            self.fileManager.save_answer_file(
+                course_id,
+                year,
+                semester,
+                moed,
+                question_number,
+                pdf_answer
+            )
+            return "Answer added successfully to the question."
+        except (CourseIsNotExist, ExamIsNotExist) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to upload answer: {e}")
+
+
+
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions based on the provided specifics for the course."""
         try:

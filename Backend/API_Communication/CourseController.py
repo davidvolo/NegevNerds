@@ -682,3 +682,146 @@ def search_question_by_specifics():
         }), 500
 
 
+@course_controller.route('/api/course/get_question_pdf', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_question_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        question_path = serviceLayer.get_question_path(course_id, year, semester, moed, question_number)
+        print(f"Generated file path: {question_path}")
+
+        # בדיקה אם הקובץ קיים
+        if not os.path.exists(question_path):
+            return jsonify({
+                "status": "error",
+                "message": "File not found"
+            }), 404
+
+        # שליחת הקובץ ללקוח
+        return send_file(question_path, mimetype='application/pdf')
+    except Exception as e:
+        print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@course_controller.route('/api/course/get_answer_pdf', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_answer_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        answer_path = serviceLayer.get_answer_path(course_id, year, semester, moed, question_number)
+        print(f"Generated file path: {answer_path}")
+
+        # בדיקה אם הקובץ קיים
+        if not os.path.exists(answer_path):
+            return jsonify({
+                "status": "error",
+                "message": "File not found"
+            }), 404
+
+        # שליחת הקובץ ללקוח
+        return send_file(answer_path, mimetype='application/pdf')
+    except Exception as e:
+        print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def upload_answer():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        pdf_answer = request.files.get('pdf_answer')  # Optional
+
+        if not all([course_id, year, semester, moed, question_number, pdf_answer]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.upload_answer(
+            course_id, year, semester, moed, question_number, pdf_answer
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in upload_answer: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+
+
+
