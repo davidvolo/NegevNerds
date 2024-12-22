@@ -277,6 +277,22 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
+    def upload_answer(self, course_id, year, semester, moed, question_number, pdf_answer):
+        try:
+            self.fileManager.save_answer_file(
+                course_id,
+                year,
+                semester,
+                moed,
+                question_number,
+                pdf_answer
+            )
+            return "Answer added successfully to the question."
+        except (CourseIsNotExist, ExamIsNotExist) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to upload answer: {e}")
+
     def add_question(self, course_id, year, semester, moed,question_number,is_american,question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.

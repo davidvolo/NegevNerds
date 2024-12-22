@@ -277,8 +277,10 @@ class CourseFacade:
         except Exception as e:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
-        
 
+    # def upload_answer(self, course_id, year, semester, moed, question_number, pdf_answer_path):
+    #     course = self.get_course(course_id)
+    #     course.get_exam(year, semester, moed).upload_answer(question_number, pdf_answer_path)
 
     def remove_question(self, course_id, year, semester, moed, question_number):
         """

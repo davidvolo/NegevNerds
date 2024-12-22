@@ -493,6 +493,50 @@ def get_course(course_id):
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def upload_answer():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        pdf_answer = request.files.get('pdf_answer')  # Optional
+
+        if not all([course_id, year, semester, moed, question_number, pdf_answer]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.upload_answer(
+            course_id, year, semester, moed, question_number, pdf_answer
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in upload_answer: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
 
 # @course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
 # @cross_origin()
@@ -600,8 +644,6 @@ def add_question():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
-
-
 
 @course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
 @cross_origin()

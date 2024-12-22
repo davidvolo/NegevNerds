@@ -39,6 +39,9 @@ class Question:
             link_to_question=self.link_to_question
         )
 
+    # def set_link_to_answer(self, link_to_answer):
+    #     self.link_to_answer = link_to_answer
+
     def get_question_topics(self):
         return self.question_topics
 

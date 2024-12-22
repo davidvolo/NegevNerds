@@ -78,6 +78,8 @@ class Exam:
         self.questions_list[question_number] = question_dto
         return question_dto
 
+    # def upload_answer(self, question_number, pdf__answer_path):
+    #     self.questions_list[question_number].set_link_to_answer(pdf__answer_path)
 
     def remove_question(self, question_number):
         """
