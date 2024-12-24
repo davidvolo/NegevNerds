@@ -55,7 +55,7 @@ def register():
         data = request.get_json()
 
         # Validate input
-        if not all(key in data for key in ['email', 'password', 'first_name', 'last_name']):
+        if not all(key in data for key in ['email', 'password','password_confirm', 'first_name', 'last_name']):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
@@ -66,14 +66,28 @@ def register():
         password = data.get('password')
         first_name = data.get('first_name')
         last_name = data.get('last_name')
+        password_confirm = data.get('password_confirm')
 
         # Call the service layer's register method directly
-        result = serviceLayer.register(email, password, first_name, last_name)
+        result = serviceLayer.register(email, password,password_confirm, first_name, last_name)
 
         # Parse the JSON string
-        parsed_result = json.loads(result)
+        # parsed_result = json.loads(result)
 
-        return parse_jsonify(parsed_result)
+        # # return parse_jsonify(parsed_result)
+    
+        # if result['status'] == "success":
+        #     return jsonify({
+        #         "success": True,
+        #         "message": parsed_result['message'],
+        #         "password": parsed_result['password']  # Include password if needed
+        #     }),200
+        
+        if result['status'] == "success":
+            return jsonify({"success": True, "message": result["message"], "password": result["password"]}), 200
+        return jsonify({"success": False, "message": result["message"]}), 400
+
+
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
