@@ -12,17 +12,18 @@ class QuestionModel(Base):
     __tablename__ = 'questions'
 
     # Primary key
-    question_id = Column(String, primary_key=True)
+    question_id = Column(String)
 
     year = Column(Integer, nullable=False)
+    text = Column(String, nullable=False)
     semester = Column(String, nullable=False)
     moed = Column(String, nullable=False)
-    question_number = Column(Integer, nullable=False)
+    question_number = Column(Integer, nullable=False, primary_key=True)
     is_american = Column(Boolean, nullable=False)
     link_to_question = Column(String, nullable=True)
     link_to_exam = Column(String, nullable=True)
     link_to_answer = Column(String, nullable=True)
-    exam_id = Column(String, ForeignKey('exams.exam_id'))
+    exam_id = Column(String, ForeignKey('exams.exam_id'),primary_key=True)
 
     topics = relationship('QuestionTopicsModel', back_populates='question', cascade='all, delete')
     exam = relationship('ExamModel', back_populates='questions')
@@ -46,6 +47,7 @@ class QuestionModel(Base):
             semester=Semester(self.semester),
             moed=Moed(self.moed),
             question_number=self.question_number,
+            text=self.text
         )
         return question
 
@@ -53,7 +55,7 @@ class QuestionModel(Base):
     def from_business_model(cls, question, exam_id):
 
         return cls(
-            question_id=question.question_id,
+            question_id=question.id,
             year=question.year,
             is_american=question.is_american,
             link_to_question=question.link_to_question,
@@ -62,5 +64,7 @@ class QuestionModel(Base):
             moed=question.moed.value,
             question_number=question.question_number,
             link_to_answer=question.link_to_answer,
-            exam_id=exam_id
+            exam_id=question.exam_id,
+            text=question.text
+
         )

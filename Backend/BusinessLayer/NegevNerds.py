@@ -1,5 +1,6 @@
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
+from Backend.BusinessLayer.PDFAnalyzer.QuestionAnalyzer import QuestionAnalyzer
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
@@ -116,9 +117,9 @@ class NegevNerds:
                 return None, None, None, {"status": "error", "message": "Incorrect email or password."}
 
             return user_firstName, user_lastName, user_id, {"status": "success", "message": message}
-        except UserOrPasswordIncorrectError:
-            # return None, None, None, {"status": "error", "message": "Incorrect email or password."}
-            return None, None, None, {"status": "error", "message": message}
+        except UserOrPasswordIncorrectError as e:
+            # return None, None, None, {"status": "error", "message": "}
+            return None, None, None, {"status": "error", "message": e.message}
 
         except Exception as e:
             return None, None, None, {"status": "error", "message": str(e)}
@@ -277,7 +278,7 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
-    def add_question(self, course_id, year, semester, moed,question_number,is_american,question_topics,  pdf_question, pdf_answer):
+    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.
 
@@ -286,34 +287,34 @@ class NegevNerds:
         """
         try:
             # Get course name for filename generation
-            
-            if self.courseFacade.check_valid_question(course_id,year,semester, moed, question_number,pdf_question):
-
+            question_analyzer = QuestionAnalyzer()
+            question_text = question_analyzer.extract_text_from_pdf_file(pdf_question)
+            if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
                 # Save the PDF file with a custom name
                 pdf__question_path = self.fileManager.save_question_file(
-                    course_id,
-                    year,
-                    semester,
-                    moed,
-                    question_number,
-                    pdf_question
+                    course_id=course_id,
+                    year=year,
+                    semester=semester,
+                    moed=moed,
+                    question_number=question_number,
+                    pdf_question=pdf_question
                 )
                 pdf__answer_path = None
                 if pdf_answer is not None:
                     pdf__answer_path = self.fileManager.save_answer_file(
-                        course_id,
-                        year,
-                        semester,
-                        moed,
-                        question_number,
-                        pdf_answer
-                )
-
+                        course_id=course_id,
+                        year=year,
+                        semester=semester,
+                        moed=moed,
+                        question_number=question_number,
+                        pdf_answer=pdf_answer
+                    )
                 # Add the question to the course
-                question_dto =self.courseFacade.add_question(course_id, year, semester, moed, question_number,
-                                            is_american, question_topics,pdf__question_path, pdf__answer_path )
-                
-                self._pdfFacade.perform_information_retrival_question(pdf__question_path,question_dto)
+                question_data = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
+                                                             question_number=question_number,is_american=is_american,
+                                                             question_topics=question_topics,pdf_question_path=pdf__question_path, pdf_answer_path=pdf__answer_path, question_text=question_text)
+
+                self._pdfFacade.perform_information_retrival_question(pdf__question_path,question_data)
             
 
             return "Question added successfully."

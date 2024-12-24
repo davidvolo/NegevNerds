@@ -9,7 +9,7 @@ from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 class Question:
     def __init__(self, year, semester, moed, question_number, is_american,
-                 link_to_question, link_to_answer, link_to_exam, question_topics=None, question_id=None, comments=None):
+                 link_to_question, link_to_answer, link_to_exam, question_topics=None, question_id=None, comments=None, text = ""):
         """
         Initialize a Question instance.
         """
@@ -24,11 +24,12 @@ class Question:
         self.link_to_exam = link_to_exam
         self.id = question_id
         self.comments = comments if comments is not None else []# Default to an empty list
+        self.text = text
 
     @classmethod
     def create(cls, year, semester, moed, question_number, is_american,
                link_to_question, link_to_answer, link_to_exam,exam_id, question_id=None,
-               question_topics=None):
+               question_topics=None, question_text=""):
         """
         Class method to create a new user and save to database
         Returns:
@@ -45,14 +46,19 @@ class Question:
             link_to_exam=link_to_exam,
             link_to_answer=link_to_answer,
             question_id=question_id,
-            question_topics=question_topics
+            question_topics=question_topics,
+            text=question_text
+
         )
         question_repo = QuestionRepository()
         question_repo.add_question(question, exam_id)
         question_topics_repo = QuestionTopicsRepository()
+
         for topic in question_topics:
             if not question_topics_repo.is_exist(topic=topic, question_id=question_id):
                 question_topics_repo.add_Topic_to_Question(topic=topic, question_id=question_id)
+
+        return question
 
     def to_dto(self):
         """
@@ -67,7 +73,8 @@ class Question:
             question_number=self.question_number,
             question_topics=self.question_topics,
             is_american=self.is_american,
-            link_to_question=self.link_to_question
+            link_to_question=self.link_to_question,
+            text=text
         )
 
     def get_question_topics(self):
@@ -78,6 +85,9 @@ class Question:
         Add a topic for the question from it's course_topics.
         """
         self.question_topics.append(question_topic)
+
+    def generate_question_details_name(self):
+        return f"E-{self.year}-{self.semester}-{self.moed}-Q{self.question_number}"
 
     def remove_question_topic(self, question_topic):
         """
