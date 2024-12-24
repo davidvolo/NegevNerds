@@ -112,6 +112,49 @@ class ExamRepository:
         finally:
             session.close()
 
+    def get_all_exams_by_year(self, year):
+        """
+        Retrieve a exam by their email
+
+        Args:
+            email (str): exam's email address
+
+        Returns:
+            exam: Business layer exam object or None if not found
+        """
+
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by email: {e}")
+            return None
+        finally:
+            session.close()
+
+    def get_all_exams(self):
+        """
+        Retrieve a exam by their email
+
+        Args:
+            email (str): exam's email address
+
+        Returns:
+            exam: Business layer exam object or None if not found
+        """
+
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by email: {e}")
+            return None
+        finally:
+            session.close()
     def update_exam(self, exam):
         """
         Update an existing exam's information
@@ -146,6 +189,8 @@ class ExamRepository:
             raise e
         finally:
             session.close()
+
+
 
     def delete_exam(self, year, semester, moed):
         """

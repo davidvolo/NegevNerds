@@ -41,6 +41,10 @@ class Course:
     def get_id(self):
         return self.course_id
 
+    def get_exams_by_year(self, year):
+        exam_repo = ExamRepository()
+        return exam_repo.get_all_exams_by_year(year=year)
+
     def get_name(self):
         return self.name
 
@@ -52,15 +56,11 @@ class Course:
 
     def get_all_exams(self):
         """Retrieve all exams from the exams dictionary."""
-        all_exams = []
-        for year_exams in self.exams.values():
-            for exam in year_exams:
-                all_exams.append(exam)
-        return all_exams
 
+        exam_repo = ExamRepository()
+        return exam_repo.get_all_exams()
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
         """Get specific questions."""
-        print ("in course")
         question_dtos = []
         if year is None:
             all_exams = self.get_all_exams()
@@ -68,8 +68,9 @@ class Course:
                 # Only include the questions that match the specific number
                 question_dtos.extend(exam.get_questions_by_specific(question_number))
         else:
-            if year in self.exams:
-                year_exams = self.exams[year]
+            year_exams = self.get_exams_by_year(year)
+            if year_exams is not None and len(year_exams) > 0:
+                # year_exams = self.exams[year]
                 if semester is None:
                     for exam in year_exams:
                         question_dtos.extend(exam.get_questions_by_specific(question_number))

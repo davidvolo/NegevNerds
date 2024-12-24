@@ -30,7 +30,7 @@ class UserFacade:
 
     def generateUserId(self):
         return "user" + str(uuid.uuid4())
-    
+
     import bcrypt
 
     def hash_password(self,password):
@@ -54,10 +54,10 @@ class UserFacade:
         try:
             if self.getUser_by_email(email) is not None:
                 raise Exception("המשתמש כבר קיים במערכת.")
-            
+
             if not self.is_valid_name(first_name):
                 raise Exception("השם הפרטי אינו תקין.")
-            
+
             if not self.is_valid_name(last_name):
                 raise Exception("שם המשפחה אינו תקין.")
 
@@ -66,7 +66,7 @@ class UserFacade:
 
             if not self.is_valid_password(password):
                 raise Exception("הסיסמה אינה תקינה.")
-            
+
             if password != password_confirm:
                 raise Exception("הסיסמה אינה תואמת לאימות סיסמה.")
 
@@ -234,7 +234,7 @@ class UserFacade:
         try:
             # Check if the email exists in the system
             #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
-           
+
             user = self.getUser_by_email(email)
             if user is None:
                 raise UserOrPasswordIncorrectError()
@@ -296,7 +296,7 @@ class UserFacade:
 
 
     def getUser_by_id(self, user_id):
-        user = self.users_byEmail.get(user_id)
+        user = self.users_byId.get(user_id)
         if user is not None:
             return user
         user_repo = UserRepository()
@@ -331,7 +331,7 @@ class UserFacade:
 
         if not self.is_valid_password(password):
             raise Exception("הסיסמה אינה תקינה.")
-        
+
         encrypted_password = self.hash_password(password)
 
         user_id = self.generateUserId()

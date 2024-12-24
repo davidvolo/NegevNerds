@@ -166,11 +166,15 @@ class FileManager:
         # Create directories if they do not exist
         os.makedirs(question_folder, exist_ok=True)
 
-        # Define the file path
-        question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
 
-        # Save the file using FileStorage's save() method
+        question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+        # with open(question_file_path, 'wb') as f:
+        #     f.write(file_content)
+
+        pdf_question.seek(0)
+
         pdf_question.save(question_file_path)
+
 
         return question_file_path
 
@@ -179,6 +183,10 @@ class FileManager:
         Saves the answer PDF file to the appropriate directory.
         """
         # Construct the file path
+
+        pdf_answer.seek(0)
+
+
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
         exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
