@@ -661,10 +661,10 @@ class ServiceLayer:
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
-                                    False, ["math", "algebra"],"ex2.pdf",None)
-
-            print(" add question -", res)
+            # res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
+            #                         False, ["math", "algebra"],"ex2.pdf",None)
+            #
+            # print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:
             print(f"Error: Initialization file {file_path} not found.")

@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 
@@ -568,6 +569,7 @@ def add_question():
         moed = request.form.get('moed')
         question_number = int(request.form.get('question_number'))
         is_american = request.form.get('is_american')
+        is_american_boolean = is_american.lower() == 'true'
         question_topics = request.form.get('question_topics')
         pdf_question = request.files.get('pdf_question')
         pdf_answer = request.files.get('pdf_answer')  # Optional
@@ -580,10 +582,21 @@ def add_question():
                 "message": "Missing required fields."
             }), 400
 
+        if isinstance(question_topics, str):
+            try:
+                question_topics = ast.literal_eval(question_topics)  # Safely convert string to list
+                if not isinstance(question_topics, list):  # Ensure it's a list after conversion
+                    question_topics = [question_topics]
+            except (ValueError, SyntaxError):
+                return jsonify({
+                    "success": False,
+                    "message": "Invalid format for question_topics."
+                }), 400
+
         # Call the service layer
         result = serviceLayer.add_question(
             course_id, year, semester, moed, question_number,
-            is_american, question_topics, pdf_question, pdf_answer
+            is_american_boolean, question_topics, pdf_question, pdf_answer
         )
 
         # Parse the service response
@@ -680,6 +693,7 @@ def search_question_by_specifics():
             "success": False,
             "message": str(e)
         }), 500
+
 
 @course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
 @cross_origin()
