@@ -61,13 +61,13 @@ class NegevNerds:
         """Checks if the user is a system manager."""
         return user_id in self.system_managers
 
-    def register(self, email, password, first_name, last_name):
-        """Register a new user."""
+    def register(self, email, password, password_confirm, first_name, last_name):
         try:
-            return self.userFacade.register(email, password, first_name, last_name)
-
+            return self.userFacade.register(email, password, password_confirm, first_name, last_name)
         except Exception as e:
-            return f"Error: {e}"
+            return None, {"Error": str(e)}  # Always return a tuple
+
+
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """Register a new user."""

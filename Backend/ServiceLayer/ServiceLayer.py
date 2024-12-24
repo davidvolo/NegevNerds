@@ -30,26 +30,29 @@ class ServiceLayer:
                 negev_nerds = NegevNerds.NegevNerds("../")
             self.negev_nerds = negev_nerds
             self._initialized = True
-
-    def register(self, email, password, first_name, last_name):
-        """Handle user registration and return JSON."""
+            
+    def register(self, email, password, password_confirm, first_name, last_name):
         try:
-            result = self.negev_nerds.register(email, password, first_name, last_name)
+            password, result = self.negev_nerds.register(email, password, password_confirm, first_name, last_name)
 
             if "Error" in result:
-                return json.dumps({
+                return {
                     "status": "error",
-                    "message": result
-                })
-            return json.dumps({
+                    "message": result["Error"]
+                }
+            return {
                 "status": "success",
-                "message": result
-            })
+                "message": result.get("message", "Registration successful"),
+                "password": password
+            }
         except Exception as e:
-            return json.dumps({
+            return {
                 "status": "error",
                 "message": str(e)
-            })
+            }
+
+        
+        
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """Handle user registration and return JSON."""
