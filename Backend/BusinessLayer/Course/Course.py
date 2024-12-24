@@ -177,10 +177,9 @@ class Course:
         else:
             raise UserIsNotRegisterToCourse()
 
-    def generate_exam_id(self):
-        return len(self.exams) + 1
-
-    def add_exam(self, link, year, semester, moed):
+    def generate_exam_id(self, year, semester, moed):
+        return f"EXAM-{self.course_id}-{year}-{semester}-{moed}"
+    def add_exam(self, year, semester, moed, link=""):
         """
         Adds an exam to the course.
         """
@@ -190,7 +189,7 @@ class Course:
 
         exam = self.get_exam(year, semester, moed, raise_exception=False)
         if exam is None:
-            exam_id = self.generate_exam_id()
+            exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
             exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
 
             if year not in self.exams:
@@ -274,23 +273,24 @@ class Course:
     #         else:
     #             raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-    def check_valid_question(self, year, semester, moed, question_number, pdf_question):
+    def check_valid_question(self, year, semester, moed, question_number, question_text):
         # Get or create the exam
         currExam = self.get_exam(year, semester, moed)
         if currExam is None:
             # Create the exam if it doesn't exist
-            self.add_exam(pdf_question, year, semester, moed)
+            self.add_exam(year=year, semester=semester, moed=moed)
             return True
         else:
             # Compare normalized values
             if currExam.semester == semester and currExam.moed == moed:
-                return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
+                return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number, question_text=question_text)
             else:
                 raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
             
                 
-    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path):
+    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
         exam = self.get_exam(year, semester, moed)
-        return exam.add_question(question_number,is_american,question_topics, pdf__question_path, pdf__answer_path)
+        return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
+                                 pdf__answer_path, question_text)
 
