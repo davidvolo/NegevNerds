@@ -213,7 +213,7 @@ class UserFacade:
             # Check if the email exists in the system
             #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
             user_repo = UserRepository()
-            user = user_repo.get_user_by_email(email)
+            user = self.getUser_by_email(email)
             if user is None:
                 raise UserOrPasswordIncorrectError()
 
@@ -273,7 +273,7 @@ class UserFacade:
 
 
     def getUser_by_id(self, user_id):
-        user = self.users_byEmail.get(user_id)
+        user = self.users_byId.get(user_id)
         if user is not None:
             return user
         user_repo = UserRepository()

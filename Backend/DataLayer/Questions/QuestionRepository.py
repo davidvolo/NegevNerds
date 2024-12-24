@@ -74,6 +74,23 @@ class QuestionRepository:
         finally:
             session.close()
 
+    def get_question_by_exam_id(self, exam_id):
+
+        session = self.Session()
+        try:
+            question_models = session.query(QuestionModel).filter_by(exam_id=exam_id).all()
+            return [question_model.to_business_model() for question_model in question_models]
+        finally:
+            session.close()
+
+    def get_question_by_number(self, exam_id, question_number):
+        session = self.Session()
+        try:
+            question_model = session.query(QuestionModel).filter_by(exam_id=exam_id, question_number=question_number).first()
+            return question_model.to_business_model() if question_model else None
+        finally:
+            session.close()
+
 
     def update_question(self, question):
         if isinstance(question.semester,Semester):

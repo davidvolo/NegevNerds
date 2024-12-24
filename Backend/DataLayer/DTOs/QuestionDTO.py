@@ -2,7 +2,7 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 
 class QuestionDTO:
     def __init__(self, question_id, year, semester, moed, question_number, question_topics,
-                 is_american, link_to_question , text):
+                 is_american, link_to_question):
         """
         Data Transfer Object for the Question class.
         """
@@ -14,7 +14,6 @@ class QuestionDTO:
         self.question_topics = question_topics
         self.is_american = is_american
         self.link_to_question = link_to_question
-        self.text = text
 
     def to_dict(self):
         """
@@ -31,6 +30,5 @@ class QuestionDTO:
             "question_topics": self.question_topics,
             "is_american": self.is_american,
             "link_to_question": self.link_to_question,
-            "text": self.text
         }
 

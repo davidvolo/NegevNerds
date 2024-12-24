@@ -23,7 +23,7 @@ class QuestionModel(Base):
     link_to_question = Column(String, nullable=True)
     link_to_exam = Column(String, nullable=True)
     link_to_answer = Column(String, nullable=True)
-    exam_id = Column(String, ForeignKey('exams.exam_id'),primary_key=True)
+    exam_id = Column(String, ForeignKey('exams.exam_id'), primary_key=True)
 
     topics = relationship('QuestionTopicsModel', back_populates='question', cascade='all, delete')
     exam = relationship('ExamModel', back_populates='questions')
@@ -32,11 +32,16 @@ class QuestionModel(Base):
                           back_populates='question',
                           cascade='all, delete')
 
-
-
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Question import Question
 
+        # Extract the string topics from the related QuestionTopicsModel instances
+        business_topics = [topic.topic for topic in self.topics]  # Assuming 'name' is the string field
+
+        # No changes for comments if they're the same as before
+
+
+        # Create the business model
         question = Question(
             question_id=self.question_id,
             year=self.year,
@@ -47,7 +52,8 @@ class QuestionModel(Base):
             semester=Semester(self.semester),
             moed=Moed(self.moed),
             question_number=self.question_number,
-            text=self.text
+            text=self.text,
+            question_topics=business_topics,  # List of strings
         )
         return question
 

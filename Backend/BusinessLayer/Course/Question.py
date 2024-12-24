@@ -74,7 +74,6 @@ class Question:
             question_topics=self.question_topics,
             is_american=self.is_american,
             link_to_question=self.link_to_question,
-            text=text
         )
 
     def get_question_topics(self):
