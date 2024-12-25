@@ -92,6 +92,11 @@ class Exam:
         return True
 
 
+    def get_all_exam_question(self):
+        question_repo = QuestionRepository()
+        return question_repo.get_question_by_exam_id(exam_id=self.id)
+
+
     def remove_question(self, question_number):
         """
         Remove a question from the questions list if it exists.
@@ -107,8 +112,8 @@ class Exam:
         """
         if question_number in self.questions_list:
             return self.questions_list[question_number]
-        else:
-            raise QuestionNotFound(question_number)
+        question_repo = QuestionRepository()
+        return question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
 
     def get_questions_by_keywords(self, keywords):
         questions = []
@@ -171,3 +176,18 @@ class Exam:
             self.moed = Moed(new_moed)
         else:
             raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
+
+
+    def get_questions_by_specific(self, question_number=None):
+        """
+        Return list of questions dtos.
+        """
+        questions = []
+        if question_number is None:
+            for exam in self.get_all_exam_question():
+                questions.append(exam.to_dto())
+        else:
+            question= self.get_question(question_number=question_number)
+            if question is not None:
+                questions.append(question.to_dto())
+        return questions  # Will return an empty list if no question was found

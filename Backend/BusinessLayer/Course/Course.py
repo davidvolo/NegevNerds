@@ -56,7 +56,6 @@ class Course:
 
     def get_all_exams(self):
         """Retrieve all exams from the exams dictionary."""
-
         exam_repo = ExamRepository()
         return exam_repo.get_all_exams()
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
