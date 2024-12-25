@@ -24,8 +24,8 @@ class QuestionDTO:
         return {
             "question_id": self.question_id,
             "year": self.year,
-            "semester": self.semester.name if hasattr(self.semester, 'name') else self.semester,
-            "moed": self.moed.name if hasattr(self.moed, 'name') else self.moed,
+            "semester": self.semester.value if hasattr(self.semester, 'value') else self.semester,
+            "moed": self.moed.value if hasattr(self.moed, 'value') else self.moed,
             "question_number": self.question_number,
             "question_topics": self.question_topics,
             "is_american": self.is_american,
