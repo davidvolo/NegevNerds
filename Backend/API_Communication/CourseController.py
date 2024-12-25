@@ -4,6 +4,8 @@ import os
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_cors import cross_origin, CORS
+from werkzeug.utils import secure_filename
+
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
@@ -119,8 +121,10 @@ def open_course():
         name = request.form.get('name')
         syllabus_file = request.files['syllabus_content_pdf']
 
-        # Save file
-        file_path = f"/Users/davidvolodarsky/Desktop/Semeters/Semester_G/NegevNerds/sylbus_analyzer/uplods/{syllabus_file.filename}"
+         # Save file to the specified directory
+        base_dir = os.path.join(os.getcwd(), 'Backend', 'BusinessLayer', 'PDFAnalyzer')
+        os.makedirs(base_dir, exist_ok=True)  # Ensure the directory exists
+        file_path = os.path.join(base_dir, secure_filename(syllabus_file.filename))
         syllabus_file.save(file_path)
         print(f"File saved to {file_path}")
         print(f"user id {user_id}")
@@ -129,6 +133,13 @@ def open_course():
         result = serviceLayer.open_course(user_id, course_id, name, file_path)
         parsed_result = json.loads(result)
         print(f"Service layer response: {parsed_result}")
+
+        try:
+            os.remove(file_path)
+            print(f"Deleted file {file_path}")
+        except Exception as delete_error:
+            print(f"Error deleting file {file_path}: {str(delete_error)}")
+
 
         # Construct and return response
         return jsonify({
