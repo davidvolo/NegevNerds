@@ -16,8 +16,8 @@ class PDFAnalyzerFacade:
         # Only initialize attributes if they don't already exist
         if not hasattr(self, 'course_syllabus'):
             self.course_syllabus = Course_syllabus()
-        common_words_en = ["the", "is", "in", "and", "of"]  # Replace with actual common words
-        common_words_he = ["של", "על", "זה", "עם", "את"]   # Replace with actual common words
+        common_words_en = {"the", "and", "is", "in", "of", "to","or", "a", "on", "yes", "no", "etc", "it"}
+        common_words_he = {"של", "הוא", "היא", "זה", "את", "אם","עם", "או","כי"}
         self.inforamtion_retrival =  WordIndexController(common_words_en,common_words_he)
 
 
