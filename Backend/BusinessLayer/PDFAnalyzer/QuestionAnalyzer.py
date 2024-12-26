@@ -1,8 +1,11 @@
 import fitz  # PyMuPDF
+from PIL import Image
+import pytesseract
+
 
 class QuestionAnalyzer:
 
-    def extract_text_from_pdf_file(self ,file_obj):
+    def extract_text_from_pdf_file(self,file_obj):
         try:
             # Open the PDF from the file-like object
             document = fitz.open(stream=file_obj.read(), filetype="pdf")
@@ -13,3 +16,23 @@ class QuestionAnalyzer:
             return text
         except Exception as e:
             return f"An error occurred: {e}"
+
+    def extract_text_from_image(self, image_path:str):
+        """
+        Extracts text from an image using Tesseract OCR for Hebrew and English.
+
+        :param image_path: Path to the image file
+        :return: Extracted text as a string
+        """
+        try:
+            # Open the image
+            image = Image.open(image_path)
+
+            # Perform OCR using Tesseract with Hebrew and English
+            text = pytesseract.image_to_string(image, lang="heb+eng")
+            # print(text)
+            return text
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return None

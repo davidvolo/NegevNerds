@@ -329,7 +329,7 @@ class NegevNerds:
                                                              question_number=question_number,is_american=is_american,
                                                              question_topics=question_topics,pdf_question_path=pdf__question_path, pdf_answer_path=pdf__answer_path, question_text=question_text)
 
-                self._pdfFacade.perform_information_retrival_question(pdf__question_path,question_data)
+                self._pdfFacade.perform_information_retrival_question(pdf_question_path=pdf__question_path,question_data=question_data)
             
 
             return "Question added successfully."
