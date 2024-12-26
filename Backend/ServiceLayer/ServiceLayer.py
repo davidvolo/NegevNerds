@@ -481,6 +481,28 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def add_comment(self, course_id, year, semester, moed, question_number,
+                     writer_name
+                     , prev_id,
+                     comment_text):
+        """
+        Handles adding a comment to a question discussion.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+
+            result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
+                                                  writer_name, prev_id, comment_text)
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
                      question_topics
                      ,pdf_question, 

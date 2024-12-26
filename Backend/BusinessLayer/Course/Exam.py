@@ -177,7 +177,6 @@ class Exam:
         else:
             raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
 
-
     def get_questions_by_specific(self, question_number=None):
         """
         Return list of questions dtos.

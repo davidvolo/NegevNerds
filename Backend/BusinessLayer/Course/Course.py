@@ -58,6 +58,7 @@ class Course:
         """Retrieve all exams from the exams dictionary."""
         exam_repo = ExamRepository()
         return exam_repo.get_all_exams()
+
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
         """Get specific questions."""
         question_dtos = []
@@ -287,8 +288,18 @@ class Course:
             else:
                 raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-            
-                
+    def add_comment(self, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+        """
+        Add a Comment to specific question.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if exam is None:
+            raise ExamIsNotExist
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound
+        question.add_comment(writer_name, prev_id, comment_text)
+
     def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,

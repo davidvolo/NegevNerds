@@ -1,3 +1,5 @@
+import uuid
+
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
@@ -65,6 +67,7 @@ class Question:
         Converts the Question instance to a QuestionDTO.
         :return: QuestionDTO instance.
         """
+        comment_dtos = [comment.to_dto() for comment in self.comments]
         return QuestionDTO(
             question_id=self.id,
             year=self.year,
@@ -74,7 +77,11 @@ class Question:
             question_topics=self.question_topics,
             is_american=self.is_american,
             link_to_question=self.link_to_question,
+            comments_list=comment_dtos
         )
+
+    def generate_comment_id(self):
+        return "comment" + str(uuid.uuid4())
 
     def get_question_topics(self):
         return self.question_topics
@@ -97,11 +104,16 @@ class Question:
         else:
             print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, comment_id, writer_name, prev_id, comment_text):
+    def add_comment(self, writer_name, prev_id, comment_text):
         """
         Add a Comment to the comments list.
         """
-        comment = Comment(comment_id, writer_name, datetime.now(), prev_id, comment_text)
+        comment = Comment.create(comment_id=self.generate_comment_id(),
+                                 writer_name=writer_name,
+                                 date=datetime.now(), 
+                                 prev_id=prev_id,
+                                 comment_text=comment_text,
+                                 question_id=self.id)
         self.comments.append(comment)
 
     def remove_comment(self, comment_id):
