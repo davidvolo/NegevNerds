@@ -26,7 +26,7 @@ class PDFAnalyzerFacade:
         return syllabus
     
     def perform_information_retrival_question(self, pdf_question_path, question_data):
-        self.inforamtion_retrival.process_pdf(pdf_question_path , question_data)
+        self.inforamtion_retrival.process_pdf(pdf_file_path=pdf_question_path , question_data=question_data)
 
 
        

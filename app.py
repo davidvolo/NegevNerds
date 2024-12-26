@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
+from Backend.DataLayer.WordsQuestions import WordsQuestionsRepository
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 app = Flask(__name__)
@@ -40,13 +41,15 @@ app.register_blueprint(course_controller)
 
 
 def main():
-
-    db.init_app(app)
-
-    with app.app_context():
-        db.create_all()
+    #
+    # db.init_app(app)
+    #
+    # with app.app_context():
+    #     db.create_all()
 
     print("Starting the Exam Preparation System API...")
+    wordsQuestionsRepository =WordsQuestionsRepository
+
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
 

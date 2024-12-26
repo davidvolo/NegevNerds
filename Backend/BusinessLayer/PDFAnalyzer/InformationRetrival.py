@@ -3,46 +3,65 @@ from collections import defaultdict
 import re
 import pdfplumber
 from collections import defaultdict
+from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 
 
 class WordIndexController:
     def __init__(self, common_words_en, common_words_he):
-        self.english_dict = defaultdict(list)  # English word dictionary
-        self.hebrew_dict = defaultdict(list)   # Hebrew word dictionary
+        # self.english_dict = defaultdict(list)  # English word dictionary
+        # self.hebrew_dict = defaultdict(list)   # Hebrew word dictionary
         self.common_words_en = set(common_words_en)  # Set of common English words
         self.common_words_he = set(common_words_he)  # Set of common Hebrew words
+        self.words_repository = WordsQuestionsRepository()
         self.wordIndex1 = WordIndex1(common_words_en, common_words_he)
         self.wordIndex2 = WordIndex2(common_words_en, common_words_he)
 
-    def process_pdf(self, pdf_file_path, question_dto):
+    def process_pdf(self, pdf_file_path, question_data):
         # Process PDF using both WordIndex classes
-        english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_dto)
-        english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_dto)
+        # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
+        # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
+        words1 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
+        words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
+        total_words = set([word for sublist in (words1 + words2) for word in sublist])
+
+        self.update_words(words=total_words, question_data=question_data)
+
+
+
 
         # Merge and update dictionaries
-        self._update_main_dictionary(english_words1, english_words2, question_dto, self.english_dict, self.common_words_en, lower=True)
-        self._update_main_dictionary(hebrew_words1, hebrew_words2, question_dto, self.hebrew_dict, self.common_words_he)
+        #self._update_main_dictionary(english_words1, english_words2, question_data, self.english_dict, self.common_words_en, lower=True)
+        #self._update_main_dictionary(hebrew_words1, hebrew_words2, question_data, self.hebrew_dict, self.common_words_he)
 
-        sorted_english_dict, sorted_hebrew_dict = self.get_sorted_dictionaries()
-        self.english_dict = sorted_english_dict
-        self.hebrew_dict = sorted_hebrew_dict
+        #sorted_english_dict, sorted_hebrew_dict = self.get_sorted_dictionaries()
+        #self.english_dict = sorted_english_dict
+        #self.hebrew_dict = sorted_hebrew_dict
 
 
-    def _update_main_dictionary(self, words1, words2, question_dto, main_dict, common_words, lower=False):
-        """
-        Merges words from two sources and updates the main dictionary, avoiding duplicates.
-        """
-        all_words = set(words1 + words2)  # Combine and remove duplicates
-        for word in all_words:
-            normalized_word = word.lower() if lower else word  # Convert to lowercase if specified
-            if normalized_word not in common_words and question_dto not in main_dict[normalized_word]:
-                main_dict[normalized_word].append(question_dto)
+    # def _update_main_dictionary(self, words1, words2, question_data, main_dict, common_words, lower=False):
+    #     """
+    #     Merges words from two sources and updates the main dictionary, avoiding duplicates.
+    #     """
+    #     all_words = set(words1 + words2)  # Combine and remove duplicates
+    #     for word in all_words:
+    #         normalized_word = word.lower() if lower else word  # Convert to lowercase if specified
+    #         if normalized_word not in common_words and question_data not in main_dict[normalized_word]:
+    #             main_dict[normalized_word].append(question_data)
 
-    def get_sorted_dictionaries(self):
-        # Return sorted versions of both dictionaries
-        sorted_english_dict = dict(sorted(self.english_dict.items()))
-        sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
-        return sorted_english_dict, sorted_hebrew_dict
+
+    def update_words(self, words, question_data):
+        for word in words:
+            word = word.lower()
+            if len(word)>1:
+                if word not in self.common_words_en and word not in self.common_words_he:
+                    self.words_repository.add_word_to_question(word, question_data)
+
+
+    # def get_sorted_dictionaries(self):
+    #     # Return sorted versions of both dictionaries
+    #     sorted_english_dict = dict(sorted(self.english_dict.items()))
+    #     sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
+    #     return sorted_english_dict, sorted_hebrew_dict
 
 
 
@@ -79,7 +98,7 @@ class WordIndex1:
                 split_hebrew.extend(word.split('-'))  # Add components of hyphenated words
             split_hebrew.append(word)  # Keep the hyphenated word itself
 
-        return split_english, split_hebrew
+        return split_english + split_hebrew
 
 
     def process_pdf(self, pdf_file_path, question_data):
@@ -90,13 +109,13 @@ class WordIndex1:
         # Extract English and Hebrew words
         english_words, hebrew_words = self.extract_words(text)
 
-        return english_words, hebrew_words
+        return english_words + hebrew_words
         
-    def get_sorted_dictionaries(self):
-        # Return sorted versions of both dictionaries
-        sorted_english_dict = dict(sorted(self.english_dict.items()))
-        sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
-        return sorted_english_dict, sorted_hebrew_dict
+    # def get_sorted_dictionaries(self):
+    #     # Return sorted versions of both dictionaries
+    #     sorted_english_dict = dict(sorted(self.english_dict.items()))
+    #     sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
+    #     return sorted_english_dict, sorted_hebrew_dict
 
 
 
@@ -135,7 +154,7 @@ class WordIndex2:
 
         return split_english, split_hebrew
 
-    def process_pdf(self, pdf_file_path, question_dto):
+    def process_pdf(self, pdf_file_path, question_data):
         try:
             with pdfplumber.open(pdf_file_path) as pdf:
                 text = ""
