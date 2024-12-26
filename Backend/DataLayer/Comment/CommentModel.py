@@ -29,7 +29,7 @@ class CommentModel(Base):
             writer_name=self.writer_name,
             date=self.date,
             prev_id=self.prev_id,
-            text=self.text,
+            comment_text=self.text,
         )
         return comment
 

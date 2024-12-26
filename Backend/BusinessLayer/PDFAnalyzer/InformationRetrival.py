@@ -82,7 +82,7 @@ class WordIndex1:
         return split_english, split_hebrew
 
 
-    def process_pdf(self, pdf_file_path, question_dto):
+    def process_pdf(self, pdf_file_path, question_data):
         # Parse the PDF
         parsed = parser.from_file(pdf_file_path)
         text = parsed.get('content', '')

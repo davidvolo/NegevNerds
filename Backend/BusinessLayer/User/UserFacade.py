@@ -6,6 +6,7 @@ import re
 import threading
 import uuid
 from email.mime.text import MIMEText
+import bcrypt
 import logging
 from Backend.BusinessLayer.User.User import User  # Adjusted import
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -30,31 +31,52 @@ class UserFacade:
     def generateUserId(self):
         return "user" + str(uuid.uuid4())
 
-    def register(self, email, password, first_name, last_name):
+    import bcrypt
+
+    def hash_password(self,password):
+        """Hash a password using bcrypt."""
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed_password.decode('utf-8')
+
+    def verify_password(self, provided_password, stored_hashed_password):
+        """Verify a password against a stored hashed password."""
+        return bcrypt.checkpw(provided_password.encode('utf-8'), stored_hashed_password.encode('utf-8'))
+
+
+    def register(self, email, password,password_confirm, first_name, last_name):
         """
         Unified register function.
         - Sends an authentication code.
         - Verifies the code interactively.
         - Completes the registration.
         """
-        if self.getUser_by_email(email) is not None:
-            raise Exception("המשתמש כבר קיים במערכת.")
-        
-        if not self.is_valid_name(first_name):
-            raise Exception("השם הפרטי אינו תקין.")
-        
-        if not self.is_valid_name(last_name):
-            raise Exception("שם המשפחה אינו תקין.")
+        try:
+            if self.getUser_by_email(email) is not None:
+                raise Exception("המשתמש כבר קיים במערכת.")
 
-        if not self.is_valid_email(email):
-            raise Exception("האימייל אינו תקין.")
+            if not self.is_valid_name(first_name):
+                raise Exception("השם הפרטי אינו תקין.")
 
-        if not self.is_valid_password(password):
-            raise Exception("הסיסמה אינה תקינה.")
+            if not self.is_valid_name(last_name):
+                raise Exception("שם המשפחה אינו תקין.")
 
-        # Send authentication code
-        self.send_auth_code(email, first_name)
-        return {"message": f"קוד אימות נשלח למייל {email}"}
+            if not self.is_valid_email(email):
+                raise Exception("האימייל אינו תקין.")
+
+            if not self.is_valid_password(password):
+                raise Exception("הסיסמה אינה תקינה.")
+
+            if password != password_confirm:
+                raise Exception("הסיסמה אינה תואמת לאימות סיסמה.")
+
+            # Send authentication code
+            self.send_auth_code(email, first_name)
+            encrypt_password = self.hash_password(password)
+
+            return encrypt_password, {"message": f"קוד אימות נשלח למייל {email}"}
+        except Exception as e:
+                raise Exception(str(e))
 
     def register_authentication_part(self, email, auth_code: str):
         # Interactively verify the code # Allow up to 3 attempts
@@ -212,13 +234,14 @@ class UserFacade:
         try:
             # Check if the email exists in the system
             #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
-            user_repo = UserRepository()
-            user = user_repo.get_user_by_email(email)
+
+            user = self.getUser_by_email(email)
             if user is None:
                 raise UserOrPasswordIncorrectError()
 
+            match_password = self.verify_password(password, user.password)
             # Check if the password matches
-            if user.password != password:
+            if not match_password:
                 raise UserOrPasswordIncorrectError()
 
             user_id = user.get_user_id()
@@ -273,7 +296,7 @@ class UserFacade:
 
 
     def getUser_by_id(self, user_id):
-        user = self.users_byEmail.get(user_id)
+        user = self.users_byId.get(user_id)
         if user is not None:
             return user
         user_repo = UserRepository()
@@ -309,8 +332,10 @@ class UserFacade:
         if not self.is_valid_password(password):
             raise Exception("הסיסמה אינה תקינה.")
 
+        encrypted_password = self.hash_password(password)
+
         user_id = self.generateUserId()
-        user = User.create(user_id, email, password, first_name, last_name)
+        user = User.create(user_id, email, encrypted_password, first_name, last_name)
         #user.login()
         self.users_byEmail[email] = user
         self.users_byId[user_id] = user

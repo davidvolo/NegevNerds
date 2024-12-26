@@ -31,17 +31,19 @@ class CommentRepository:
 
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
-    def add_Comment(self, comment):
+
+    def add_Comment(self, comment, question_id):
 
         session = self.Session()
         try:
             # Convert business model to SQLAlchemy model
             comment_model = CommentModel(
-                comment_id=comment.id,
+                comment_id=comment.comment_id,
                 writer_name=comment.writer_name,
                 date=comment.date,
                 prev_id=comment.prev_id,
-                text=comment.text,
+                text=comment.comment_text,
+                question_id=question_id
             )
 
             session.add(comment_model)

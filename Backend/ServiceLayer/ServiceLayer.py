@@ -30,26 +30,29 @@ class ServiceLayer:
                 negev_nerds = NegevNerds.NegevNerds("../")
             self.negev_nerds = negev_nerds
             self._initialized = True
-
-    def register(self, email, password, first_name, last_name):
-        """Handle user registration and return JSON."""
+            
+    def register(self, email, password, password_confirm, first_name, last_name):
         try:
-            result = self.negev_nerds.register(email, password, first_name, last_name)
+            password, result = self.negev_nerds.register(email, password, password_confirm, first_name, last_name)
 
             if "Error" in result:
-                return json.dumps({
+                return {
                     "status": "error",
-                    "message": result
-                })
-            return json.dumps({
+                    "message": result["Error"]
+                }
+            return {
                 "status": "success",
-                "message": result
-            })
+                "message": result.get("message", "Registration successful"),
+                "password": password
+            }
         except Exception as e:
-            return json.dumps({
+            return {
                 "status": "error",
                 "message": str(e)
-            })
+            }
+
+        
+        
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """Handle user registration and return JSON."""
@@ -478,6 +481,28 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def add_comment(self, course_id, year, semester, moed, question_number,
+                     writer_name
+                     , prev_id,
+                     comment_text):
+        """
+        Handles adding a comment to a question discussion.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+
+            result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
+                                                  writer_name, prev_id, comment_text)
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
                      question_topics
                      ,pdf_question, 
@@ -490,6 +515,24 @@ class ServiceLayer:
             
             result = self.negev_nerds.add_question(course_id, year, semester, moed, questionNumber
                                                    ,is_american,question_topics, pdf_question,pdf_answer )
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def upload_answer(self, course_id, year, semester, moed, questionNumber, pdf_answer):
+        """
+        Handles uploading an answer to an existing question.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+
+            result = self.negev_nerds.upload_answer(course_id, year, semester, moed, questionNumber, pdf_answer)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -640,10 +683,10 @@ class ServiceLayer:
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
-                                    False, ["math", "algebra"],"ex2.pdf",None)
-
-            print(" add question -", res)
+            # res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
+            #                         False, ["math", "algebra"],"ex2.pdf",None)
+            #
+            # print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:
             print(f"Error: Initialization file {file_path} not found.")

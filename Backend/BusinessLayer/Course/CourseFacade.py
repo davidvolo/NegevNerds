@@ -256,30 +256,26 @@ class CourseFacade:
         return True
 
 
-    
-    # def check_valid_question(self,course_id,year,semester, moed, question_number,pdf_question):
-    #     if self.valid_question_parameters(year, semester,moed ,question_number):
-    #         course = self.get_course(course_id)
-    #         return course.check_valid_question(course_id,year,semester, moed, question_number,pdf_question)
-    def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
+
+    def check_valid_question(self, course_id, year, semester, moed, question_number,question_text):
         # Step 1: Validate parameters
-        self.valid_question_parameters(year, semester, moed, question_number)
+        self.valid_question_parameters(year=year, semester=semester, moed=moed, question_number=question_number)
         semester = Semester(semester)
         moed = Moed(moed)
 
         # Step 2: Get the course
-        course = self.get_course(course_id)
-        if not course:
-            raise ValueError(f"Course with ID {course_id} does not exist.")
+        course = self.get_course(course_id=course_id)
+        #if not course:
+        #    raise ValueError(f"Course with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
-        return course.check_valid_question(year, semester, moed, question_number, pdf_question)
+        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number, question_text=question_text)
 
 
 
     
     def add_question(self, course_id, year, semester, moed, question_number,is_american, 
-                     question_topics,pdf_question_path, pdf_answer_path ):
+                     question_topics,pdf_question_path, pdf_answer_path, question_text):
         """
         Delegates question addition to the specified Exam.
         """
@@ -288,12 +284,20 @@ class CourseFacade:
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
             logging.info(f"Question: {year} {semester} {moed} {question_number} was added successfully.")
-            return course.add_question(year, semester, moed, question_number, is_american, question_topics, pdf_question_path, pdf_answer_path)
+            return course.add_question(year, semester, moed, question_number, is_american, question_topics,
+                                       pdf_question_path, pdf_answer_path, question_text)
         except Exception as e:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
-        
 
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.add_comment(year, semester, moed, question_number, writer_name, prev_id, comment_text)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
 
     def remove_question(self, course_id, year, semester, moed, question_number):
         """
@@ -320,13 +324,6 @@ class CourseFacade:
         return course.get_questions_by_keywords(keywords)
 
     """--------------Comment functionality--------------"""
-
-    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, prev_id, comment_text):
-        """
-        Delegates Comment addition to the specified Exam and Question.
-        """
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
     def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """

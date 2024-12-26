@@ -4,6 +4,7 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
+from Backend.DataLayer.Exam.ExamRepository import ExamRepository
 
 
 class Course:
@@ -40,6 +41,10 @@ class Course:
     def get_id(self):
         return self.course_id
 
+    def get_exams_by_year(self, year):
+        exam_repo = ExamRepository()
+        return exam_repo.get_all_exams_by_year(year=year)
+
     def get_name(self):
         return self.name
 
@@ -51,15 +56,11 @@ class Course:
 
     def get_all_exams(self):
         """Retrieve all exams from the exams dictionary."""
-        all_exams = []
-        for year_exams in self.exams.values():
-            for exam in year_exams:
-                all_exams.append(exam)
-        return all_exams
+        exam_repo = ExamRepository()
+        return exam_repo.get_all_exams()
 
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
         """Get specific questions."""
-        print ("in course")
         question_dtos = []
         if year is None:
             all_exams = self.get_all_exams()
@@ -67,8 +68,9 @@ class Course:
                 # Only include the questions that match the specific number
                 question_dtos.extend(exam.get_questions_by_specific(question_number))
         else:
-            if year in self.exams:
-                year_exams = self.exams[year]
+            year_exams = self.get_exams_by_year(year)
+            if year_exams is not None and len(year_exams) > 0:
+                # year_exams = self.exams[year]
                 if semester is None:
                     for exam in year_exams:
                         question_dtos.extend(exam.get_questions_by_specific(question_number))
@@ -102,10 +104,11 @@ class Course:
             for exam in self.exams[year]:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
-
+        exam_repo = ExamRepository()
+        exam= exam_repo.get_exam_by_date(year, semester, moed)
+        return exam
         # if raise_exception:
         #     raise ExamIsNotExist(year, semester, moed)
-        return None
 
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
     def get_exams(self, year: int, semester=None, moed=None):
@@ -175,10 +178,9 @@ class Course:
         else:
             raise UserIsNotRegisterToCourse()
 
-    def generate_exam_id(self):
-        return len(self.exams) + 1
-
-    def add_exam(self, link, year, semester, moed):
+    def generate_exam_id(self, year, semester, moed):
+        return f"EXAM-{self.course_id}-{year}-{semester}-{moed}"
+    def add_exam(self, year, semester, moed, link=""):
         """
         Adds an exam to the course.
         """
@@ -188,7 +190,7 @@ class Course:
 
         exam = self.get_exam(year, semester, moed, raise_exception=False)
         if exam is None:
-            exam_id = self.generate_exam_id()
+            exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
             exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
 
             if year not in self.exams:
@@ -272,23 +274,34 @@ class Course:
     #         else:
     #             raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-    def check_valid_question(self, year, semester, moed, question_number, pdf_question):
+    def check_valid_question(self, year, semester, moed, question_number, question_text):
         # Get or create the exam
         currExam = self.get_exam(year, semester, moed)
         if currExam is None:
             # Create the exam if it doesn't exist
-            self.add_exam(pdf_question, year, semester, moed)
+            self.add_exam(year=year, semester=semester, moed=moed)
             return True
         else:
             # Compare normalized values
             if currExam.semester == semester and currExam.moed == moed:
-                return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
+                return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number, question_text=question_text)
             else:
                 raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-            
-                
-    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path):
+    def add_comment(self, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+        """
+        Add a Comment to specific question.
+        """
         exam = self.get_exam(year, semester, moed)
-        return exam.add_question(question_number,is_american,question_topics, pdf__question_path, pdf__answer_path)
+        if exam is None:
+            raise ExamIsNotExist
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound
+        question.add_comment(writer_name, prev_id, comment_text)
+
+    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
+        exam = self.get_exam(year, semester, moed)
+        return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
+                                 pdf__answer_path, question_text)
 

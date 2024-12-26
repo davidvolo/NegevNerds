@@ -2,7 +2,7 @@ from Backend.BusinessLayer.Course.enums import Semester, Moed
 
 class QuestionDTO:
     def __init__(self, question_id, year, semester, moed, question_number, question_topics,
-                 is_american, link_to_question):
+                 is_american, link_to_question, comments_list):
         """
         Data Transfer Object for the Question class.
         """
@@ -14,6 +14,7 @@ class QuestionDTO:
         self.question_topics = question_topics
         self.is_american = is_american
         self.link_to_question = link_to_question
+        self.comments_list = comments_list
 
     def to_dict(self):
         """
@@ -24,11 +25,15 @@ class QuestionDTO:
         return {
             "question_id": self.question_id,
             "year": self.year,
-            "semester": self.semester.name if hasattr(self.semester, 'name') else self.semester,
-            "moed": self.moed.name if hasattr(self.moed, 'name') else self.moed,
+            "semester": self.semester.value if hasattr(self.semester, 'value') else self.semester,
+            "moed": self.moed.value if hasattr(self.moed, 'value') else self.moed,
             "question_number": self.question_number,
             "question_topics": self.question_topics,
             "is_american": self.is_american,
             "link_to_question": self.link_to_question,
+            "comments_list": [
+                comment.to_dict() if hasattr(comment, "to_dict") else comment
+                for comment in self.comments_list
+            ],
         }
 

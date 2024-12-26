@@ -42,15 +42,16 @@ class QuestionRepository:
         try:
             # Convert business model to SQLAlchemy model
             question_model = QuestionModel(
-                question_id=question.question_id,
+                question_id=question.id,
                 year=question.year,
                 is_american=question.is_american,
                 link_to_question=question.link_to_question,
-                link_to_exam=question.link_to_question,
+                link_to_exam=question.link_to_exam,
                 semester=question.semester,
                 moed=question.moed,
                 question_number=question.question_number,
-                exam_id=exam_id
+                exam_id=exam_id,
+                text= question.text
             )
 
             session.add(question_model)
@@ -73,6 +74,23 @@ class QuestionRepository:
         finally:
             session.close()
 
+    def get_question_by_exam_id(self, exam_id):
+
+        session = self.Session()
+        try:
+            question_models = session.query(QuestionModel).filter_by(exam_id=exam_id).all()
+            return [question_model.to_business_model() for question_model in question_models]
+        finally:
+            session.close()
+
+    def get_question_by_number(self, exam_id, question_number):
+        session = self.Session()
+        try:
+            question_model = session.query(QuestionModel).filter_by(exam_id=exam_id, question_number=question_number).first()
+            return question_model.to_business_model() if question_model else None
+        finally:
+            session.close()
+
 
     def update_question(self, question):
         if isinstance(question.semester,Semester):
@@ -81,7 +99,7 @@ class QuestionRepository:
             question.moed =question.moed.value
         session = self.Session()
         try:
-            question_model = session.query(QuestionModel).filter_by(question_id=question.question_id).first()
+            question_model = session.query(QuestionModel).filter_by(question_id=question.id).first()
 
             if not question_model:
                 raise ValueError(f"No question found with ID {question.id}")
@@ -91,10 +109,12 @@ class QuestionRepository:
             question_model.year = question.year,
             question_model.is_american = question.is_american,
             question_model.link_to_question = question.link_to_question,
-            question_model.link_to_exam = question.link_to_question,
+            question_model.link_to_exam = question.link_to_exam,
+            question_model.link_to_answer = question.link_to_answer
             question_model.semester = question.semester,
             question_model.moed = question.moed,
             question_model.question_number = question.question_number,
+            question_model.text = question.text
 
             session.commit()
         except Exception as e:
@@ -119,3 +139,16 @@ class QuestionRepository:
             raise e
         finally:
             session.close()
+
+    def is_exist(self, year, semester, moed, text):
+
+        session = self.Session()
+        try:
+            curr = session.query(QuestionModel).filter_by(year=year, semester=semester,
+                                                             moed=moed, text=text).first()
+            return curr is not None
+        finally:
+            session.close()
+
+
+

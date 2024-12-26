@@ -1,10 +1,12 @@
+import ast
 import json
 import os
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_cors import cross_origin, CORS
+from werkzeug.utils import secure_filename
 
-from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
+
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
@@ -118,8 +120,10 @@ def open_course():
         name = request.form.get('name')
         syllabus_file = request.files['syllabus_content_pdf']
 
-        # Save file
-        file_path = f"/Users/davidvolodarsky/Desktop/Semeters/Semester_G/NegevNerds/sylbus_analyzer/uplods/{syllabus_file.filename}"
+         # Save file to the specified directory
+        base_dir = os.path.join(os.getcwd(), 'Backend', 'BusinessLayer', 'PDFAnalyzer')
+        os.makedirs(base_dir, exist_ok=True)  # Ensure the directory exists
+        file_path = os.path.join(base_dir, secure_filename(syllabus_file.filename))
         syllabus_file.save(file_path)
         print(f"File saved to {file_path}")
         print(f"user id {user_id}")
@@ -128,6 +132,13 @@ def open_course():
         result = serviceLayer.open_course(user_id, course_id, name, file_path)
         parsed_result = json.loads(result)
         print(f"Service layer response: {parsed_result}")
+
+        try:
+            os.remove(file_path)
+            print(f"Deleted file {file_path}")
+        except Exception as delete_error:
+            print(f"Error deleting file {file_path}: {str(delete_error)}")
+
 
         # Construct and return response
         return jsonify({
@@ -568,6 +579,7 @@ def add_question():
         moed = request.form.get('moed')
         question_number = int(request.form.get('question_number'))
         is_american = request.form.get('is_american')
+        is_american_boolean = is_american.lower() == 'true'
         question_topics = request.form.get('question_topics')
         pdf_question = request.files.get('pdf_question')
         pdf_answer = request.files.get('pdf_answer')  # Optional
@@ -580,10 +592,21 @@ def add_question():
                 "message": "Missing required fields."
             }), 400
 
+        if isinstance(question_topics, str):
+            try:
+                question_topics = ast.literal_eval(question_topics)  # Safely convert string to list
+                if not isinstance(question_topics, list):  # Ensure it's a list after conversion
+                    question_topics = [question_topics]
+            except (ValueError, SyntaxError):
+                return jsonify({
+                    "success": False,
+                    "message": "Invalid format for question_topics."
+                }), 400
+
         # Call the service layer
         result = serviceLayer.add_question(
             course_id, year, semester, moed, question_number,
-            is_american, question_topics, pdf_question, pdf_answer
+            is_american_boolean, question_topics, pdf_question, pdf_answer
         )
 
         # Parse the service response
@@ -601,7 +624,55 @@ def add_question():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/course/add_comment', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def add_comment():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
 
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        writer_name = request.form.get('writer_name')
+        prev_id = int(request.form.get('prev_id'))
+        comment_text = request.form.get('comment_text')  # Optional
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.add_comment(
+            course_id, year, semester, moed, question_number,
+            writer_name, prev_id, comment_text
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in add_comment: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
 
 @course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
 @cross_origin()
@@ -680,5 +751,54 @@ def search_question_by_specifics():
             "success": False,
             "message": str(e)
         }), 500
+
+
+@course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def upload_answer():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        pdf_answer = request.files.get('pdf_answer')  # Optional
+
+        if not all([course_id, year, semester, moed, question_number, pdf_answer]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.upload_answer(
+            course_id, year, semester, moed, question_number, pdf_answer
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in upload_answer: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+
 
 
