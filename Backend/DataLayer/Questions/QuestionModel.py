@@ -39,7 +39,7 @@ class QuestionModel(Base):
         business_topics = [topic.topic for topic in self.topics]  # Assuming 'name' is the string field
 
         # No changes for comments if they're the same as before
-
+        business_comments = [comment.to_business_model() for comment in self.comments]
 
         # Create the business model
         question = Question(
@@ -54,6 +54,7 @@ class QuestionModel(Base):
             question_number=self.question_number,
             text=self.text,
             question_topics=business_topics,  # List of strings
+            comments=business_comments
         )
         return question
 

@@ -1,19 +1,54 @@
 from datetime import datetime
 
 from Backend.BusinessLayer.Util.Exceptions import UserAlreadyPostEmoji, EmojiNotFounded
+from Backend.DataLayer.Comment.CommentRepository import CommentRepository
+from Backend.DataLayer.DTOs.CommentDTO import CommentDTO
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name, date=None, prev_id=None, text=""):
+    def __init__(self, comment_id, writer_name, date=None, prev_id=None, comment_text=""):
         """
         Initialize a Comment instance.
         """
-        self.id = comment_id
+        self.comment_id = comment_id
         self.writer_name = writer_name
         self.date = date if date else datetime.now()  # Default to current date if not provided
         self.prev_id = prev_id
-        self.text = text
+        self.comment_text = comment_text
         self.emoji_counter_map = {"like": set(), "dislike": set()}
+
+    @classmethod
+    def create(cls, comment_id, writer_name, date, prev_id, comment_text, question_id):
+        """
+        Class method to create a new comment and save to database
+        Returns:
+            Comment: Newly created comment instance
+        """
+
+        comment = cls(
+            comment_id=comment_id,
+            writer_name=writer_name,
+            date=date,
+            prev_id=prev_id,
+            comment_text=comment_text,
+        )
+        comment_repo = CommentRepository()
+        comment_repo.add_Comment(comment, question_id)
+
+        return comment
+
+    def to_dto(self):
+        """
+        Converts the Comment instance to a CommentDTO.
+        :return: CommentDTO instance.
+        """
+        return CommentDTO(
+            comment_id=self.comment_id,
+            writer_name=self.writer_name,
+            date=self.date,
+            prev_id=self.prev_id,
+            comment_text=self.comment_text
+        )
 
     def add_emoji(self, emoji, userId):
         """

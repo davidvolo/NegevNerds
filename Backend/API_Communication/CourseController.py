@@ -7,7 +7,6 @@ from flask_cors import cross_origin, CORS
 from werkzeug.utils import secure_filename
 
 
-from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
@@ -625,7 +624,55 @@ def add_question():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/course/add_comment', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def add_comment():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
 
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        writer_name = request.form.get('writer_name')
+        prev_id = int(request.form.get('prev_id'))
+        comment_text = request.form.get('comment_text')  # Optional
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.add_comment(
+            course_id, year, semester, moed, question_number,
+            writer_name, prev_id, comment_text
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in add_comment: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
 
 @course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
 @cross_origin()

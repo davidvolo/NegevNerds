@@ -289,8 +289,15 @@ class CourseFacade:
         except Exception as e:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
-        
 
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.add_comment(year, semester, moed, question_number, writer_name, prev_id, comment_text)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
 
     def remove_question(self, course_id, year, semester, moed, question_number):
         """
@@ -317,13 +324,6 @@ class CourseFacade:
         return course.get_questions_by_keywords(keywords)
 
     """--------------Comment functionality--------------"""
-
-    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, prev_id, comment_text):
-        """
-        Delegates Comment addition to the specified Exam and Question.
-        """
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).add_comment(comment_id, writer_name, prev_id, comment_text)
 
     def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """

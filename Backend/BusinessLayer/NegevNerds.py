@@ -278,6 +278,21 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id,
+                    comment_text):
+        """
+                Add a comment to a question discussion.
+        """
+        try:
+            self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+                                                           moed=moed, question_number=question_number,
+                                                          writer_name=writer_name, prev_id=prev_id, comment_text=comment_text)
+            return "Comment added successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to add comment: {e}")
+
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.
