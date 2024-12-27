@@ -112,6 +112,94 @@ class ExamRepository:
         finally:
             session.close()
 
+    def get_exam_by_course(self, course_id):
+        """
+        Retrieve a exam by their course
+
+        Args:
+            course_id (str): course's id
+
+        Returns:
+            exam: Business layer exam object
+
+        """
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).filter_by(course_id=course_id).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by course: {e}")
+            return None
+        finally:
+            session.close()
+
+    def get_all_exams_by_year_and_course(self, year, course_id):
+        """
+        Retrieve a exam by their course_id and year
+
+        Args:
+            year, course_id (str)
+
+        Returns:
+            exam: Business layer exam object or None if not found
+        """
+
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).filter_by(year=year,course_id=course_id).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by email: {e}")
+            return None
+        finally:
+            session.close()
+
+    def get_all_exams_by_year_sem_moed(self, year, semester, moed, course_id):
+        """
+        Retrieve a exam by their year,semester, moed, course_id
+
+        Args:
+            email (str): exam's email address
+
+        Returns:
+            exam: Business layer exam object or None if not found
+        """
+
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by email: {e}")
+            return None
+        finally:
+            session.close()
+
+    def get_all_exams_by_year(self, year):
+        """
+        Retrieve a exam by their email
+
+        Args:
+            email (str): exam's email address
+
+        Returns:
+            exam: Business layer exam object or None if not found
+        """
+
+        session = self.Session()
+        try:
+            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            return [exam.to_business_model() for exam in exam_model]
+        except Exception as e:
+            # Log the exception if needed
+            print(f"Error retrieving exam by email: {e}")
+            return None
+        finally:
+            session.close()
+
     def get_all_exams_by_year(self, year):
         """
         Retrieve a exam by their email

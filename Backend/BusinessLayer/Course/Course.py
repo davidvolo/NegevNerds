@@ -43,7 +43,7 @@ class Course:
 
     def get_exams_by_year(self, year):
         exam_repo = ExamRepository()
-        return exam_repo.get_all_exams_by_year(year=year)
+        return exam_repo.get_all_exams_by_year_and_course(year=year, course_id=self.course_id)
 
     def get_name(self):
         return self.name
@@ -57,16 +57,17 @@ class Course:
     def get_all_exams(self):
         """Retrieve all exams from the exams dictionary."""
         exam_repo = ExamRepository()
-        return exam_repo.get_all_exams()
+        return exam_repo.get_exam_by_course(course_id=self.course_id)
 
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
         """Get specific questions."""
         question_dtos = []
         if year is None:
             all_exams = self.get_all_exams()
-            for exam in all_exams:
-                # Only include the questions that match the specific number
-                question_dtos.extend(exam.get_questions_by_specific(question_number))
+            if all_exams is not None:
+                for exam in all_exams:
+                    # Only include the questions that match the specific number
+                    question_dtos.extend(exam.get_questions_by_specific(question_number))
         else:
             year_exams = self.get_exams_by_year(year)
             if year_exams is not None and len(year_exams) > 0:
@@ -76,7 +77,7 @@ class Course:
                         question_dtos.extend(exam.get_questions_by_specific(question_number))
                 elif semester is not None and moed is None:
                     for exam in year_exams:
-                        if exam.semester == semester:
+                        if exam.semester.__str__() == semester:
                             question_dtos.extend(exam.get_questions_by_specific(question_number))
                 else:
                     exam = self.get_exam(year, semester, moed)
