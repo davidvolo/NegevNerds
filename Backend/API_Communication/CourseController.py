@@ -631,7 +631,7 @@ def add_comment():
         moed = request.form.get('moed')
         question_number = int(request.form.get('question_number'))
         writer_name = request.form.get('writer_name')
-        prev_id = int(request.form.get('prev_id'))
+        prev_id = request.form.get('prev_id')
         comment_text = request.form.get('comment_text')  # Optional
 
         # Validate required fields
