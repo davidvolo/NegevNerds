@@ -14,7 +14,7 @@ class Course:
         self.course_topics = course_topics if course_topics is not None else set()  # Default to an empty list
         self.exams = {}  # Dictionary to store exams by years
         self.managers = set() # Dictionary to store managers with manager_id as key
-        self.students = []  # List of students for the course
+        self.users = []  # List of users for the course
 
     @classmethod
     def create(cls, course_id, name, course_topics=None):
@@ -140,8 +140,8 @@ class Course:
     def get_managers(self):
         return self.managers
 
-    def get_students(self):
-        return self.students
+    def get_users(self):
+        return self.users
 
     # Setters
     def set_syllabus(self, syllabus):
@@ -164,15 +164,15 @@ class Course:
 
     def add_student(self, user_id):
         """Adds a student to the course."""
-        if user_id not in self.students:
-            self.students.append(user_id)
+        if user_id not in self.users:
+            self.users.append(user_id)
         else:
             raise UserAlreadyRegisterToCourse()
 
     def remove_student(self, user_id):
         """Removes a student from the course."""
-        if user_id in self.students:
-            self.students.remove(user_id)
+        if user_id in self.users:
+            self.users.remove(user_id)
             course_repo = CourseRepository()
             course_repo.update_course(self)
         else:
@@ -243,8 +243,8 @@ class Course:
             self.exams[new_year].append(exam)
         else:
             raise ExamIsNotExist(year, semester, moed)
-        
-        
+
+
     # def check_valid_question(self, course_id,year,semester, moed, question_number,pdf_question):
     #     currExam = self.get_exam(year,semester,moed)
     #     if currExam is None:
@@ -253,7 +253,7 @@ class Course:
     #     else:
     #         if currExam.semester == semester and currExam.moed == moed:
     #             return currExam.check_add_question_possibility(year, semester, moed, question_number,pdf_question )
-    
+
     # def check_valid_question(self, course_id, year, semester, moed, question_number, pdf_question):
     #     # Get or create the exam
     #     currExam = self.get_exam(year, semester, moed)
