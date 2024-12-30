@@ -301,6 +301,30 @@ class Course:
             raise QuestionNotFound
         question.add_comment(writer_name, prev_id, comment_text)
 
+    def add_reaction(self, year, semester, moed, question_number, comment_id, user_id, emoji):
+        """
+        Add a reaction to specific question.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if exam is None:
+            raise ExamIsNotExist
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound
+        question.add_reaction(comment_id, user_id, emoji)
+
+    def remove_reaction(self, year, semester, moed, question_number, comment_id, reaction_id):
+        """
+        Add a reaction to specific question.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if exam is None:
+            raise ExamIsNotExist
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound
+        question.remove_reaction(comment_id, reaction_id)
+
     def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,

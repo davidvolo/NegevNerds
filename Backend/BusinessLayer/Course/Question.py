@@ -122,10 +122,24 @@ class Question:
         Raise an exception if the Comment is not found.
         """
         for comment in self.comments:
-            if comment.id == comment_id:
+            if comment.comment_id == comment_id:
                 self.comments.remove(comment)
                 return
         raise CommentNotFound(comment_id)
+
+    def add_reaction(self, comment_id, user_id, emoji):
+        for comment in self.comments:
+            if comment.comment_id == comment_id:
+                comment.add_reaction(user_id, emoji)
+                return
+        raise CommentNotFound
+
+    def remove_reaction(self, comment_id, reaction_id):
+        for comment in self.comments:
+            if comment.comment_id == comment_id:
+                comment.remove_reaction(reaction_id)
+                return
+        raise CommentNotFound
 
     def __str__(self):
         """
