@@ -503,6 +503,44 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
+        """
+        Handles adding a reaction to a comment.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+
+            result = self.negev_nerds.add_reaction(course_id, year, semester, moed, question_number,
+                                                  comment_id, user_id, emoji)
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
+        """
+        Handles removing a reaction from a comment.
+        :return: JSON response indicating success or failure.
+        """
+        try:
+
+            result = self.negev_nerds.remove_reaction(course_id, year, semester, moed, question_number,
+                                                  comment_id, reaction_id)
+            return json.dumps({
+                "status": "success",
+                "message": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
                      question_topics
                      ,pdf_question, 

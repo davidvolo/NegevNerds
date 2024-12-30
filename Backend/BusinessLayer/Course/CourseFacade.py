@@ -299,6 +299,24 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
+    def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.add_reaction(year, semester, moed, question_number, comment_id, user_id, emoji)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
+    def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.remove_reaction(year, semester, moed, question_number, comment_id, reaction_id)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
     def remove_question(self, course_id, year, semester, moed, question_number):
         """
         Delegates question removal to the specified Exam.

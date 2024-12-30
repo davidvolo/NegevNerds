@@ -6,7 +6,6 @@ class Moed(Enum):
     C = "ג"
     D = "ד"
 
-
     def __str__(self):
         return self.value
 

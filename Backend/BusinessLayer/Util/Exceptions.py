@@ -128,19 +128,11 @@ class ExamAlreadyExists(BaseError):
         super().__init__(message, code=409)  # 4
 
 
-class UserAlreadyPostEmoji(BaseError):
-    """Exception raised when the manager is not exist."""
+class ReactionNotFound(BaseError):
+    """Exception raised when the reaction does not exist."""
 
-    def __init__(self, userId):
-        message = f"user {userId} already post this emoji."
-        super().__init__(message, code=409)  # 4
-
-
-class EmojiNotFounded(BaseError):
-    """Exception raised when the manager is not exist."""
-
-    def __init__(self):
-        message = "Emoji not found or count is already zero."
+    def __init__(self, reaction_id):
+        message = f"Reaction {reaction_id} not found."
         super().__init__(message, code=409)  # 4
 
 

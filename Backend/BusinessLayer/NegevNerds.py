@@ -293,6 +293,34 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to add comment: {e}")
 
+    def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
+        """
+            Add a reaction to a comment.
+        """
+        try:
+            self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
+                                          moed=moed, question_number=question_number,
+                                          comment_id=comment_id, user_id=user_id, emoji=emoji)
+            return "Reaction added successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to add reaction: {e}")
+
+    def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
+        """
+            Remove a reaction from a comment.
+        """
+        try:
+            self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
+                                          moed=moed, question_number=question_number,
+                                          comment_id=comment_id, reaction_id=reaction_id)
+            return "Reaction removed successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to remove reaction: {e}")
+
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  pdf_question, pdf_answer):
         """
         Add a question to a course exam with an associated PDF file.

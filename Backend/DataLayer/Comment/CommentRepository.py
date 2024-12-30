@@ -32,7 +32,7 @@ class CommentRepository:
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
-    def add_Comment(self, comment, question_id):
+    def add_comment(self, comment, question_id):
 
         session = self.Session()
         try:
@@ -74,13 +74,13 @@ class CommentRepository:
         session = self.Session()
         try:
 
-            comment_model = session.query(CommentModel).filter_by(comment_id=comment.id).first()
+            comment_model = session.query(CommentModel).filter_by(comment_id=comment.comment_id).first()
 
             if not comment_model:
-                raise ValueError(f"No comment found with ID {comment.id}")
+                raise ValueError(f"No comment found with ID {comment.comment_id}")
 
             # Update fields
-            comment_model.comment_id = comment.id
+            comment_model.comment_id = comment.comment_id
             comment_model.writer_name = comment.writer_name
             comment_model.date = comment.date
             comment_model.prev_id = comment.prev_id

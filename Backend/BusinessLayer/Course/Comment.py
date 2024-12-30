@@ -1,12 +1,15 @@
+import uuid
 from datetime import datetime
 
-from Backend.BusinessLayer.Util.Exceptions import UserAlreadyPostEmoji, EmojiNotFounded
+from Backend.BusinessLayer.Course.Reaction import Reaction
+from Backend.BusinessLayer.Util.Exceptions import ReactionNotFound
 from Backend.DataLayer.Comment.CommentRepository import CommentRepository
 from Backend.DataLayer.DTOs.CommentDTO import CommentDTO
+from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name, date=None, prev_id=None, comment_text=""):
+    def __init__(self, comment_id, writer_name, date=None, prev_id=None, comment_text="", reactions=None):
         """
         Initialize a Comment instance.
         """
@@ -15,7 +18,7 @@ class Comment:
         self.date = date if date else datetime.now()  # Default to current date if not provided
         self.prev_id = prev_id
         self.comment_text = comment_text
-        self.emoji_counter_map = {"like": set(), "dislike": set()}
+        self.reactions = reactions if reactions is not None else [] #reactions_list
 
     @classmethod
     def create(cls, comment_id, writer_name, date, prev_id, comment_text, question_id):
@@ -33,7 +36,7 @@ class Comment:
             comment_text=comment_text,
         )
         comment_repo = CommentRepository()
-        comment_repo.add_Comment(comment, question_id)
+        comment_repo.add_comment(comment, question_id)
 
         return comment
 
@@ -42,43 +45,46 @@ class Comment:
         Converts the Comment instance to a CommentDTO.
         :return: CommentDTO instance.
         """
+        reaction_dtos = [reaction.to_dto() for reaction in self.reactions]
         return CommentDTO(
             comment_id=self.comment_id,
             writer_name=self.writer_name,
             date=self.date,
             prev_id=self.prev_id,
-            comment_text=self.comment_text
+            comment_text=self.comment_text,
+            reactions=reaction_dtos
         )
 
-    def add_emoji(self, emoji, userId):
-        """
-        Add an emoji to the Comment, incrementing its count.
-        """
-        # Ensure the emoji exists in the counter map
-        if emoji not in self.emoji_counter_map:
-            raise EmojiNotFounded()
+    def generate_reaction_id(self):
+        return "reaction" + str(uuid.uuid4())
 
-        # Check if the user already posted this emoji
-        if userId in self.emoji_counter_map[emoji]:
-            raise UserAlreadyPostEmoji(userId)
-
-        # Remove conflicting emoji if needed
-        if emoji == "like" and userId in self.emoji_counter_map["dislike"]:
-            self.emoji_counter_map["dislike"].remove(userId)
-        elif emoji == "dislike" and userId in self.emoji_counter_map["like"]:
-            self.emoji_counter_map["like"].remove(userId)
-
-        # Add the userId to the emoji set
-        self.emoji_counter_map[emoji].add(userId)
-
-    def remove_emoji(self, emoji, userId):
+    def add_reaction(self, user_id, emoji):
         """
-        Remove an emoji from the Comment for a specific user.
+        Add a reaction to the Comment.
         """
-        if emoji in self.emoji_counter_map and userId in self.emoji_counter_map[emoji]:
-            self.emoji_counter_map[emoji].remove(userId)
-        else:
-            raise EmojiNotFounded
+
+        # Check if the user already reacted
+        for reaction in self.reactions:
+            if reaction.user_id == user_id:
+                if reaction.emoji != emoji:
+                    self.remove_reaction(reaction.reaction_id)
+                else:
+                    return
+        reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
+        self.reactions.append(reaction)
+
+    def remove_reaction(self, reaction_id):
+        """
+        Remove a reaction from the Comment for a specific user.
+        """
+        for reaction in self.reactions:
+            if reaction.reaction_id == reaction_id:
+                reaction_repo = ReactionRepository()
+                reaction_repo.remove_reaction(reaction.reaction_id)
+                self.reactions.remove(reaction)
+                return
+
+        raise ReactionNotFound(reaction_id)
 
     def edit_text(self, new_text):
         self.text = new_text

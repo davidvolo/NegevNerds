@@ -674,6 +674,105 @@ def add_comment():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/course/add_reaction', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def add_reaction():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        comment_id = request.form.get('comment_id')
+        user_id = request.form.get('user_id')
+        emoji = request.form.get('emoji')  # Optional
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, comment_id, user_id, emoji]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.add_reaction(
+            course_id, year, semester, moed, question_number,
+            comment_id, user_id, emoji
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in add_reaction: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+@course_controller.route('/api/course/remove_reaction', methods=['POST', 'GET', 'OPTIONS'])
+@cross_origin()
+def remove_reaction():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        comment_id = request.form.get('comment_id')
+        reaction_id = request.form.get('reaction_id')
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, comment_id, reaction_id]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        # Call the service layer
+        result = serviceLayer.remove_reaction(
+            course_id, year, semester, moed, question_number,
+            comment_id, reaction_id
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in remove_reaction: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
 @course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
 @cross_origin()
 def search_question_by_specifics():
