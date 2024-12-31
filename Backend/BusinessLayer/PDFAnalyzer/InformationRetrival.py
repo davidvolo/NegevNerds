@@ -198,7 +198,7 @@ class WordIndex2:
             reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
 
 
-            return english_words + hebrew_words
+            return english_words + reversed_hebrew_words
 
         except Exception as e:
             print(f"Error processing PDF: {e}")
