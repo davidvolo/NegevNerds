@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+import threading
 
 from Backend.BusinessLayer.Course.Reaction import Reaction
 from Backend.BusinessLayer.Util.Exceptions import ReactionNotFound
@@ -19,6 +20,8 @@ class Comment:
         self.prev_id = prev_id
         self.comment_text = comment_text
         self.reactions = reactions if reactions is not None else [] #reactions_list
+
+        self.reactions_lock = threading.Lock()  # Lock for reactions list
 
     @classmethod
     def create(cls, comment_id, writer_name, date, prev_id, comment_text, question_id):
@@ -62,29 +65,31 @@ class Comment:
         """
         Add a reaction to the Comment.
         """
-
-        # Check if the user already reacted
-        for reaction in self.reactions:
-            if reaction.user_id == user_id:
-                if reaction.emoji != emoji:
-                    self.remove_reaction(reaction.reaction_id)
-                else:
-                    return
-        reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
-        if reaction is not None:
-            self.reactions.append(reaction)
-        else:
-            raise Exception("error while creating reaction")
+        with self.reactions_lock:  # Synchronize access to reactions list
+            for reaction in self.reactions:
+                if reaction.user_id == user_id:
+                    if reaction.emoji != emoji:
+                        self.remove_reaction(reaction.reaction_id)
+                    else:
+                        return
+            reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
+            reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
+            if reaction is not None:
+                self.reactions.append(reaction)
+            else:
+                raise Exception("error while creating reaction")
+                
     def remove_reaction(self, reaction_id):
         """
         Remove a reaction from the Comment for a specific user.
         """
-        for reaction in self.reactions:
-            if reaction.reaction_id == reaction_id:
-                reaction_repo = ReactionRepository()
-                reaction_repo.remove_reaction(reaction.reaction_id)
-                self.reactions.remove(reaction)
-                return
+        with self.reactions_lock:  # Synchronize access to reactions list
+            for reaction in self.reactions:
+                if reaction.reaction_id == reaction_id:
+                    reaction_repo = ReactionRepository()
+                    reaction_repo.remove_reaction(reaction.reaction_id)
+                    self.reactions.remove(reaction)
+                    return
 
     def edit_text(self, new_text):
         self.text = new_text
@@ -94,5 +99,6 @@ class Comment:
         Calculate and return the score of the Comment.
         The score is the count of 'like' emojis minus the count of 'dislike' emojis.
         """
-        return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])
+        with self.reactions_lock:
+            return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])
 

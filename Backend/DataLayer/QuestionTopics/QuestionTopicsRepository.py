@@ -36,7 +36,7 @@ class QuestionTopicsRepository:
         else:
             self.Session = session
 
-    def add_Topic_to_Question(self, question_id, topic):
+    def add_topic_to_question(self, question_id, topic):
 
         session = self.Session()
         try:

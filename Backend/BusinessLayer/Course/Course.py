@@ -1,3 +1,5 @@
+import threading
+
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
@@ -5,6 +7,7 @@ from Backend.DataLayer.Course.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.Exam.ExamRepository import ExamRepository
+from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
 
 class Course:
@@ -15,6 +18,11 @@ class Course:
         self.exams = {}  # Dictionary to store exams by years
         self.managers = set() # Dictionary to store managers with manager_id as key
         self.users = []  # List of users for the course
+
+        self.course_topics_lock = threading.Lock()
+        self.exams_lock = threading.Lock()  # Lock for synchronizing access to exams
+        self.managers_lock = threading.Lock()
+        self.users_lock = threading.Lock()
 
     @classmethod
     def create(cls, course_id, name, course_topics=None):
@@ -41,10 +49,6 @@ class Course:
     def get_id(self):
         return self.course_id
 
-    def get_exams_by_year(self, year):
-        exam_repo = ExamRepository()
-        return exam_repo.get_all_exams_by_year_and_course(year=year, course_id=self.course_id)
-
     def get_name(self):
         return self.name
 
@@ -52,12 +56,47 @@ class Course:
         return self.syllabus
 
     def get_topics(self):
-        return self.course_topics
+        with self.course_topics_lock:  # Ensure synchronized access to course_topics
+            if not self.course_topics:  # If course topics is empty, fetch from database
+                topics_repo = CourseTopicsRepository()
+                self.course_topics = topics_repo.get_topics_by_course(course_id=self.course_id)
+
+            return list(self.course_topics)  # Return as a list to avoid direct modification
+
+    def get_exam(self, year, semester, moed, raise_exception=True):
+        """
+        Retrieves a specific exam by year, semester, and moed.
+        Raises an exception if not found, unless raise_exception is False.
+        """
+        # Convert semester and moed to Enum
+        semester = Semester(semester)
+        moed = Moed(moed)
+
+        if year in self.exams:
+            for exam in self.exams[year]:
+                if exam.semester == semester and exam.moed == moed:
+                    return exam
+        else:
+            # If the year is not in the exams dictionary, create an empty list for that year
+            self.exams[year] = []
+        exam_repo = ExamRepository()
+        exam = exam_repo.get_exam_by_date(year, semester, moed)
+        self.exams[year].append(exam)
+
+        return exam
+        # if raise_exception:
+        #     raise ExamIsNotExist(year, semester, moed)
 
     def get_all_exams(self):
-        """Retrieve all exams from the exams dictionary."""
-        exam_repo = ExamRepository()
-        return exam_repo.get_exam_by_course(course_id=self.course_id)
+        with self.exams_lock:  # Synchronize access to the exams dictionary
+            exam_repo = ExamRepository()
+            exams = exam_repo.get_exam_by_course(course_id=self.course_id)
+            return exams
+
+    def get_exams_by_year(self, year):
+        with self.exams_lock:  # Synchronize access to the exams dictionary
+            exam_repo = ExamRepository()
+            return exam_repo.get_all_exams_by_year_and_course(year=year, course_id=self.course_id)
 
     def get_questions_by_specific(self, year=None, semester=None, moed=None, question_number=None):
         """Get specific questions."""
@@ -92,25 +131,6 @@ class Course:
             questions = questions + exam.get_questions_by_keywords(keywords)
         return questions
 
-    def get_exam(self, year, semester, moed, raise_exception=True):
-        """
-        Retrieves a specific exam by year, semester, and moed.
-        Raises an exception if not found, unless raise_exception is False.
-        """
-        # Convert semester and moed to Enum
-        semester = Semester(semester)
-        moed = Moed(moed)
-
-        if year in self.exams:
-            for exam in self.exams[year]:
-                if exam.semester == semester and exam.moed == moed:
-                    return exam
-        exam_repo = ExamRepository()
-        exam = exam_repo.get_exam_by_date(year, semester, moed)
-        return exam
-        # if raise_exception:
-        #     raise ExamIsNotExist(year, semester, moed)
-
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
     def get_exams(self, year: int, semester=None, moed=None):
         """Fetch exams by year, and optionally filter by semester and moed."""
@@ -139,10 +159,29 @@ class Course:
         return exams
 
     def get_managers(self):
-        return self.managers
+        with self.managers_lock:  # Synchronize access to the managers set
+            # Retrieve managers from the database
+            manager_repo = CourseManagersRepository()
+            all_managers_from_db = manager_repo.get_managers_by_course(course_id=self.course_id)
+
+            # Update the local managers set with any missing managers from the database
+            existing_managers = set(self.managers)  # Convert current managers to set for comparison
+            missing_managers = [manager for manager in all_managers_from_db if manager not in existing_managers]
+            self.managers.update(missing_managers)
+
+            return list(self.managers)  # Return as a list to avoid direct modification
 
     def get_users(self):
-        return self.users
+        with self.users_lock:  # Synchronize access to the users list
+            # Retrieve users from the database
+            user_courses_repo = UserCoursesRepository()
+            all_users_from_db = user_courses_repo.get_users_for_course(course_id=self.course_id)
+
+            # Update the local users list with any missing users from the database
+            missing_users = [user for user in all_users_from_db if user not in self.users]
+            self.users.extend(missing_users)
+
+            return list(self.users)  # Return as a list to avoid direct modification
 
     # Setters
     def set_syllabus(self, syllabus):
@@ -151,46 +190,50 @@ class Course:
     # Methods
     def add_course_topic(self, course_topic):
         """Add a topic to the course."""
-        if course_topic not in self.course_topics:
-            self.course_topics.append(course_topic)
-        else:
-            raise TopicAlreadyExist(course_topic)
+        with self.course_topics_lock:
+            if course_topic not in self.course_topics:
+                self.course_topics.append(course_topic)
+            else:
+                raise TopicAlreadyExist(course_topic)
 
     def remove_course_topic(self, course_topic):
         """Remove a topic from the course."""
-        if course_topic in self.course_topics:
-            self.course_topics.remove(course_topic)
-        else:
-            raise TopicNotFound(course_topic)
+        with self.course_topics_lock:
+            if course_topic in self.course_topics:
+                self.course_topics.remove(course_topic)
+            else:
+                raise TopicNotFound(course_topic)
 
     def add_student(self, user_id):
         """Adds a student to the course."""
-        if user_id not in self.users:
-            self.users.append(user_id)
-        else:
-            raise UserAlreadyRegisterToCourse()
+        with self.users_lock:
+            if user_id not in self.users:
+                self.users.append(user_id)
+            else:
+                raise UserAlreadyRegisterToCourse()
 
     def remove_student(self, user_id):
         """Removes a student from the course."""
-        if user_id in self.users:
-            self.users.remove(user_id)
-            course_repo = CourseRepository()
-            course_repo.update_course(self)
-        else:
-            raise UserIsNotRegisterToCourse()
+        with self.users_lock:
+            if user_id in self.users:
+                self.users.remove(user_id)
+                course_repo = CourseRepository()
+                course_repo.update_course(self)
+            else:
+                raise UserIsNotRegisterToCourse()
 
     def generate_exam_id(self, year, semester, moed):
         return f"EXAM-{self.course_id}-{year}-{semester}-{moed}"
+
     def add_exam(self, year, semester, moed, link=""):
         """
         Adds an exam to the course.
         """
-        # Convert semester and moed to Enum
-        semester = Semester(semester)
-        moed = Moed(moed)
+        with self.exams_lock:  # Synchronize access to the exams dictionary
+            # Convert semester and moed to Enum
+            semester = Semester(semester)
+            moed = Moed(moed)
 
-        exam = self.get_exam(year, semester, moed, raise_exception=False)
-        if exam is None:
             exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
             exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
             if exam is not None:
@@ -200,50 +243,54 @@ class Course:
         else:
             raise ExamAlreadyExists(f"Exam with year={year}, semester={semester}, moed={moed} already exists.")
 
+
     def remove_exam(self, year, semester, moed):
-        """Removes an exam from the course."""
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            self.exams[year].remove(exam)
-        else:
-            raise ExamIsNotExist(year, semester, moed)
+        with self.exams_lock:  # Synchronize access to the exams dictionary
+            """Removes an exam from the course."""
+            exam = self.get_exam(year, semester, moed)
+            if exam is not None:
+                self.exams[year].remove(exam)
+            else:
+                raise ExamIsNotExist(year, semester, moed)
 
     def exist_manager(self, manager_id):
-
         manager_repo = CourseManagersRepository()
         return manager_id in self.managers or manager_repo.is_exist(user_id=manager_id, course_id=self.course_id)
 
     def add_manager(self, manager_id):
         """Adds a manager to the course."""
-        if not self.exist_manager(manager_id):
-            self.managers.add(manager_id)
-            manager_repo = CourseManagersRepository()
-            manager_repo.add_manager_to_course(user_id=manager_id, course_id=self.course_id)
-        else:
-            raise ManagerAlreadyExists(manager_id)
+        with self.managers_lock:
+            if not self.exist_manager(manager_id):
+                self.managers.add(manager_id)
+                manager_repo = CourseManagersRepository()
+                manager_repo.add_manager_to_course(user_id=manager_id, course_id=self.course_id)
+            else:
+                raise ManagerAlreadyExists(manager_id)
 
     def remove_manager(self, manager_id):
         """Removes a manager from the course."""
-        if self.exist_manager(manager_id):
-            self.managers.remove(manager_id)
-            manager_repo = CourseManagersRepository()
-            manager_repo.remove_manager_from_course(user_id=manager_id, course_id=self.course_id)
-        else:
-            raise ManagerIsNotExist(manager_id)
+        with self.managers_lock:
+            if self.exist_manager(manager_id):
+                self.managers.remove(manager_id)
+                manager_repo = CourseManagersRepository()
+                manager_repo.remove_manager_from_course(user_id=manager_id, course_id=self.course_id)
+            else:
+                raise ManagerIsNotExist(manager_id)
 
     def edit_exam_year(self, year, semester, moed, new_year):
-        exam = self.get_exam(year, semester, moed)
-        if exam is not None:
-            self.exams[year].remove(exam)
-            if not self.exams[year]:  # Clean up empty lists
-                del self.exams[year]
-            exam.edit_year(new_year)
-            # Add the exam to the new year's list
-            if new_year not in self.exams:
-                self.exams[new_year] = []
-            self.exams[new_year].append(exam)
-        else:
-            raise ExamIsNotExist(year, semester, moed)
+        with self.exams_lock:
+            exam = self.get_exam(year, semester, moed)
+            if exam is not None:
+                self.exams[year].remove(exam)
+                if not self.exams[year]:  # Clean up empty lists
+                    del self.exams[year]
+                exam.edit_year(new_year)
+                # Add the exam to the new year's list
+                if new_year not in self.exams:
+                    self.exams[new_year] = []
+                self.exams[new_year].append(exam)
+            else:
+                raise ExamIsNotExist(year, semester, moed)
 
 
     # def check_valid_question(self, course_id,year,semester, moed, question_number,pdf_question):
