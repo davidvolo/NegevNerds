@@ -1,4 +1,5 @@
 # Backend/BusinessLayer/User.py
+import threading
 
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.User.UserRepository import UserRepository  # Import the repository
@@ -14,6 +15,8 @@ class User:
         self.last_name = last_name
         self.loggedIn = loggedIn
         self.courses = []
+
+        self.courses_lock = threading.Lock()  # Lock for courses list
 
         # Create a repository instance for database operations
         self._repo = UserRepository()
@@ -80,22 +83,24 @@ class User:
         Raises:
             UserAlreadyRegisterToCourse: If user is already registered
         """
-        user_courses_repo = UserCoursesRepository()
-        if course_id not in self.courses and not user_courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
-            self.courses.append(course_id)
-            user_courses_repo.add_user_to_course(user_id=self.user_id, course_id=course_id)
-            self._repo.update_user(self)
-        else:
-            raise UserAlreadyRegisterToCourse()
+        with self.courses_lock:  # Synchronize access to the courses list
+            user_courses_repo = UserCoursesRepository()
+            if course_id not in self.courses and not user_courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
+                self.courses.append(course_id)
+                user_courses_repo.add_user_to_course(user_id=self.user_id, course_id=course_id)
+                self._repo.update_user(self)
+            else:
+                raise UserAlreadyRegisterToCourse()
 
     def removeCourse(self, course_id):
-        courses_repo = UserCoursesRepository()
-        if course_id in self.courses or courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
-            self.courses.remove(course_id)
-            self._repo.update_user(self)
-            courses_repo.remove_user_from_course(user_id=self.user_id, course_id=course_id)
-        else:
-            raise UserIsNotRegisterToCourse()
+        with self.courses_lock:
+            courses_repo = UserCoursesRepository()
+            if course_id in self.courses or courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
+                self.courses.remove(course_id)
+                self._repo.update_user(self)
+                courses_repo.remove_user_from_course(user_id=self.user_id, course_id=course_id)
+            else:
+                raise UserIsNotRegisterToCourse()
 
     def editProfile(self, email=None, password=None, first_name=None, last_name=None):
         """

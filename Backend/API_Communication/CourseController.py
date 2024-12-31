@@ -773,7 +773,7 @@ def remove_reaction():
             "error": str(e)
         }), 500
 
-@course_controller.route('/api/course/search_exam_by_specifics', methods=['OPTIONS', 'POST'])
+@course_controller.route('/api/course/search_question_by_specifics', methods=['OPTIONS', 'POST'])
 @cross_origin()
 def search_question_by_specifics():
     # Handle OPTIONS preflight request

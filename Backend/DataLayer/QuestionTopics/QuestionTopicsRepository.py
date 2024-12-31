@@ -33,7 +33,7 @@ class QuestionTopicsRepository:
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
-    def add_Topic_to_Question(self, question_id, topic):
+    def add_topic_to_question(self, question_id, topic):
 
         session = self.Session()
         try:
@@ -46,7 +46,7 @@ class QuestionTopicsRepository:
         finally:
             session.close()
 
-    def remove_topic_from_question(self, topic, question_id):
+    def remove_topic_from_question(self, question_id, topic):
         session = self.Session()
         try:
             association = session.query(QuestionTopicsModel).filter_by(topic=topic, question_id=question_id).first()
