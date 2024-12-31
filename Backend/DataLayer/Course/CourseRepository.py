@@ -5,11 +5,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.DataLayer.Course.CourseModel import Base, CourseModel
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
 class CourseRepository:
 
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, session=None):
         """
         Initialize the database engine.
 
@@ -31,7 +32,10 @@ class CourseRepository:
         # Ensure all tables are created
 
         Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
+        if session is None:
+            self.Session = sessionmaker(bind=self.engine)
+        else:
+            self.Session = session
 
     def add_course(self, course):
 
@@ -42,7 +46,9 @@ class CourseRepository:
                 course_id=course.course_id,
                 name=course.name,
             )
-
+            course_topics_repo = CourseTopicsRepository()
+            course_topics_repo.add_topics_to_course(course_id=course.course_id, topics=course.course_topics,
+                                                    session=session)
             session.add(course_model)
             session.commit()
 

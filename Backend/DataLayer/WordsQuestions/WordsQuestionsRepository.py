@@ -61,8 +61,11 @@ class WordsQuestionsRepository:
             session.close()
 
     def get_questions_id_by_word(self, word):
-        first_letter = word[0]
         session = self.Session()
-        words = session.query(MODELS[first_letter]).filter_by(word=word).all()
-        session.close()
-        return words
+        try:
+            first_letter = word[0]
+            words = session.query(MODELS[first_letter]).filter_by(word=word).all()
+            session.close()
+            return words
+        finally:
+            session.close()

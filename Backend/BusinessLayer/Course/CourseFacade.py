@@ -49,8 +49,10 @@ class CourseFacade:
         """Opens a new course"""
 
         course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
-        self.courses[course_id] = course
-
+        if course is not None:
+            self.courses[course_id] = course
+        else:
+            raise Exception("error while creating course")
     
     def open_course_possibility(self, course_id, course_name):
         """Opens a new course"""

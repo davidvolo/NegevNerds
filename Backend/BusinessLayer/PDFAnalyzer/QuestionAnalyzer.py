@@ -17,7 +17,7 @@ class QuestionAnalyzer:
         except Exception as e:
             return f"An error occurred: {e}"
 
-    def extract_text_from_image(self, image_path:str):
+    def extract_text_from_image(self,  image_file):
         """
         Extracts text from an image using Tesseract OCR for Hebrew and English.
 
@@ -26,7 +26,7 @@ class QuestionAnalyzer:
         """
         try:
             # Open the image
-            image = Image.open(image_path)
+            image = Image.open(image_file)
 
             # Perform OCR using Tesseract with Hebrew and English
             text = pytesseract.image_to_string(image, lang="heb+eng")
@@ -36,3 +36,12 @@ class QuestionAnalyzer:
         except Exception as e:
             print(f"Error occurred: {e}")
             return None
+
+
+
+
+
+# if __name__ == "__main__":
+#     image_path = "../../../photo2.jpg"  # Replace with your image path
+#     extracted_text = extract_text_from_image(image_path)
+#     print("Extracted Text:\n" , extracted_text)

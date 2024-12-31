@@ -1,5 +1,7 @@
 import uuid
 
+from flask_sqlalchemy.session import Session
+
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
@@ -54,11 +56,11 @@ class Question:
         )
         question_repo = QuestionRepository()
         question_repo.add_question(question, exam_id)
-        question_topics_repo = QuestionTopicsRepository()
+        # question_topics_repo = QuestionTopicsRepository()
 
-        for topic in question_topics:
-            if not question_topics_repo.is_exist(topic=topic, question_id=question_id):
-                question_topics_repo.add_Topic_to_Question(topic=topic, question_id=question_id)
+        # for topic in question_topics:
+        #     if not question_topics_repo.is_exist(topic=topic, question_id=question_id):
+        #         question_topics_repo.add_Topic_to_Question(topic=topic, question_id=question_id)
 
         return question
 
@@ -114,7 +116,10 @@ class Question:
                                  prev_id=prev_id,
                                  comment_text=comment_text,
                                  question_id=self.id)
-        self.comments.append(comment)
+        if comment is not None:
+            self.comments.append(comment)
+        else:
+            raise Exception("Problem to create comment")
 
     def remove_comment(self, comment_id):
         """

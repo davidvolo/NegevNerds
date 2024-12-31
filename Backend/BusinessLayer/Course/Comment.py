@@ -71,8 +71,10 @@ class Comment:
                 else:
                     return
         reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
-        self.reactions.append(reaction)
-
+        if reaction is not None:
+            self.reactions.append(reaction)
+        else:
+            raise Exception("error while creating reaction")
     def remove_reaction(self, reaction_id):
         """
         Remove a reaction from the Comment for a specific user.

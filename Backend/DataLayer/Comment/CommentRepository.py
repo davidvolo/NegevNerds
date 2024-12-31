@@ -8,7 +8,7 @@ from Backend.DataLayer.Comment.CommentModel import Base, CommentModel
 
 class CommentRepository:
 
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, session=None):
         """
         Initialize the database engine.
 
@@ -30,7 +30,10 @@ class CommentRepository:
         # Ensure all tables are created
 
         Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
+        if session is None:
+            self.Session = sessionmaker(bind=self.engine)
+        else:
+            self.Session = session
 
     def add_comment(self, comment, question_id):
 
