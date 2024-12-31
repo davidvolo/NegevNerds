@@ -1,4 +1,3 @@
-import threading
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
@@ -6,8 +5,10 @@ from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
 
 class CourseFacade:
@@ -21,9 +22,9 @@ class CourseFacade:
     def __init__(self):
         if not hasattr(self, 'courses'):
             self.courses = {}  # courseId, Course
-            # self.course_repository = CourseRepository()
-            # self.user_courses_repository = UserCoursesRepository()
-            self.courses_lock = threading.Lock()  # Lock for synchronizing access to the courses dictionary
+            #self.course_repository = CourseRepository()
+            #self.user_courses_repository = UserCoursesRepository()
+
 
     """--------------course functionality--------------"""
 
@@ -31,8 +32,9 @@ class CourseFacade:
         course = self.get_course(course_id)
         if course is not None:
             course.add_student(user_id)
-            # user_courses_rep = UserCoursesRepository()
-            # user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+            #user_courses_rep = UserCoursesRepository()
+            #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+
 
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
@@ -41,29 +43,31 @@ class CourseFacade:
             course.remove_student(user_id)
         else:
             raise CourseIsNotExist(course_id)
+    
 
     def open_course(self, course_id, name, course_topics):
         """Opens a new course"""
-        with self.courses_lock:  # Synchronize access to the courses dictionary
-            course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
-            if course is not None:
-                self.courses[course_id] = course
-            else:
-                raise Exception("error while creating course")
 
+        course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
+        if course is not None:
+            self.courses[course_id] = course
+        else:
+            raise Exception("error while creating course")
+    
     def open_course_possibility(self, course_id, course_name):
         """Opens a new course"""
 
         if self.get_course(course_id) is not None:
             raise CourseAlreadyExists(course_id)
-
+        
         if not self.is_valid_courseID(course_id):
             raise InvalidCourseIdFormat(course_id)
-
+        
         if not self.is_valid_course_name(course_name):
             raise Exception("שם  קורס אינו תקין.")
 
         return True
+    
 
     def is_valid_course_name(self, name):
         """
@@ -81,16 +85,16 @@ class CourseFacade:
         # Validate the name using regex
         return bool(re.match(hebrew_name_regex, name))
 
+
     def remove_course(self, course_id):
         """Remove an existing course along with its folder."""
-        with self.courses_lock:  # Synchronize access to the courses dictionary
-            course = self.get_course(course_id)
-            if course is not None:
-                del self.courses[course_id]
-                course_repo = CourseRepository()
-                course_repo.delete_course(course_id=course_id)
-            else:
-                raise CourseIsNotExist(course_id)
+        course = self.get_course(course_id)
+        if course is not None:
+            del self.courses[course_id]
+            course_repo = CourseRepository()
+            course_repo.delete_course(course_id=course_id)
+        else:
+            raise CourseIsNotExist(course_id)
 
     def get_course(self, course_id):
         """
@@ -101,10 +105,7 @@ class CourseFacade:
 
         course_repo = CourseRepository()
         if course_repo.is_exist(course_id=course_id):
-            course = course_repo.get_course_by_id(course_id=course_id)
-            if course:
-                self.courses[course_id] = course
-                return course
+            return course_repo.get_course_by_id(course_id=course_id)
         return None
 
     def set_syllabus_of_course(self, course_id, syllabus):
@@ -118,7 +119,7 @@ class CourseFacade:
     def is_course_manager(self, course_id, user_id):
         """Checks if the user is a manager of the given course."""
         course = self.get_course(course_id)
-        return course.exist_manager(user_id)
+        return user_id in course.managers
 
     def add_manager_to_course(self, course_id, manager_id):
         """
@@ -144,34 +145,6 @@ class CourseFacade:
     def remove_course_topic(self, course_id, course_topic):
         course = self.get_course(course_id)
         course.remove_course_topic(course_topic)
-
-    def get_all_courses(self):
-        course_list = []
-        course_repo = CourseRepository()
-        for course in course_repo.get_all_courses():
-            course_list.append(CourseDTO(course=course))
-        return course_list
-
-    def get_course_DTO(self, course_id):
-        if self.get_course(course_id) is not None:
-            course = self.get_course(course_id)
-            return CourseDTO(course_id, course.get_name())
-        raise CourseIsNotExist(course_id)
-
-    def get_courses_DTO(self, courses_ids):
-        dtos = []
-        for course_id in courses_ids:
-            course = self.get_course(course_id)
-            if course is not None:
-                course_dto = CourseDTO(course_id, course.get_name())
-                dtos.append(course_dto)
-        return dtos
-
-    def get_course_topics(self, course_id):
-        if self.get_course(course_id) is None:
-            return None
-        else:
-            return self.get_course(course_id).get_topics()
 
     """--------------exams functionality--------------"""
 
@@ -212,20 +185,20 @@ class CourseFacade:
         sorted_exams = self.sort_exams(exams)
 
         return sorted_exams
-
-    def is_valid_courseID(self, course_id):
+    
+    def is_valid_courseID(self,courseId):
         """
         Validates if a course ID is in the correct format: xxx.x.xxxx
         where x is a digit.
 
         Args:
-            course_id (str): The course ID to validate.
+            courseId (str): The course ID to validate.
 
         Returns:
             bool: True if valid, False otherwise.
         """
         pattern = r"^\d{3}\.\d\.\d{4}$"
-        return bool(re.match(pattern, course_id))
+        return bool(re.match(pattern, courseId))
 
     def search_all_course_exams(self, course_id):
         """
@@ -264,8 +237,8 @@ class CourseFacade:
 
     def valid_question_parameters(self, year, semester, moed, question_number):
         """Validates question parameters to ensure they are correct and relevant."""
-        moeds = ['א', 'ב', 'ג', 'ד']
-        semesters = ['סתיו', 'קיץ', 'אביב']
+        moeds = ['א','ב','ג','ד']
+        semesters =['סתיו','אביב','קיץ']
         if moed not in moeds:
             logging.error(f"{Moed} is not a valid Moed.")
             raise ValueError(f"Invalid Moed: {moed}")
@@ -284,7 +257,9 @@ class CourseFacade:
 
         return True
 
-    def check_valid_question(self, course_id, year, semester, moed, question_number, question_text):
+
+
+    def check_valid_question(self, course_id, year, semester, moed, question_number,question_text):
         # Step 1: Validate parameters
         self.valid_question_parameters(year=year, semester=semester, moed=moed, question_number=question_number)
         semester = Semester(semester)
@@ -292,15 +267,17 @@ class CourseFacade:
 
         # Step 2: Get the course
         course = self.get_course(course_id=course_id)
-        # if not course:
+        #if not course:
         #    raise ValueError(f"Course with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
-        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number,
-                                           question_text=question_text)
+        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number, question_text=question_text)
 
-    def add_question(self, course_id, year, semester, moed, question_number, is_american,
-                     question_topics, pdf_question_path, pdf_answer_path, question_text):
+
+
+    
+    def add_question(self, course_id, year, semester, moed, question_number,is_american, 
+                     question_topics,pdf_question_path, pdf_answer_path, question_text):
         """
         Delegates question addition to the specified Exam.
         """
@@ -359,7 +336,7 @@ class CourseFacade:
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         course = self.get_course(course_id)
-        print("in course facade")
+        print ("in course facade")
         return course.get_questions_by_specific(year, semester, moed, question_number)
 
     def get_questions_by_keywords(self, course_id, keywords):
@@ -374,3 +351,31 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
+
+    def get_all_courses(self):
+        course_list = []
+        course_repo = CourseRepository()
+        for course in course_repo.get_all_courses():
+            course_list.append(CourseDTO(course=course))
+        return course_list
+
+    def get_course_DTO(self, course_id):
+        if self.get_course(course_id) is not None:
+            course = self.get_course(course_id)
+            return CourseDTO(course_id, course.get_name())
+        raise CourseIsNotExist(course_id)
+
+    def get_courses_DTO(self, courses_ids):
+        dtos = []
+        for course_id in courses_ids:
+            course = self.get_course(course_id)
+            if course is not None:
+                course_dto = CourseDTO(course_id, course.get_name())
+                dtos.append(course_dto)
+        return dtos
+
+    def get_course_topics(self, course_id):
+        if self.get_course(course_id) is None:
+            return None
+        else:
+            return self.get_course(course_id).get_topics()

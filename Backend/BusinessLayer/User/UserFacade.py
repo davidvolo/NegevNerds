@@ -28,11 +28,10 @@ class UserFacade:
             self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
             self.auth_lock = threading.Lock()  # Lock for thread-safe access
 
-            self.email_lock = threading.Lock()  # Separate lock for email-related operations
-            self.id_lock = threading.Lock()  # Separate lock for id-related operations
-
     def generateUserId(self):
         return "user" + str(uuid.uuid4())
+
+    import bcrypt
 
     def hash_password(self,password):
         """Hash a password using bcrypt."""
@@ -99,18 +98,16 @@ class UserFacade:
 
     def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
-        with self.id_lock:
-            with self.email_lock:
-                try:
-                        id = self.generateUserId()
-                        user = User.create(id, email, password, first_name, last_name)
-                        user.login()
-                        self.users_byEmail[email] = user
-                        self.users_byId[id] = user
-                        logging.info(f"User {first_name} {last_name} registered successfully.")
-                        return id, {"message": f"User {first_name} {last_name} registered successfully."}
-                except Exception as e:
-                        raise Exception("האישור נכשל. הרשמה בוטלה.")
+        try:
+                id = self.generateUserId()
+                user = User.create(id, email, password, first_name, last_name)
+                user.login()
+                self.users_byEmail[email] = user
+                self.users_byId[id] = user
+                logging.info(f"User {first_name} {last_name} registered successfully.")
+                return id, {"message": f"User {first_name} {last_name} registered successfully."}
+        except Exception as e:
+                raise Exception("האישור נכשל. הרשמה בוטלה.")
 
     def get_user_courses(self, user_id):
         curr_user = self.getUser_by_id(user_id=user_id)
@@ -299,35 +296,19 @@ class UserFacade:
 
 
     def getUser_by_id(self, user_id):
-        # Synchronize access to the users_byId dictionary
-        with self.id_lock:
-            # First, check if the user exists in the local dictionary
-            if user_id in self.users_byId:
-                return self.users_byId[user_id]
-            else:
-                # If not, retrieve from the database and save to the dictionary
-                user_repo = UserRepository()
-                user = user_repo.get_user_by_id(user_id=user_id)
-                if user:
-                    self.users_byId[user_id] = user  # Cache the result
-                    return user
-                return None
+        user = self.users_byId.get(user_id)
+        if user is not None:
+            return user
+        user_repo = UserRepository()
+        return user_repo.get_user_by_id(user_id=user_id)
 
 
     def getUser_by_email(self, email):
-        # Synchronize access to the users_byEmail dictionary
-        with self.email_lock:
-            # First, check if the user exists in the local dictionary
-            if email in self.users_byEmail:
-                return self.users_byEmail[email]
-            else:
-                # If not, retrieve from the database and save to the dictionary
-                user_repo = UserRepository()
-                user = user_repo.get_user_by_email(email=email)
-                if user:
-                    self.users_byEmail[email] = user  # Cache the result
-                    return user
-                return None
+        user = self.users_byEmail.get(email)
+        if user is not None:
+            return user
+        user_repo = UserRepository()
+        return user_repo.get_user_by_email(email=email)
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """
