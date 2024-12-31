@@ -725,6 +725,10 @@ class ServiceLayer:
             #                         False, ["math", "algebra"],"ex2.pdf",None)
             #
             # print(" add question -", res)
+            # res = self.add_question(courses[2]["courseId"], 2023,'סתיו' ,'ב' ,1, False, ["Symbolic"],
+            #                         "Backend/SWE_2023_A_b/202201B-1.pdf",
+            #                           "Backend/SWE_2023_A_b/202201B - Solution-1.pdf")
+            # print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:
             print(f"Error: Initialization file {file_path} not found.")

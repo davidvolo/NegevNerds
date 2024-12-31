@@ -138,8 +138,10 @@ class WordIndex1:
 
         # Extract English and Hebrew words
         english_words, hebrew_words = self.extract_words(text)
+        reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
 
-        return english_words + hebrew_words
+
+        return english_words + reversed_hebrew_words
         
     # def get_sorted_dictionaries(self):
     #     # Return sorted versions of both dictionaries
@@ -193,8 +195,11 @@ class WordIndex2:
 
             # Extract English and Hebrew words
             english_words, hebrew_words = self.extract_words(text)
+            reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
+
 
             return english_words + hebrew_words
+
         except Exception as e:
             print(f"Error processing PDF: {e}")
 

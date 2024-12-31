@@ -86,8 +86,6 @@ class Comment:
                 self.reactions.remove(reaction)
                 return
 
-        raise ReactionNotFound(reaction_id)
-
     def edit_text(self, new_text):
         self.text = new_text
 
