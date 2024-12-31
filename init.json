@@ -35,6 +35,11 @@
       "courseId" : "382.1.2705",
       "name": "אנליזה נומרית",
       "syllabus_content_pdf":  "Syllabus_anl.pdf"
+    },
+    {
+      "courseId" : "372.1.3501",
+      "name": "הנדסת איכות תוכנה",
+      "syllabus_content_pdf":  "Syllabus_software.pdf"
     }
   ]
 }
