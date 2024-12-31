@@ -66,7 +66,6 @@ class Comment:
         Add a reaction to the Comment.
         """
         with self.reactions_lock:  # Synchronize access to reactions list
-            # Check if the user already reacted
             for reaction in self.reactions:
                 if reaction.user_id == user_id:
                     if reaction.emoji != emoji:
@@ -74,8 +73,12 @@ class Comment:
                     else:
                         return
             reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
-            self.reactions.append(reaction)
-
+            reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
+            if reaction is not None:
+                self.reactions.append(reaction)
+            else:
+                raise Exception("error while creating reaction")
+                
     def remove_reaction(self, reaction_id):
         """
         Remove a reaction from the Comment for a specific user.

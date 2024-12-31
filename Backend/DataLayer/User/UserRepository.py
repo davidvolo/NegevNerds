@@ -89,6 +89,8 @@ class UserRepository:
         try:
             user_model = session.query(UserModel).filter_by(user_id=user_id).first()
             return user_model.to_business_model() if user_model else None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 

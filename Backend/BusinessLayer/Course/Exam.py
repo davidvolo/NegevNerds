@@ -41,6 +41,7 @@ class Exam:
         )
         exam_repo = ExamRepository()
         exam_repo.add_exam(exam)
+        return exam
 
 
     def to_dto(self):
@@ -69,16 +70,19 @@ class Exam:
         Add a question to the exam.
         """
         with self.questions_lock:
+            print("4.1.1_david")
             # Check if the fields match
             question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
-                                       question_number=question_number, is_american=is_american,
-                                       question_topics=question_topics, link_to_question=pdf__question_path,
-                                       link_to_answer=pdf__answer_path, link_to_exam=self.link,
-                                       question_id=self.generate_question_id(), question_text=question_text)
+                                   question_number=question_number, is_american=is_american,
+                                   question_topics=question_topics, link_to_question=pdf__question_path,
+                                   link_to_answer=pdf__answer_path, link_to_exam=self.link,
+                                   question_id=self.generate_question_id(), question_text=question_text)
 
             #ToDO
-            self.questions_list[question_number] = question
-
+            if question is not None:
+                self.questions_list[question_number] = question
+            else :
+                raise Exception("error while creating question")
             return question.generate_question_details_name()
 
 

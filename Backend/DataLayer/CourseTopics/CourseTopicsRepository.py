@@ -45,6 +45,18 @@ class CourseTopicsRepository:
         finally:
             session.close()
 
+    def add_topics_to_course(self, course_id, topics, session):
+
+
+        try:
+            for topic in topics:
+                association = CourseTopicsModel(course_id=course_id, topic=topic)
+                session.add(association)
+            #session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
     def remove_topic_from_course(self, topic, course_id):
         session = self.Session()
         try:
@@ -64,6 +76,8 @@ class CourseTopicsRepository:
         try:
             associations = session.query().filter_by(course_id=course_id).all()
             return [association.course.to_business_model() for association in associations]
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -74,6 +88,8 @@ class CourseTopicsRepository:
         try:
             manager = session.query(CourseTopicsModel).filter_by(topic=topic, course_id=course_id).first()
             return manager is not None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 

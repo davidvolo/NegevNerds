@@ -48,7 +48,7 @@ class PDFAnalyzerFacade:
             'לבין','באמצע','בתוך','דרך','מבעד','באמצעות','למעלה','למטה','מחוץ','מן','לעבר','מכאן',
             'כאן','הנה','הרי','פה','שם','אך','ברם','שוב','אבל','מבלי','בלי','מלבד','רק','בגלל','מכיוון','עד','אשר',
             'ואילו','למרות','אס','כמו','כפי','אז','אחרי','כן','לכן','לפיכך','מאד','עז','מעט','מעטים','במידה','שוב',
-            'יותר','מדי','גם','כן','נו','אחר','אחרת','אחרים','אחרות','אשר','או'}
+            'יותר','מדי','גם','כן','נו','להלן','לפי','אחר','אחרת','אחרים','אחרות','אשר','או'}
 
         self.inforamtion_retrival =  WordIndexController(common_words_en,common_words_he)
 
@@ -57,8 +57,11 @@ class PDFAnalyzerFacade:
         syllabus = self.course_syllabus.extract_syllabus_topic_total(pdf_path)
         return syllabus
     
-    def perform_information_retrival_question(self, pdf_question_path, question_data):
+    def perform_information_retrival_question_pdf(self, pdf_question_path, question_data):
         self.inforamtion_retrival.process_pdf(pdf_file_path=pdf_question_path , question_data=question_data)
 
+    def perform_information_retrival_question_photo(self, text, question_data):
+
+        self.inforamtion_retrival.process_photo(text=text, question_data=question_data)
 
        

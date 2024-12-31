@@ -153,7 +153,7 @@ class FileManager:
 
         # return answer_file_path
 
-    def save_question_file(self, course_id, year, semester, moed, question_number, pdf_question):
+    def save_question_file_pdf(self, course_id, year, semester, moed, question_number, pdf_question):
         """
         Saves the question PDF file to the appropriate directory.
         """
@@ -178,7 +178,42 @@ class FileManager:
 
         return question_file_path
 
-    def save_answer_file(self, course_id, year, semester, moed, question_number, pdf_answer):
+    def save_photo_question_file(self, course_id, year, semester, moed, question_number, photo_file):
+        """
+        Saves the question photo file (e.g., JPEG, PNG) to the appropriate directory.
+
+        :param course_id: Course identifier
+        :param year: Year of the exam
+        :param semester: Semester of the exam
+        :param moed: Moed of the exam
+        :param question_number: Question number
+        :param photo_file: File-like object representing the photo
+        :return: Full path to the saved photo file
+        """
+        # Construct the file path
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        question_folder = os.path.join(exam_folder, "questions")
+
+        # Create directories if they do not exist
+        os.makedirs(question_folder, exist_ok=True)
+
+        # Determine the file extension (e.g., 'jpg', 'png') from the uploaded photo file
+        photo_extension = photo_file.filename.rsplit('.', 1)[-1].lower()
+        if photo_extension not in ["jpg", "jpeg", "png"]:
+            raise ValueError("Unsupported file format. Only JPEG and PNG are allowed.")
+
+        # Construct the file name and path
+        photo_file_path = os.path.join(question_folder, f"question_{question_number}.{photo_extension}")
+
+        # Save the photo file to disk
+        photo_file.seek(0)  # Ensure the file pointer is at the beginning
+        photo_file.save(photo_file_path)
+
+        return photo_file_path
+
+    def save_answer_file_pdf(self, course_id, year, semester, moed, question_number, pdf_answer):
         """
         Saves the answer PDF file to the appropriate directory.
         """
@@ -202,5 +237,41 @@ class FileManager:
         pdf_answer.save(answer_file_path)
 
         return answer_file_path
+
+
+    def save_photo_answer_file(self, course_id, year, semester, moed, question_number, photo_file):
+        """
+        Saves the question photo file (e.g., JPEG, PNG) to the appropriate directory.
+
+        :param course_id: Course identifier
+        :param year: Year of the exam
+        :param semester: Semester of the exam
+        :param moed: Moed of the exam
+        :param question_number: Question number
+        :param photo_file: File-like object representing the photo
+        :return: Full path to the saved photo file
+        """
+        # Construct the file path
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        question_folder = os.path.join(exam_folder, "answers")
+
+        # Create directories if they do not exist
+        os.makedirs(question_folder, exist_ok=True)
+
+        # Determine the file extension (e.g., 'jpg', 'png') from the uploaded photo file
+        photo_extension = photo_file.filename.rsplit('.', 1)[-1].lower()
+        if photo_extension not in ["jpg", "jpeg", "png"]:
+            raise ValueError("Unsupported file format. Only JPEG and PNG are allowed.")
+
+        # Construct the file name and path
+        photo_file_path = os.path.join(question_folder, f"answer{question_number}.{photo_extension}")
+
+        # Save the photo file to disk
+        photo_file.seek(0)  # Ensure the file pointer is at the beginning
+        photo_file.save(photo_file_path)
+
+        return photo_file_path
 
 

@@ -541,18 +541,18 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
+    def add_question(self, course_id, year, semester, moed, question_number, is_american,
                      question_topics
-                     ,pdf_question, 
-                     pdf_answer = None):
+                     ,question_file,
+                     answer_file = None):
         """
         Handles adding a question to an exam.
         :return: JSON response indicating success or failure.
         """
         try:
             
-            result = self.negev_nerds.add_question(course_id, year, semester, moed, questionNumber
-                                                   ,is_american,question_topics, pdf_question,pdf_answer )
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, question_number
+                                                   ,is_american,question_topics, question_file,answer_file )
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -724,6 +724,10 @@ class ServiceLayer:
             # res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
             #                         False, ["math", "algebra"],"ex2.pdf",None)
             #
+            # print(" add question -", res)
+            # res = self.add_question(courses[2]["courseId"], 2023,'סתיו' ,'ב' ,1, False, ["Symbolic"],
+            #                         "Backend/SWE_2023_A_b/202201B-1.pdf",
+            #                           "Backend/SWE_2023_A_b/202201B - Solution-1.pdf")
             # print(" add question -", res)
             print("System initialization complete.")
         except FileNotFoundError:

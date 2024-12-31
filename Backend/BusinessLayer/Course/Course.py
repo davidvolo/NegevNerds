@@ -40,10 +40,10 @@ class Course:
         course_repository.add_course(course)
         topics_repo = CourseTopicsRepository()
 
-        for topic in course_topics:
-            if not topics_repo.is_exist(topic=topic, course_id=course_id):
-                topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
-        return course
+        # for topic in course_topics:
+        #     if not topics_repo.is_exist(topic=topic, course_id=course_id):
+        #         topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
+        # return course
 
     # Getters
     def get_id(self):
@@ -234,16 +234,15 @@ class Course:
             semester = Semester(semester)
             moed = Moed(moed)
 
-            exam = self.get_exam(year, semester, moed, raise_exception=False)
-            if exam is None:
-                exam_id = self.generate_exam_id(year=year, semester=semester.value, moed=moed.value)
-                exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
-
+            exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
+            exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
+            if exam is not None:
                 if year not in self.exams:
                     self.exams[year] = []
                 self.exams[year].append(exam)
-            else:
-                raise ExamAlreadyExists(f"Exam with year={year}, semester={semester}, moed={moed} already exists.")
+        else:
+            raise ExamAlreadyExists(f"Exam with year={year}, semester={semester}, moed={moed} already exists.")
+
 
     def remove_exam(self, year, semester, moed):
         with self.exams_lock:  # Synchronize access to the exams dictionary
