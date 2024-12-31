@@ -80,12 +80,13 @@ class UserCoursesRepository:
         Returns:
             List[Course]: List of business layer Course objects
         """
-        session = self.Session()
+
         try:
-            associations = session.query().filter_by(user_id=user_id).all()
-            return [association.course.to_business_model() for association in associations]
-        finally:
-            session.close()
+            with self.Session() as session:
+                associations = session.query().filter_by(user_id=user_id).all()
+                return [association.course.to_business_model() for association in associations]
+        except Exception as e:
+            raise e
 
     def get_users_for_course(self, course_id):
         """
@@ -97,21 +98,23 @@ class UserCoursesRepository:
         Returns:
             List[User]: List of business layer User objects
         """
-        session = self.Session()
         try:
-            associations = session.query(UserCoursesModel).filter_by(course_id=course_id).all()
-            return [association.user.to_business_model() for association in associations]
-        finally:
-            session.close()
+            # Use the session context manager for automatic session handling
+            with self.Session() as session:
+                # Querying with join to fetch associated users more efficiently
+                associations = session.query(UserCoursesModel).filter_by(course_id=course_id).all()
+                # Convert to business model objects
+                return [association.user.to_business_model() for association in associations]
+        except Exception as e:
+            raise e
 
 
     def is_exist(self, user_id, course_id):
-
-        session = self.Session()
         try:
-            user = session.query(UserCoursesModel).filter_by(user_id=user_id, course_id=course_id).first()
-            return user is not None
-        finally:
-            session.close()
+            with self.Session() as session:
+                user = session.query(UserCoursesModel).filter_by(user_id=user_id, course_id=course_id).first()
+                return user is not None
+        except Exception as e:
+            raise e
 
 

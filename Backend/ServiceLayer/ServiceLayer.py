@@ -541,18 +541,18 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def add_question(self, course_id, year, semester, moed,questionNumber,is_american,
+    def add_question(self, course_id, year, semester, moed, question_number, is_american,
                      question_topics
-                     ,pdf_question, 
-                     pdf_answer = None):
+                     ,question_file,
+                     answer_file = None):
         """
         Handles adding a question to an exam.
         :return: JSON response indicating success or failure.
         """
         try:
             
-            result = self.negev_nerds.add_question(course_id, year, semester, moed, questionNumber
-                                                   ,is_american,question_topics, pdf_question,pdf_answer )
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, question_number
+                                                   ,is_american,question_topics, question_file,answer_file )
             return json.dumps({
                 "status": "success",
                 "message": result

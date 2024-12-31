@@ -10,7 +10,7 @@ from Backend.DataLayer.QuestionTopics.QuestionTopicsModel import QuestionTopicsM
 
 class QuestionTopicsRepository:
 
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, session=None):
         """
         Initialize the database engine.
 
@@ -31,7 +31,10 @@ class QuestionTopicsRepository:
 
         # Ensure all tables are created
         Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
+        if session is None:
+            self.Session = sessionmaker(bind=self.engine)
+        else:
+            self.Session = session
 
     def add_Topic_to_Question(self, question_id, topic):
 
@@ -45,6 +48,18 @@ class QuestionTopicsRepository:
             raise e
         finally:
             session.close()
+
+    def add_question_topics(self, question_id, topics, session):
+
+        try:
+            for topic in topics:
+                association = QuestionTopicsModel(question_id=question_id, topic=topic)
+                session.add(association)
+            #session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
 
     def remove_topic_from_question(self, topic, question_id):
         session = self.Session()
@@ -65,6 +80,8 @@ class QuestionTopicsRepository:
         try:
             associations = session.query().filter_by(question_id=question_id).all()
             return [association.topic for association in associations]
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -74,6 +91,8 @@ class QuestionTopicsRepository:
         try:
             manager = session.query(QuestionTopicsModel).filter_by(topic=topic, question_id=question_id).first()
             return manager is not None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 

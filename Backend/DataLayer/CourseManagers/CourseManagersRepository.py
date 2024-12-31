@@ -66,7 +66,6 @@ class CourseManagersRepository:
                 session.delete(association)
                 session.commit()
         except Exception as e:
-            session.rollback()
             raise e
         finally:
             session.close()
@@ -85,6 +84,8 @@ class CourseManagersRepository:
         try:
             associations = session.query(CourseManagersModel).filter_by(course_id=course_id).all()
             return [association.user.to_business_model() for association in associations]
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -95,5 +96,7 @@ class CourseManagersRepository:
         try:
             manager = session.query(CourseManagersModel).filter_by(user_id=user_id, course_id=course_id).first()
             return manager is not None
+        except Exception as e:
+            raise e
         finally:
             session.close()

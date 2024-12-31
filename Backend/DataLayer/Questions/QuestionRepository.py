@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.Course.enums import Semester, Moed
+from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 from Backend.DataLayer.Questions.QuestionModel import Base, QuestionModel
 
 
@@ -54,7 +55,11 @@ class QuestionRepository:
                 text= question.text
             )
 
+
             session.add(question_model)
+
+            topics_repo = QuestionTopicsRepository()
+            topics_repo.add_question_topics(question_id=question.id, topics=question.question_topics, session = session)
             session.commit()
 
             # Get the auto-generated ID
@@ -71,6 +76,8 @@ class QuestionRepository:
         try:
             question_model = session.query(QuestionModel).filter_by(question_id=question_id).first()
             return question_model.to_business_model() if question_model else None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -80,6 +87,8 @@ class QuestionRepository:
         try:
             question_models = session.query(QuestionModel).filter_by(exam_id=exam_id).all()
             return [question_model.to_business_model() for question_model in question_models]
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -88,6 +97,8 @@ class QuestionRepository:
         try:
             question_model = session.query(QuestionModel).filter_by(exam_id=exam_id, question_number=question_number).first()
             return question_model.to_business_model() if question_model else None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 
@@ -147,6 +158,8 @@ class QuestionRepository:
             curr = session.query(QuestionModel).filter_by(year=year, semester=semester,
                                                              moed=moed, text=text).first()
             return curr is not None
+        except Exception as e:
+            raise e
         finally:
             session.close()
 

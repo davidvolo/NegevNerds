@@ -1,3 +1,5 @@
+import mimetypes
+
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.PDFAnalyzer.QuestionAnalyzer import QuestionAnalyzer
@@ -321,7 +323,25 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to remove reaction: {e}")
 
-    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  pdf_question, pdf_answer):
+    def is_photo(self, file):
+        """
+        Check if the given file is a valid photo (JPEG, JPG, PNG).
+
+        :param file: The uploaded file object.
+        :return: True if the file is a valid photo, False otherwise.
+        """
+        if file:
+            # Get the MIME type of the file
+            mime_type, _ = mimetypes.guess_type(file.filename)
+            # Allowed photo MIME types
+            allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
+            return mime_type in allowed_photo_types
+        return False
+
+
+
+
+    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
         """
         Add a question to a course exam with an associated PDF file.
 
@@ -331,33 +351,59 @@ class NegevNerds:
         try:
             # Get course name for filename generation
             question_analyzer = QuestionAnalyzer()
-            question_text = question_analyzer.extract_text_from_pdf_file(pdf_question)
+            if self.is_photo(question_file):
+                question_text= question_analyzer.extract_text_from_image(question_file)
+            else:
+                question_text = question_analyzer.extract_text_from_pdf_file(question_file)
             if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
                 # Save the PDF file with a custom name
-                pdf__question_path = self.fileManager.save_question_file(
-                    course_id=course_id,
-                    year=year,
-                    semester=semester,
-                    moed=moed,
-                    question_number=question_number,
-                    pdf_question=pdf_question
-                )
-                pdf__answer_path = None
-                if pdf_answer is not None:
-                    pdf__answer_path = self.fileManager.save_answer_file(
+                if self.is_photo(question_file):
+                    question_path= self.fileManager.save_photo_question_file(
                         course_id=course_id,
                         year=year,
                         semester=semester,
                         moed=moed,
                         question_number=question_number,
-                        pdf_answer=pdf_answer
+                        photo_file=question_file
                     )
+
+                else :
+                    question_path = self.fileManager.save_question_file_pdf(
+                        course_id=course_id,
+                        year=year,
+                        semester=semester,
+                        moed=moed,
+                        question_number=question_number,
+                        pdf_question=question_file
+                    )
+                answer_path = None
+                if answer_file is not None:
+                    if self.is_photo(answer_path):
+                        answer_path = self.fileManager.save_photo_answer_file(
+                            course_id=course_id,
+                            year=year,
+                            semester=semester,
+                            moed=moed,
+                            question_number=question_number,
+                            photo_file=answer_file
+                        )
+                    else:
+                        answer_path = self.fileManager.save_answer_file_pdf(
+                            course_id=course_id,
+                            year=year,
+                            semester=semester,
+                            moed=moed,
+                            question_number=question_number,
+                            pdf_answer=answer_file
+                        )
                 # Add the question to the course
                 question_data = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
                                                              question_number=question_number,is_american=is_american,
-                                                             question_topics=question_topics,pdf_question_path=pdf__question_path, pdf_answer_path=pdf__answer_path, question_text=question_text)
-
-                self._pdfFacade.perform_information_retrival_question(pdf_question_path=pdf__question_path,question_data=question_data)
+                                                             question_topics=question_topics,pdf_question_path=question_path, pdf_answer_path=answer_path, question_text=question_text)
+                if self.is_photo(question_file):
+                    self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_data=question_data)
+                else:
+                    self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_data=question_data)
             
 
             return "Question added successfully."

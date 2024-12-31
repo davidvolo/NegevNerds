@@ -15,6 +15,9 @@ from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 course_controller = Blueprint('course_controller', __name__)
 
+
+
+
 CORS(course_controller, resources={
     r"/api/*": {
         "origins": "*",  # Or specify exact origin like "http://localhost:3000"
@@ -25,6 +28,13 @@ CORS(course_controller, resources={
 
 
 serviceLayer = ServiceLayer("../")
+
+
+ALLOWED_EXTENSIONS = {'pdf', 'jpeg', 'jpg', 'png'}
+
+def allowed_file(filename):
+    """Check if the file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def parse_jsonify(parsed_result):
@@ -581,16 +591,29 @@ def add_question():
         is_american = request.form.get('is_american')
         is_american_boolean = is_american.lower() == 'true'
         question_topics = request.form.get('question_topics')
-        pdf_question = request.files.get('pdf_question')
-        pdf_answer = request.files.get('pdf_answer')  # Optional
+        question_file = request.files.get('pdf_question')
+        answer_file = request.files.get('pdf_answer')  # Optional
 
         # Validate required fields
-        required_fields = [course_id, year, semester, moed, question_number, is_american, question_topics, pdf_question]
+        required_fields = [course_id, year, semester, moed, question_number, is_american, question_topics, question_file]
         if any(field is None for field in required_fields):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields."
             }), 400
+
+        if question_file and not allowed_file(question_file.filename):
+            return jsonify({
+                "success": False,
+                "message": "Invalid file type for pdf_question. Allowed types are PDF, JPEG, PNG."
+            }), 400
+
+        if answer_file and not allowed_file(answer_file.filename):
+            return jsonify({
+                "success": False,
+                "message": "Invalid file type for pdf_answer. Allowed types are PDF, JPEG, PNG."
+            }), 400
+
 
         if isinstance(question_topics, str):
             try:
@@ -606,7 +629,7 @@ def add_question():
         # Call the service layer
         result = serviceLayer.add_question(
             course_id, year, semester, moed, question_number,
-            is_american_boolean, question_topics, pdf_question, pdf_answer
+            is_american_boolean, question_topics, question_file, answer_file
         )
 
         # Parse the service response

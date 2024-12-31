@@ -20,11 +20,41 @@ class WordIndexController:
         # Process PDF using both WordIndex classes
         # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
         # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
-        words1 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
-        words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
+        words1 = self.wordIndex1.process_pdf(pdf_file_path)
+        words2 = self.wordIndex2.process_pdf(pdf_file_path)
         total_words = set([word for sublist in (words1 + words2) for word in sublist])
 
         self.update_words(words=total_words, question_data=question_data)
+
+    def process_photo(self, text, question_data):
+        # Process PDF using both WordIndex classes
+        # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
+        # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
+
+        english_words = re.findall(r'\b[a-zA-Z]+(?:-[a-zA-Z]+)?\b', text)
+
+        # Regex for Hebrew words, including hyphenated ones
+        hebrew_words = re.findall(r'\b[א-ת]+(?:-[א-ת]+)?\b', text)
+
+        split_english = []
+        for word in english_words:
+            if '-' in word:
+                split_english.extend(word.split('-'))
+            else:
+                split_english.append(word)
+
+        # Process Hebrew words
+        split_hebrew = []
+        for word in hebrew_words:
+            if '-' in word:
+                split_hebrew.extend(word.split('-'))
+            else:
+                split_hebrew.append(word)
+
+        words = split_english + split_hebrew
+        words_set = set(words)
+
+        self.update_words(words=words_set, question_data=question_data)
 
 
 
@@ -77,7 +107,7 @@ class WordIndex1:
 
     def extract_words(self, text):
         if text is None:
-            return [], []
+            return [],[]
 
         # Regex for English words, including hyphenated ones
         english_words = re.findall(r'\b[a-zA-Z]+(?:-[a-zA-Z]+)?\b', text)
@@ -98,10 +128,10 @@ class WordIndex1:
                 split_hebrew.extend(word.split('-'))  # Add components of hyphenated words
             split_hebrew.append(word)  # Keep the hyphenated word itself
 
-        return split_english + split_hebrew
+        return split_english , split_hebrew
 
 
-    def process_pdf(self, pdf_file_path, question_data):
+    def process_pdf(self, pdf_file_path):
         # Parse the PDF
         parsed = parser.from_file(pdf_file_path)
         text = parsed.get('content', '')
@@ -156,7 +186,7 @@ class WordIndex2:
 
         return split_english, split_hebrew
 
-    def process_pdf(self, pdf_file_path, question_data):
+    def process_pdf(self, pdf_file_path):
         try:
             with pdfplumber.open(pdf_file_path) as pdf:
                 text = ""
@@ -168,6 +198,8 @@ class WordIndex2:
             reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
 
 
-            return english_words , reversed_hebrew_words
+            return english_words + hebrew_words
+
         except Exception as e:
             print(f"Error processing PDF: {e}")
+

@@ -32,10 +32,10 @@ class Course:
         course_repository.add_course(course)
         topics_repo = CourseTopicsRepository()
 
-        for topic in course_topics:
-            if not topics_repo.is_exist(topic=topic, course_id=course_id):
-                topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
-        return course
+        # for topic in course_topics:
+        #     if not topics_repo.is_exist(topic=topic, course_id=course_id):
+        #         topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
+        # return course
 
     # Getters
     def get_id(self):
@@ -106,7 +106,7 @@ class Course:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
         exam_repo = ExamRepository()
-        exam= exam_repo.get_exam_by_date(year, semester, moed)
+        exam = exam_repo.get_exam_by_date(year, semester, moed)
         return exam
         # if raise_exception:
         #     raise ExamIsNotExist(year, semester, moed)
@@ -193,10 +193,10 @@ class Course:
         if exam is None:
             exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
             exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
-
-            if year not in self.exams:
-                self.exams[year] = []
-            self.exams[year].append(exam)
+            if exam is not None:
+                if year not in self.exams:
+                    self.exams[year] = []
+                self.exams[year].append(exam)
         else:
             raise ExamAlreadyExists(f"Exam with year={year}, semester={semester}, moed={moed} already exists.")
 

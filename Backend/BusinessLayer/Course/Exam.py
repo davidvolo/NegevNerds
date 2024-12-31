@@ -75,8 +75,10 @@ class Exam:
                                    question_id=self.generate_question_id(), question_text=question_text)
 
         #ToDO
-        self.questions_list[question_number] = question
-
+        if question is not None:
+            self.questions_list[question_number] = question
+        else :
+            raise Exception("error while creating question")
         return question.generate_question_details_name()
 
 
