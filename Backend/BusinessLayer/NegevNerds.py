@@ -329,11 +329,14 @@ class NegevNerds:
         :return: Path to the saved PDF file.
         """
         try:
+            print("1_david")
             # Get course name for filename generation
             question_analyzer = QuestionAnalyzer()
             question_text = question_analyzer.extract_text_from_pdf_file(pdf_question)
+            print("2_david")
             if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
                 # Save the PDF file with a custom name
+                print("3_david")
                 pdf__question_path = self.fileManager.save_question_file(
                     course_id=course_id,
                     year=year,
@@ -352,10 +355,12 @@ class NegevNerds:
                         question_number=question_number,
                         pdf_answer=pdf_answer
                     )
+                print("4_david")
                 # Add the question to the course
                 question_data = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
                                                              question_number=question_number,is_american=is_american,
                                                              question_topics=question_topics,pdf_question_path=pdf__question_path, pdf_answer_path=pdf__answer_path, question_text=question_text)
+                print("5_david")
 
                 self._pdfFacade.perform_information_retrival_question(pdf_question_path=pdf__question_path,question_data=question_data)
             

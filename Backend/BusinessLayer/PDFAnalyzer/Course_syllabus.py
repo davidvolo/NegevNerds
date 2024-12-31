@@ -21,7 +21,7 @@ class Course_syllabus:
         r'Outline[:\n](.*?)\n',
     ]
         
-        topics_table = ["נושאי השיעור", "נושא השיעור","Topics", "Outline"]  # List of column headers to search for
+        topics_table = ["נושאי השיעור", "נושא השיעור","Topics", "Outline","Lecture", "Practical Session"]  # List of column headers to search for
 
         topics = set()
         cropped_pdf_path = self.crop_pdf_top_margin(pdf_path)
@@ -40,6 +40,7 @@ class Course_syllabus:
             topic = topic.lstrip("•* ").strip()
             if topic:  # Only keep non-empty topics
                 cleaned_topics.add(topic)
+        cleaned_topics = {topic for topic in cleaned_topics if re.search(r"[a-zA-Zא-ת]", topic)}
 
         # Delete the cropped PDF file
         if os.path.exists(cropped_pdf_path):
