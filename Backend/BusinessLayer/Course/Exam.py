@@ -1,3 +1,4 @@
+import threading
 import uuid
 
 from Backend.BusinessLayer.Course.Question import Question
@@ -21,6 +22,8 @@ class Exam:
         self.moed = Moed(moed)
         self.questions_list = {}  # <Question number, Question>
 
+        self.questions_lock = threading.Lock()
+
     @classmethod
     def create(cls, exam_id, course_id, link, year , semester , moed):
         """
@@ -39,7 +42,6 @@ class Exam:
         exam_repo = ExamRepository()
         exam_repo.add_exam(exam)
         return exam
-
 
     def to_dto(self):
         """
@@ -66,21 +68,21 @@ class Exam:
         """
         Add a question to the exam.
         """
-        print("4.1.1_david")
-        # Check if the fields match
-        question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
-                                   question_number=question_number, is_american=is_american,
-                                   question_topics=question_topics, link_to_question=pdf__question_path,
-                                   link_to_answer=pdf__answer_path, link_to_exam=self.link,
-                                   question_id=self.generate_question_id(), question_text=question_text)
+        with self.questions_lock:
+            print("4.1.1_david")
+            # Check if the fields match
+            question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
+                                       question_number=question_number, is_american=is_american,
+                                       question_topics=question_topics, link_to_question=pdf__question_path,
+                                       link_to_answer=pdf__answer_path, link_to_exam=self.link,
+                                       question_id=self.generate_question_id(), question_text=question_text)
 
-        #ToDO
-        if question is not None:
-            self.questions_list[question_number] = question
-        else :
-            raise Exception("error while creating question")
-        return question.generate_question_details_name()
-
+            #ToDO
+            if question is not None:
+                self.questions_list[question_number] = question
+            else :
+                raise Exception("error while creating question")
+            return question.generate_question_details_name()
 
     def check_add_question_possibility(self, year, semester, moed, question_number,question_text ):
         # Ensure exam details match
@@ -95,29 +97,32 @@ class Exam:
 
         return True
 
-
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)
-
 
     def remove_question(self, question_number):
         """
         Remove a question from the questions list if it exists.
         """
-        if question_number in self.questions_list:
-            del self.questions_list[question_number]  # Remove the question completely
-        else:
-            raise QuestionNotFound(question_number)
+        with self.questions_lock:
+            if question_number in self.questions_list:
+                question_id = self.questions_list[question_number].id
+                question_repo = QuestionRepository()
+                question_repo.delete_question(question_id=question_id)
+                del self.questions_list[question_number]  # Remove the question completely
+            else:
+                raise QuestionNotFound(question_number)
 
     def get_question(self, question_number):
         """
         Retrieve a question by its number.
         """
-        if question_number in self.questions_list:
-            return self.questions_list[question_number]
-        question_repo = QuestionRepository()
-        return question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
+        with self.questions_lock:
+            if question_number in self.questions_list:
+                return self.questions_list[question_number]
+            question_repo = QuestionRepository()
+            return question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
 
     def get_questions_by_keywords(self, keywords):
         questions = []
@@ -138,14 +143,6 @@ class Exam:
     #     Remove a Comment from the comments list of a specific question.
     #     """
     #     self.get_question(question_number).remove_comment(comment_id)
-
-    def __str__(self):
-        """
-        String representation of the Exam instance.
-        """
-        return (f"Exam(ID: {self.id}, Course: {self.course_id}, Year: {self.year}, "
-                f"Semester: {self.semester}, Moed: {self.moed}, "
-                f"Questions: {len(self.questions_list)})")
     
     # def edit_course_name(self, new_course_name):
     #     """Edit the course name."""
@@ -194,3 +191,11 @@ class Exam:
             if question is not None:
                 questions.append(question.to_dto())
         return questions  # Will return an empty list if no question was found
+
+    def __str__(self):
+        """
+        String representation of the Exam instance.
+        """
+        return (f"Exam(ID: {self.id}, Course: {self.course_id}, Year: {self.year}, "
+                f"Semester: {self.semester}, Moed: {self.moed}, "
+                f"Questions: {len(self.questions_list)})")

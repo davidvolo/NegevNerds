@@ -1,3 +1,4 @@
+import threading
 import uuid
 
 from flask_sqlalchemy.session import Session
@@ -29,6 +30,9 @@ class Question:
         self.id = question_id
         self.comments = comments if comments is not None else []# Default to an empty list
         self.text = text
+
+        self.question_topics_lock = threading.Lock()
+        self.comments_lock = threading.Lock()
 
     @classmethod
     def create(cls, year, semester, moed, question_number, is_american,
@@ -86,13 +90,17 @@ class Question:
         return "comment" + str(uuid.uuid4())
 
     def get_question_topics(self):
-        return self.question_topics
+        with self.question_topics_lock:
+            return self.question_topics
 
     def add_question_topic(self, question_topic):
         """
         Add a topic for the question from it's course_topics.
         """
-        self.question_topics.append(question_topic)
+        with self.question_topics_lock:
+            self.question_topics.append(question_topic)
+            question_topics_repo = QuestionTopicsRepository()
+            question_topics_repo.add_Topic_to_Question(self.id, question_topic)
 
     def generate_question_details_name(self):
         return f"E-{self.year}-{self.semester}-{self.moed}-Q{self.question_number}"
@@ -101,36 +109,41 @@ class Question:
         """
         Remove a topic.
         """
-        if question_topic in self.question_topics:
-            self.question_topics.remove(question_topic)
-        else:
-            print(f"Keyword '{question_topic}' not found in the list.")
+        with self.question_topics_lock:
+            if question_topic in self.question_topics:
+                self.question_topics.remove(question_topic)
+                question_topics_repo = QuestionTopicsRepository()
+                question_topics_repo.remove_topic_from_question(question_topic, self.id)
+            else:
+                print(f"Keyword '{question_topic}' not found in the list.")
 
     def add_comment(self, writer_name, prev_id, comment_text):
         """
         Add a Comment to the comments list.
         """
-        comment = Comment.create(comment_id=self.generate_comment_id(),
-                                 writer_name=writer_name,
-                                 date=datetime.now(), 
-                                 prev_id=prev_id,
-                                 comment_text=comment_text,
-                                 question_id=self.id)
-        if comment is not None:
-            self.comments.append(comment)
-        else:
-            raise Exception("Problem to create comment")
+        with self.comments_lock:
+            comment = Comment.create(comment_id=self.generate_comment_id(),
+                                     writer_name=writer_name,
+                                     date=datetime.now(),
+                                     prev_id=prev_id,
+                                     comment_text=comment_text,
+                                     question_id=self.id)
+            if comment is not None:
+                self.comments.append(comment)
+            else:
+                raise Exception("Problem to create comment")
 
     def remove_comment(self, comment_id):
         """
         Remove a Comment from the comments list if it exists.
         Raise an exception if the Comment is not found.
         """
-        for comment in self.comments:
-            if comment.comment_id == comment_id:
-                self.comments.remove(comment)
-                return
-        raise CommentNotFound(comment_id)
+        with self.comments_lock:
+            for comment in self.comments:
+                if comment.comment_id == comment_id:
+                    self.comments.remove(comment)
+                    return
+            raise CommentNotFound(comment_id)
 
     def add_reaction(self, comment_id, user_id, emoji):
         for comment in self.comments:

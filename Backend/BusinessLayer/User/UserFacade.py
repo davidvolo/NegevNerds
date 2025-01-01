@@ -28,10 +28,11 @@ class UserFacade:
             self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
             self.auth_lock = threading.Lock()  # Lock for thread-safe access
 
+            self.email_lock = threading.Lock()
+            self.id_lock = threading.Lock()
+
     def generateUserId(self):
         return "user" + str(uuid.uuid4())
-
-    import bcrypt
 
     def hash_password(self,password):
         """Hash a password using bcrypt."""
@@ -43,6 +44,55 @@ class UserFacade:
         """Verify a password against a stored hashed password."""
         return bcrypt.checkpw(provided_password.encode('utf-8'), stored_hashed_password.encode('utf-8'))
 
+    def is_valid_email(self,email):
+        """Validate email domain."""
+        return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
+
+    def is_valid_name(self, name):
+        """
+        Validates a name to ensure it contains only Hebrew characters, spaces, tabs, and hyphens.
+
+        Args:
+        name (str): The name to validate.
+
+        Returns:
+        bool: True if the name is valid, False otherwise.
+        """
+        # Regular expression to allow only Hebrew characters, spaces, tabs, and hyphens
+        hebrew_name_regex = r'^[\u0590-\u05FF]+([\s\t-][\u0590-\u05FF]+)*$'
+
+        # Validate the name using regex
+        return bool(re.match(hebrew_name_regex, name))
+
+    def is_valid_password(self,password):
+        """
+        Validate the password.
+        Password must:
+        - Be at least 8 characters long
+        - Be at most 20 characters long
+        - Contain only English letters (a-z, A-Z), numbers, and allowed special characters
+        - Contain at least one uppercase letter
+        - Contain at least one lowercase letter
+        - Contain at least one number
+        - Contain at least one special character: {, }, [, ], !, @, $, %, ^, &, *, (, ), +
+        """
+
+        # Check for minimum and maximum length
+        if len(password) < 8 or len(password) > 20:
+            return False
+
+        # Ensure password contains only allowed characters
+        if not re.match(r"^[A-Za-z0-9{}\[\]!@\$%\^&\*\(\)\+]+$", password):
+            return False
+
+        # Regular expressions for each condition
+        has_uppercase = re.search(r"[A-Z]", password)
+        has_lowercase = re.search(r"[a-z]", password)
+        has_number = re.search(r"[0-9]", password)
+        has_special = re.search(r"[{}\[\]!@\$%\^&\*\(\)\+]", password)
+
+        # Return True only if all conditions are met
+        return bool(has_uppercase and has_lowercase and has_number and has_special)
 
     def register(self, email, password,password_confirm, first_name, last_name):
         """
@@ -95,79 +145,21 @@ class UserFacade:
             logging.error(f"Attempt  failed: {e}")
             raise Exception("האימות נכשל. הרשמה בוטלה.")
 
-
     def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
-        try:
-                id = self.generateUserId()
-                user = User.create(id, email, password, first_name, last_name)
-                user.login()
-                self.users_byEmail[email] = user
-                self.users_byId[id] = user
-                logging.info(f"User {first_name} {last_name} registered successfully.")
-                return id, {"message": f"User {first_name} {last_name} registered successfully."}
-        except Exception as e:
-                raise Exception("האישור נכשל. הרשמה בוטלה.")
+        with self.email_lock:
+            with self.id_lock:
+                try:
+                        id = self.generateUserId()
+                        user = User.create(id, email, password, first_name, last_name)
+                        user.login()
+                        self.users_byEmail[email] = user
+                        self.users_byId[id] = user
+                        logging.info(f"User {first_name} {last_name} registered successfully.")
+                        return id, {"message": f"User {first_name} {last_name} registered successfully."}
+                except Exception as e:
+                        raise Exception("האישור נכשל. הרשמה בוטלה.")
 
-    def get_user_courses(self, user_id):
-        curr_user = self.getUser_by_id(user_id=user_id)
-        if curr_user is None:
-            return []
-        return curr_user.courses
-
-
-    def is_valid_email(self,email):
-        """Validate email domain."""
-        return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
-    
-    
-    def is_valid_name(self, name):
-        """
-        Validates a name to ensure it contains only Hebrew characters, spaces, tabs, and hyphens.
-
-        Args:
-        name (str): The name to validate.
-
-        Returns:
-        bool: True if the name is valid, False otherwise.
-        """
-        # Regular expression to allow only Hebrew characters, spaces, tabs, and hyphens
-        hebrew_name_regex = r'^[\u0590-\u05FF]+([\s\t-][\u0590-\u05FF]+)*$'
-        
-        # Validate the name using regex
-        return bool(re.match(hebrew_name_regex, name))
-
-    
-    def is_valid_password(self,password):
-        """
-        Validate the password.
-        Password must:
-        - Be at least 8 characters long
-        - Be at most 20 characters long
-        - Contain only English letters (a-z, A-Z), numbers, and allowed special characters
-        - Contain at least one uppercase letter
-        - Contain at least one lowercase letter
-        - Contain at least one number
-        - Contain at least one special character: {, }, [, ], !, @, $, %, ^, &, *, (, ), +
-        """
-
-        # Check for minimum and maximum length
-        if len(password) < 8 or len(password) > 20:
-            return False
-
-        # Ensure password contains only allowed characters
-        if not re.match(r"^[A-Za-z0-9{}\[\]!@\$%\^&\*\(\)\+]+$", password):
-            return False
-
-        # Regular expressions for each condition
-        has_uppercase = re.search(r"[A-Z]", password)
-        has_lowercase = re.search(r"[a-z]", password)
-        has_number = re.search(r"[0-9]", password)
-        has_special = re.search(r"[{}\[\]!@\$%\^&\*\(\)\+]", password)
-
-        # Return True only if all conditions are met
-        return bool(has_uppercase and has_lowercase and has_number and has_special)
-    
     def send_auth_code(self,email, first_name):
         """Generate and send an authentication code via email."""
         auth_code = random.randint(100000, 999999)
@@ -226,7 +218,6 @@ class UserFacade:
     #     print(f"user_firstName: {user_firstName}")
     #     print(f"user_lastName: {user_lastName}")
 
-
     #     return user_firstName, user_lastName, user_id,  message  # Return user_id and message
 
     def login(self, email, password):
@@ -263,7 +254,6 @@ class UserFacade:
             print(f"Login failed: Incorrect email or password for {email}")
             return None, None, None, "אימייל או סיסמה שגויים. אנא נסה שוב."
 
-
     def logout(self, email):
         # Check if the user exists
         user = self.getUser_by_email(email)
@@ -276,6 +266,12 @@ class UserFacade:
         logging.info(f"User {email} logged out successfully.")
         message = "התנתקות בוצעה בהצלחה"
         return message
+
+    def get_user_courses(self, user_id):
+        curr_user = self.getUser_by_id(user_id=user_id)
+        if curr_user is None:
+            return []
+        return curr_user.get_courses()
 
     def registerToCourse(self, courseId, userId):
         """Add user to course (through User object)."""
@@ -294,21 +290,27 @@ class UserFacade:
         else:
             raise UserDoesnotExistsError()
 
-
     def getUser_by_id(self, user_id):
-        user = self.users_byId.get(user_id)
-        if user is not None:
+        with self.id_lock:
+            user = self.users_byId.get(user_id)
+            if user is not None:
+                return user
+            user_repo = UserRepository()
+            user = user_repo.get_user_by_id(user_id=user_id)
+            if user:
+                self.users_byId[user_id] = user
             return user
-        user_repo = UserRepository()
-        return user_repo.get_user_by_id(user_id=user_id)
-
 
     def getUser_by_email(self, email):
-        user = self.users_byEmail.get(email)
-        if user is not None:
+        with self.email_lock:
+            user = self.users_byEmail.get(email)
+            if user is not None:
+                return user
+            user_repo = UserRepository()
+            user = user_repo.get_user_by_email(email=email)
+            if user:
+                self.users_byEmail[email] = user
             return user
-        user_repo = UserRepository()
-        return user_repo.get_user_by_email(email=email)
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """
