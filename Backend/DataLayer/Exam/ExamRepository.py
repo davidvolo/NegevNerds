@@ -304,3 +304,24 @@ class ExamRepository:
             raise e
         finally:
             session.close()
+
+    def update_exam_link(self, exam_id, new_link):
+        """
+        Update the link field of an existing exam.
+        """
+        session = self.Session()
+        try:
+            # Find the existing exam
+            exam_model = session.query(ExamModel).filter_by(exam_id=exam_id).first()
+
+            if not exam_model:
+                raise ValueError(f"No exam found with ID {exam_id}")
+
+            # Update only the link field
+            exam_model.link = new_link
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()

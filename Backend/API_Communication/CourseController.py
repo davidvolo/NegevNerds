@@ -920,7 +920,163 @@ def upload_answer():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/checkExamFullPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def check_exam_full_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
 
+    try:
+        # Extract required fields from the JSON body
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
 
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
 
+        # Call the service layer function
+        result = serviceLayer.check_exam_full_pdf(course_id, year, semester, moed)
 
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link"),
+            "link": parsed_result.get("link", None)
+        }), 200
+
+    except Exception as e:
+        print(f"Error in check_exam_full_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+@course_controller.route('/api/course/uploadFullExamPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def uploadFullExamPdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Validate that a file is included in the request
+        if 'pdf_exam' not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "No file part in the request"
+            }), 400
+
+        pdf_exam = request.files['pdf_exam']
+
+        # Validate file
+        if pdf_exam.filename == '':
+            return jsonify({
+                "success": False,
+                "message": "No file selected for upload"
+            }), 400
+
+        # Extract additional fields from the form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year')
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call service layer to handle logic
+        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam)
+        parsed_result = json.loads(result)
+
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link", False),
+            "link": parsed_result.get("link", None)
+        }), 200 if parsed_result.get("status") == "success" else 400
+
+    except Exception as e:
+        print(f"Error in upload_full_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+    
+
+@course_controller.route('/api/course/downloadExamPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def download_exam_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters."
+            }), 400
+
+        # Call service layer to get the link
+        result = serviceLayer.get_exam_pdf_link(course_id, year, semester, moed)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("has_link"):
+            # If the file exists, send it
+            file_path = parsed_result.get("link")
+            if os.path.exists(file_path):
+                filename = f"{course_id}_{year}_{semester}_{moed}.pdf"
+                return send_file(file_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
+                # return send_file(file_path, as_attachment=True, mimetype='application/pdf')
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "The file path does not exist on the server."
+                }), 404
+        else:
+            # No file link exists
+            return jsonify({
+                "success": True,
+                "message": "המבחן המלא לא קיים במערכת.\n את/ה מוזמנ/ת לתרום לאתר ולהעלות אותה"
+            }), 200
+
+    except Exception as e:
+        print(f"Error in download_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500

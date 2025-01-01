@@ -671,6 +671,84 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+    
+    def check_exam_full_pdf(self, course_id, year, semester, moed):
+        
+        try:
+            # Call the Negev Nerds business logic to check for the exam
+            result = self.negev_nerds.check_exam_full_pdf(course_id, year, semester, moed)
+
+            # Parse the result from the Negev Nerds logic
+            if result.get("status") == "success":
+                return json.dumps({
+                    "status": "success",
+                    "message": result.get("message", "Operation successful."),
+                    "has_link": result.get("has_link"),
+                    "link": result.get("link", None)
+                })
+            else:
+                # Handle known failures returned by Negev Nerds
+                return json.dumps({
+                    "status": "error",
+                    "message": result.get("message", "Unknown error occurred.")
+                })
+
+        except Exception as e:
+            # Handle unexpected errors gracefully
+            print(f"Error in check_exam_full_pdf: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "An unexpected error occurred.",
+                "error": str(e)
+            })
+        
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
+        try:
+            result = self.negev_nerds.upload_full_exam_pdf(course_id, year, semester, moed, pdf_file)
+
+            if result.get("status") == "success":
+                return json.dumps({
+                    "status": "success",
+                    "message": result.get("message", "File uploaded successfully."),
+                    "has_link": result.get("has_link", False),
+                    "link": result.get("link", None)
+                })
+            else:
+                return json.dumps({
+                    "status": "error",
+                    "message": result.get("message", "An error occurred while uploading the file.")
+                })
+        except Exception as e:
+            print(f"Error in serviceLayer.upload_full_exam_pdf: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "An unexpected error occurred in the service layer.",
+                "error": str(e)
+            })
+
+    def get_exam_pdf_link(self, course_id, year, semester, moed):
+        try:
+            result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)
+
+            if result.get("status") == "success":
+                return json.dumps({
+                    "success": True,
+                    "has_link": result.get("has_link", False),
+                    "message": result.get("message", "Operation successful."),
+                    "link": result.get("link", None)  # Link will be used only if needed
+                })
+            else:
+                return json.dumps({
+                    "success": False,
+                    "message": result.get("message", "Unknown error occurred.")
+                })
+        except Exception as e:
+            print(f"Error in get_exam_pdf_link: {str(e)}")
+            return json.dumps({
+                "success": False,
+                "message": "An unexpected error occurred.",
+                "error": str(e)
+            })
 
     def initialize_system(self, file_path="init.json"):
         """
@@ -721,6 +799,17 @@ class ServiceLayer:
             res = self.register_to_course(courses[1]["courseId"], usersId[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
+            res = self.register_to_course(courses[2]["courseId"], usersId[0])
+            print(f"register {users[0]['first_name']} to course  {courses[2]['name']}: {res}")
+
+            res = self.register_to_course(courses[2]["courseId"], usersId[1])
+            print(f"register {users[1]['first_name']} to course  {courses[2]['name']}: {res}")
+
+            res = self.register_to_course(courses[2]["courseId"], usersId[2])
+            print(f"register {users[2]['first_name']} to course  {courses[2]['name']}: {res}")
+
+            res = self.register_to_course(courses[2]["courseId"], usersId[3])
+            print(f"register {users[3]['first_name']} to course  {courses[2]['name']}: {res}")
             # res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
             #                         False, ["math", "algebra"],"ex2.pdf",None)
             #

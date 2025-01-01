@@ -188,6 +188,32 @@ class NegevNerds:
                 raise Exception("Failed to create course.")
         except Exception as e:
             return f"Error: {e}"
+    
+    def check_exam_full_pdf(self, course_id, year, semester, moed):
+        """Opens a new course in the system and saves the syllabus file."""
+        try:
+            return self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
+        except Exception as e:
+            return f"Error: {e}"
+    
+    def get_exam_pdf_link(self, course_id, year, semester, moed):
+        try:
+            result = self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
+            return result
+        except Exception as e:
+            print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
+    
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
+        try:
+            exam_path = self._file_manager.save_exam_file1(course_id, year, semester, moed, pdf_file)
+            result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
+            return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
+        except Exception as e:
+            print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
 
     def remove_course(self, course_id, user_id):
         """Remove an existing course from the system and delete its corresponding folder."""
@@ -411,6 +437,8 @@ class NegevNerds:
             raise e
         except Exception as e:
             raise Exception(f"Failed to add question with PDF: {e}")
+        
+    
 
     def get_user_courses(self, user_id):
         courses_ids = self.userFacade.get_user_courses(user_id)

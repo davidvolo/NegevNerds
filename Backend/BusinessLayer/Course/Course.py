@@ -207,6 +207,57 @@ class Course:
             self.exams[year].remove(exam)
         else:
             raise ExamIsNotExist(year, semester, moed)
+    
+    # def check_exam_full_pdf(self, year, semester, moed):
+    #     """Removes an exam from the course."""
+    #     exam = self.get_exam(year, semester, moed)
+    #     exma_pdf_link = exam.link
+    #     if exma_pdf_link == "":
+
+    #     # else:
+    #     #     raise ExamIsNotExist(year, semester, moed)
+
+    def check_exam_full_pdf(self, year, semester, moed):
+        """
+        Checks if the full exam PDF exists and returns the result.
+        
+        Args:
+            year (int): Year of the exam.
+            semester (str): Semester of the exam.
+            moed (str): Exam session.
+        
+        Returns:
+            dict: Result indicating if the PDF link exists or not.
+        
+        Raises:
+            ExamIsNotExist: If the exam does not exist.
+        """
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        print("exma_link")
+        exam_pdf_link = exam.link  # Check for the exam link
+        print(exam_pdf_link)
+        if exam_pdf_link != "":
+            return {
+                "status": "success",
+                "message": "Exam PDF found.",
+                "has_link": True,
+                "link": exam_pdf_link
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "Exam PDF is not available.",
+                "has_link": False
+            }
+    
+    def upload_full_exam_pdf(self, year, semester, moed, exam_path):
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.upload_full_exam_pdf(exam_path)
+
 
     def exist_manager(self, manager_id):
 
