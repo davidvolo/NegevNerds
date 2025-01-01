@@ -100,6 +100,28 @@ class Exam:
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)
 
+    # def upload_full_exam_pdf(self, exam_path):
+    #     try:
+    #         self.link = exam_path  # Assuming this is the property where the link is saved
+    #         return {"status": "success", "message": "File uploaded successfully.", "link": self.link}
+    #     except Exception as e:
+    #         print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
+            # return {"status": "error", "message": str(e)}
+    def upload_full_exam_pdf(self, exam_path):
+        try:
+            # Update the in-memory link property
+            self.link = exam_path
+
+            # Update the record in the database
+            exam_repo = ExamRepository()  # Assuming you have an ExamRepository for database operations
+            exam_repo.update_exam_link(self.id, self.link)
+
+            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+        except Exception as e:
+            print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
+
 
     def remove_question(self, question_number):
         """

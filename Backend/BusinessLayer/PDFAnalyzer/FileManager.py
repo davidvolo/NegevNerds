@@ -105,6 +105,29 @@ class FileManager:
             file.write(exam_content)
 
         return exam_file_path
+    
+    def save_exam_file1(self, course_id, year, semester, moed, pdf_file):
+        """Saves the exam file in the course's year folder."""
+        try:
+            # Define folder paths
+            course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+            year_folder = os.path.join(course_folder, str(year))
+
+            # Create the year folder if it doesn't exist
+            if not os.path.exists(year_folder):
+                os.makedirs(year_folder)
+
+            # Define the file path
+            exam_file_path = os.path.join(year_folder, f"exam_{course_id}_{year}_{semester}_{moed}.pdf")
+
+            # Read the file content and write it to the desired location
+            with open(exam_file_path, 'wb') as file:
+                file.write(pdf_file.read())  # Read the content from the FileStorage object
+
+            return exam_file_path
+        except Exception as e:
+            raise Exception(f"Failed to save exam file: {str(e)}")
+
 
     # def save_question_file(self, course_id, year, semester, moed, question_number, question_content_pdf):
     #     """Saves a question file inside the corresponding exam folder."""

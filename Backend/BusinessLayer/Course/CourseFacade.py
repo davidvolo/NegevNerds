@@ -291,6 +291,29 @@ class CourseFacade:
         except Exception as e:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    def check_exam_full_pdf(self, course_id, year, semester, moed, ):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.check_exam_full_pdf(year, semester, moed)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    
+    
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.upload_full_exam_pdf(year, semester, moed, exam_path)
+        except Exception as e:
+            print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
+            raise Exception(f"CourseFacade Error: {str(e)}")
 
     def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text):
         try:
