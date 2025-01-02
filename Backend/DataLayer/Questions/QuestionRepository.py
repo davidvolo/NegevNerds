@@ -47,6 +47,7 @@ class QuestionRepository:
                 year=question.year,
                 is_american=question.is_american,
                 link_to_question=question.link_to_question,
+                link_to_answer = question.link_to_answer,
                 link_to_exam=question.link_to_exam,
                 semester=question.semester,
                 moed=question.moed,
@@ -159,6 +160,27 @@ class QuestionRepository:
                                                              moed=moed, text=text).first()
             return curr is not None
         except Exception as e:
+            raise e
+        finally:
+            session.close()
+
+    def uploadSolution(self, question_id, link_to_answer):
+        """
+        Update the link field of an existing exam.
+        """
+        session = self.Session()
+        try:
+            # Find the existing exam
+            question_model = session.query(QuestionModel).filter_by(question_id=question_id).first()
+
+            if not question_model:
+                raise ValueError(f"No exam found with ID {question_id}")
+
+            # Update only the link field
+            question_model.link_to_answer = link_to_answer
+            session.commit()
+        except Exception as e:
+            session.rollback()
             raise e
         finally:
             session.close()

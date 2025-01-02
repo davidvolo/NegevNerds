@@ -235,9 +235,7 @@ class Course:
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
             raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
-        print("exma_link")
         exam_pdf_link = exam.link  # Check for the exam link
-        print(exam_pdf_link)
         if exam_pdf_link != "":
             return {
                 "status": "success",
@@ -252,13 +250,40 @@ class Course:
                 "has_link": False
             }
     
+    def checkExistSolution(self, year, semester, moed,question_number):
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        question_answer_pdf_link = question.link_to_answer  # Check for the exam link
+        if question_answer_pdf_link != "":
+            return {
+                "status": "success",
+                "message": "Exam PDF found.",
+                "has_link": True,
+                "link": question_answer_pdf_link
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "Exam PDF is not available.",
+                "has_link": False
+            }
+    
     def upload_full_exam_pdf(self, year, semester, moed, exam_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:
             raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
         return exam.upload_full_exam_pdf(exam_path)
 
-
+    
+    def uploadSolution(self, year, semester, moed, question_number, answer_path_path):
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        return question.uploadSolution(answer_path_path)
+    
     def exist_manager(self, manager_id):
 
         manager_repo = CourseManagersRepository()
