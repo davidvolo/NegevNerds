@@ -115,6 +115,11 @@ class UserFacade:
             return []
         return curr_user.courses
 
+    def get_user_name(self, user_id):
+        curr_user = self.getUser_by_id(user_id=user_id)
+        if curr_user is None:
+            return []
+        return curr_user.first_name + " " + curr_user.last_name
 
     def is_valid_email(self,email):
         """Validate email domain."""
