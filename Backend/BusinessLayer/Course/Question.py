@@ -138,6 +138,20 @@ class Question:
                 comment.add_reaction(user_id, emoji)
                 return
         raise CommentNotFound
+    
+    def uploadSolution(self, answer_path_path):
+        try:
+            # Update the in-memory link property
+            self.link_to_answer = answer_path_path
+
+            # Update the record in the database
+            question_repo = QuestionRepository()  # Assuming you have an ExamRepository for database operations
+            question_repo.uploadSolution(self.id, self.link_to_answer)
+
+            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+        except Exception as e:
+            print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
     def remove_reaction(self, comment_id, reaction_id):
         for comment in self.comments:

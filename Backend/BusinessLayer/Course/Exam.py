@@ -66,7 +66,6 @@ class Exam:
         """
         Add a question to the exam.
         """
-        print("4.1.1_david")
         # Check if the fields match
         question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
                                    question_number=question_number, is_american=is_american,

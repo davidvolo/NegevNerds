@@ -90,7 +90,7 @@ class CourseManagersRepository:
             session.close()
 
 
-    def is_exist(self, user_id, course_id):
+    def is_exist(self, course_id,user_id ):
 
         session = self.Session()
         try:
@@ -100,3 +100,6 @@ class CourseManagersRepository:
             raise e
         finally:
             session.close()
+    
+   
+
