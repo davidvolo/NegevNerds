@@ -619,6 +619,23 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def get_user_name(self, user_id):
+        try:
+            # Call the business layer method with the provided arguments
+            result = self.negev_nerds.get_user_name(user_id)
+
+            print(f"name result from NegevNerds: {result}")  # לוג להראות מה חזר
+
+            return json.dumps({
+                "status": "success",
+                "data": result
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def get_course_topics(self, course_id):
         """Editing exam's year """
         try:

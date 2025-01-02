@@ -511,3 +511,55 @@ def get_user_courses():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
+
+
+@user_controller.route('/api/get_user_name', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_user_name():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+
+    try:
+        # Extract user_id from query parameters
+        user_id = request.args.get('user_id')  # Use request.args for query params
+
+        # Validate input
+        if not user_id:
+            return jsonify({
+                "success": False,
+                "message": "User ID is required"
+            }), 400  # Return 400 if user_id is missing
+
+        # Fetch the user courses from the service layer
+        result = serviceLayer.get_user_name(user_id)
+
+        result = json.loads(result)  # Convert the JSON string to a Python dict
+
+        if 'data' in result:
+            parsed_result = result["data"]  # Now we're getting only the courses list
+
+        # Return the courses as JSON response
+        return jsonify({
+            "success": True,
+            "data": parsed_result
+        }), 200
+
+    except Exception as e:
+        print(f"Error in getting user name: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500

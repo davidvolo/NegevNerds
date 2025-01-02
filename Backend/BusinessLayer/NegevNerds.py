@@ -171,6 +171,15 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
 
+    def get_user_name(self, user_id):
+        """Get the user full name."""
+        try:
+            result = self.userFacade.get_user_name(user_id)
+            return result
+        except Exception as e:
+            print(f"Error in NegevNerds.get_user_name: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
     def open_course(self, user_id, course_id, name, syllabus_content_pdf):
         """Opens a new course in the system and saves the syllabus file."""
         try:
