@@ -22,7 +22,7 @@ class WordIndexController:
         # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
         words1 = self.wordIndex1.process_pdf(pdf_file_path)
         words2 = self.wordIndex2.process_pdf(pdf_file_path)
-        total_words = set([word for sublist in (words1 + words2) for word in sublist])
+        total_words = set(words1+words2)
 
         self.update_words(words=total_words, question_data=question_data)
 
