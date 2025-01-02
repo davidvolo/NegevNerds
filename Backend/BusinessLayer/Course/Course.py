@@ -35,7 +35,7 @@ class Course:
         # for topic in course_topics:
         #     if not topics_repo.is_exist(topic=topic, course_id=course_id):
         #         topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
-        # return course
+        return course
 
     # Getters
     def get_id(self):
