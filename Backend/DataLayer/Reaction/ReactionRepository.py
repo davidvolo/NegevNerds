@@ -72,3 +72,25 @@ class ReactionRepository:
             raise e
         finally:
             session.close()
+    
+    def delete_reactions_by_comment_ids(self, comment_ids):
+        """
+        Deletes all reactions associated with a list of comment IDs.
+
+        Args:
+            comment_ids (List[int]): List of comment IDs whose reactions should be deleted.
+        """
+        session = self.Session()
+        try:
+            # Query and delete all reactions for each comment ID in the list
+            for comment_id in comment_ids:
+                reactions = session.query(ReactionModel).filter_by(comment_id=comment_id).all()
+                for reaction in reactions:
+                    session.delete(reaction)
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error deleting reactions: {str(e)}")
+        finally:
+            session.close()

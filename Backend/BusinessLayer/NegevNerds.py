@@ -8,7 +8,11 @@ from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
-
+from Backend.DataLayer.Comment.CommentRepository import CommentRepository
+from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
+from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
+from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 
@@ -492,6 +496,33 @@ class NegevNerds:
             return course_managers_repo.is_exist(course_id, user_id)
         except Exception as e:
             raise Exception(f"Error in NegevNerds.is_user_manager: {str(e)}")
+    
+    def delete_question(self, course_id, year, semester, moed, question_number):
+        """
+        Deletes a question from the course, ensuring all related data is removed.
+        """
+        try:
+            # Get the course and ensure it exists
+            question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
+            if not question_id:
+                raise Exception(
+                    f"Question {question_number} does not exist in the exam for course {course_id}, "
+                    f"Year: {year}, Semester: {semester}, Moed: {moed}."
+                )           
+            comment_repo = CommentRepository()
+            comments_Ids = comment_repo.get_comment_ids_by_question_id(question_id)
+            reactions_repo = ReactionRepository()
+            reactions_repo.delete_reactions_by_comment_ids(comments_Ids)
+            comment_repo.delete_comments_by_question_id(question_id)
+            words_questions_repo = WordsQuestionsRepository()
+            words_questions_repo.delete_question_words_from_all_tables(question_details)
+            question_topics_repo = QuestionTopicsRepository()
+            question_topics_repo.delete_topics_by_question_id(question_id)
+            question_repo = QuestionRepository()
+            question_repo.delete_question(question_id)
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+
 
 
     def get_user_courses(self, user_id):

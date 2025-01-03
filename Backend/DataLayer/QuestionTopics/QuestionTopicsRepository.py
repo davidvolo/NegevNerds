@@ -95,6 +95,34 @@ class QuestionTopicsRepository:
             raise e
         finally:
             session.close()
+    
+
+    def delete_topics_by_question_id(self, question_id):
+        """
+        Deletes all topic associated with a specific question ID.
+
+        Args:
+            question_id (str): The ID of the question whose topics should be deleted.
+        """
+        session = self.Session()
+        try:
+            # Query to find all comments for the given question_id
+            topics = session.query(QuestionTopicsModel).filter_by(question_id=question_id).all()
+            
+            if not topics:
+                raise ValueError(f"No topics found for question ID {question_id}")
+
+            # Delete all retrieved comments
+            for topic in topics:
+                session.delete(topic)
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
 
 
 
