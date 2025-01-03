@@ -314,6 +314,17 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
     
+    def checkExistQuestion(self, course_id, year, semester, moed,question_number ):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.checkExistQuestion(year, semester, moed,question_number)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
     
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):

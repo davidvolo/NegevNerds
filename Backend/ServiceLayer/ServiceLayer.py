@@ -608,6 +608,24 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def delete_question(self, course_id, year, semester, moed, question_number):
+        """
+        Deletes a specific question from the course and its related data.
+        """
+        try:
+            # Call the NegevNerds logic to delete the question
+            self.negev_nerds.delete_question(course_id, year, semester, moed, question_number)
+            return json.dumps({
+                "status": "success",
+                "message": "Question deleted successfully."
+            })
+        except Exception as e:
+            # Handle errors and return an error response
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def get_user_courses(self, user_id):
         """Editing exam's year """
         try:

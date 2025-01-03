@@ -1209,4 +1209,28 @@ def is_course_manager():
     except Exception as e:
         print(f"Error in is_course_manager: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
+    
+
+@course_controller.route('/api/course/delete_question', methods=['DELETE'])
+@cross_origin()
+def delete_question():
+    try:
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = data.get('year')
+        semester = data.get('semester')
+        moed = data.get('moed')
+        question_number = data.get('question_number')
+
+        # Validate input
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({"success": False, "message": "Missing parameters"}), 400
+
+        # Call the service layer to delete the question
+        serviceLayer.delete_question(course_id, year, semester, moed, question_number)
+        return jsonify({"success": True, "message": "Question deleted successfully."}), 200
+    except Exception as e:
+        print(f"Error in delete_question: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 

@@ -270,6 +270,18 @@ class Course:
                 "has_link": False
             }
     
+    
+    def checkExistQuestion(self, year, semester, moed,question_number):
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        question_details = question.generate_question_details_name()
+        if not question:
+            return False
+        return question.id, question_details
+        
+        
     def upload_full_exam_pdf(self, year, semester, moed, exam_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:

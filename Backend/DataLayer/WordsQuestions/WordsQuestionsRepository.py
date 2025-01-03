@@ -69,3 +69,37 @@ class WordsQuestionsRepository:
             return words
         finally:
             session.close()
+    
+
+   
+
+    def delete_question_words_from_all_tables(self, question_details):
+        """
+        Deletes all rows across all words tables defined in MODELS where question_id matches.
+
+        Args:
+            question_id (str): The ID of the question whose topics should be deleted.
+        """
+        session = self.Session()
+        try:
+            for letter, model_class in MODELS.items():
+                try:
+                    # Query the table associated with the model
+                    rows_to_delete = session.query(model_class).filter_by(question_id=question_details).all()
+                    
+                    # Delete each row
+                    for row in rows_to_delete:
+                        session.delete(row)
+
+                except Exception as e:
+                    # Handle errors specific to the table, log and continue
+                    print(f"Error deleting topics for table '{letter}': {str(e)}")
+
+            # Commit all deletions
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error deleting topics across all tables: {str(e)}")
+        finally:
+            session.close()
+
