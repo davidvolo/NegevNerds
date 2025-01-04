@@ -118,6 +118,7 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
         
     # def login(self, email, password):
     #     """Handle user login and return JSON."""
@@ -211,6 +212,8 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+
+
     def register_to_course(self, course_id, user_id):
         """Handle user registration to a course and return JSON response."""
         try:
@@ -300,6 +303,31 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+
+
+    def search_free_text(self, text):
+        """Handle user logout and return JSON."""
+        try:
+            result = self.negev_nerds.search_free_text(text=text)
+
+            questions_dict = [question.to_dict() for question in result]
+
+            if not questions_dict:
+                return json.dumps({
+                    "status": "error",
+                    "message": "No questions found for the given criteria."
+                })
+
+            return json.dumps({
+                "status": "success",
+                "message": questions_dict
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions by specific criteria."""

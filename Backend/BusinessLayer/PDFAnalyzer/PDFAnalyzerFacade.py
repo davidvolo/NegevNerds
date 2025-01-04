@@ -64,4 +64,8 @@ class PDFAnalyzerFacade:
 
         self.inforamtion_retrival.process_photo(text=text, question_data=question_data)
 
+    def search_free_text(self , text):
+        return self.inforamtion_retrival.search_free_text(text=text)
+
+
        

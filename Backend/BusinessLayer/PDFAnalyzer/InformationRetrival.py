@@ -93,6 +93,39 @@ class WordIndexController:
     #     sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
     #     return sorted_english_dict, sorted_hebrew_dict
 
+    def search_free_text(self, text: str) -> list:
+        """
+        Search for the 50 best matching question IDs based on the number of words in common with the text.
+
+        :param text: The input free-text string.
+        :return: A list of up to 50 question IDs with the most words in common with the text.
+        """
+        from collections import defaultdict
+
+        # Step 1: Split the input text into words
+        words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
+
+        # Step 2: Dictionary to count the number of matching words for each question ID
+        question_word_count = defaultdict(int)
+
+        # Step 3: Iterate over words and fetch associated question IDs
+        for word in words:
+            question_ids = self.words_repository.get_questions_id_by_word(word)
+            for question_id in question_ids:
+                question_word_count[question_id] += 1
+
+        # Step 4: Sort question IDs by the number of matching words (descending)
+        # If counts are equal, secondary sorting by question ID (optional)
+        sorted_questions = sorted(
+            question_word_count.items(),
+            key=lambda item: (-item[1], item[0])  # Sort by count descending, then by ID ascending
+        )
+
+        # Step 5: Extract the top 50 question IDs
+        top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
+
+        return top_50_questions
+
 
 
     

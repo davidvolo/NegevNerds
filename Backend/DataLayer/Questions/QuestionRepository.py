@@ -93,6 +93,20 @@ class QuestionRepository:
         finally:
             session.close()
 
+    def get_questions_by_ids_list(self, ids):
+        session = self.Session()
+        try:
+            questions = []
+            for curr_id in ids:
+                question_model = session.query(QuestionModel).filter_by(question_id=curr_id).first()
+                if question_model is not None:
+                    questions.append(question_model.to_business_model())
+            return questions
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
+
     def get_question_by_number(self, exam_id, question_number):
         session = self.Session()
         try:
