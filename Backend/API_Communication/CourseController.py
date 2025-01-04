@@ -875,6 +875,63 @@ def search_question_by_specifics():
         }), 500
 
 
+@course_controller.route('/api/course/search_questions_by_text', methods=['OPTIONS', 'POST'])
+@cross_origin()
+def search_questions_by_text():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+
+        print("Received data:", data)
+
+        # Validate input
+        if not all(key in data for key in ['text']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract the data
+        text = data.get('text')
+
+        result = serviceLayer.search_free_text(text=text)
+        print(f"Service Layer Result: {result}")
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [question.to_dict() if isinstance(question, QuestionDTO) else question for question in result]
+        else:
+            result = result.to_dict() if isinstance(result, QuestionDTO) else result
+
+        # Return the response
+        print(f"Formatted result: {result}")
+
+        # Return the response
+        return jsonify({
+            "success": True,
+            "data": result
+        }), 200
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 @course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def upload_answer():
@@ -920,7 +977,317 @@ def upload_answer():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/checkExamFullPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def check_exam_full_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from the JSON body
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call the service layer function
+        result = serviceLayer.check_exam_full_pdf(course_id, year, semester, moed)
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link"),
+            "link": parsed_result.get("link", None)
+        }), 200
+
+    except Exception as e:
+        print(f"Error in check_exam_full_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+@course_controller.route('/api/course/uploadFullExamPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def uploadFullExamPdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Validate that a file is included in the request
+        if 'pdf_exam' not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "No file part in the request"
+            }), 400
+
+        pdf_exam = request.files['pdf_exam']
+
+        # Validate file
+        if pdf_exam.filename == '':
+            return jsonify({
+                "success": False,
+                "message": "No file selected for upload"
+            }), 400
+
+        # Extract additional fields from the form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year')
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call service layer to handle logic
+        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam)
+        parsed_result = json.loads(result)
+
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link", False),
+            "link": parsed_result.get("link", None)
+        }), 200 if parsed_result.get("status") == "success" else 400
+
+    except Exception as e:
+        print(f"Error in upload_full_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+    
+
+@course_controller.route('/api/course/downloadExamPdf', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def download_exam_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters."
+            }), 400
+
+        # Call service layer to get the link
+        result = serviceLayer.get_exam_pdf_link(course_id, year, semester, moed)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("has_link"):
+            # If the file exists, send it
+            file_path = parsed_result.get("link")
+            if os.path.exists(file_path):
+                filename = f"{course_id}_{year}_{semester}_{moed}.pdf"
+                return send_file(file_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
+                # return send_file(file_path, as_attachment=True, mimetype='application/pdf')
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "The file path does not exist on the server."
+                }), 404
+        else:
+            # No file link exists
+            return jsonify({
+                "success": True,
+                "message": "המבחן המלא לא קיים במערכת.\n את/ה מוזמנ/ת לתרום לאתר ולהעלות אותה"
+            }), 200
+
+    except Exception as e:
+        print(f"Error in download_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
 
 
+
+@course_controller.route('/api/checkExistSolution', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def checkExistSolution():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from the JSON body
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
+        question_number = data.get("question_number")
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed,question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call the service layer function
+        result = serviceLayer.checkExistSolution(course_id, year, semester, moed,question_number)
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link"),
+            "link": parsed_result.get("link", None)
+        }), 200
+
+    except Exception as e:
+        print(f"Error in check_exam_full_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+
+@course_controller.route('/api/course/uploadSolution', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def uploadSolution():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Validate that a file is included in the request
+        if 'solution_file' not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "No file part in the request"
+            }), 400
+
+        solution_file = request.files['solution_file']
+
+        # Validate file
+        if solution_file.filename == '':
+            return jsonify({
+                "success": False,
+                "message": "No file selected for upload"
+            }), 400
+
+        # Extract additional fields from the form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year')
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = request.form.get('question_number')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call service layer to handle logic
+        result = serviceLayer.uploadSolution(course_id, int(year), semester, moed,question_number, solution_file)
+        parsed_result = json.loads(result)
+
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link", False),
+            "link": parsed_result.get("link", None)
+        }), 200 if parsed_result.get("status") == "success" else 400
+
+    except Exception as e:
+        print(f"Error in upload_full_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/is_course_manager', methods=['POST'])
+@cross_origin()
+def is_course_manager():
+    try:
+        data = request.get_json()
+        course_id = data.get('course_id')
+        user_id = data.get('user_id')
+
+        if not course_id or not user_id:
+            return jsonify({"success": False, "message": "Missing parameters"}), 400
+
+        result = serviceLayer.is_user_manager(course_id, user_id)
+        print(f"Is user manager result for course {course_id} and user {user_id}: {result}")
+
+        return jsonify({"success": True, "is_manager": result}), 200
+    except Exception as e:
+        print(f"Error in is_course_manager: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+
+@course_controller.route('/api/course/delete_question', methods=['DELETE'])
+@cross_origin()
+def delete_question():
+    try:
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = data.get('year')
+        semester = data.get('semester')
+        moed = data.get('moed')
+        question_number = data.get('question_number')
+
+        # Validate input
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({"success": False, "message": "Missing parameters"}), 400
+
+        # Call the service layer to delete the question
+        serviceLayer.delete_question(course_id, year, semester, moed, question_number)
+        return jsonify({"success": True, "message": "Question deleted successfully."}), 200
+    except Exception as e:
+        print(f"Error in delete_question: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 

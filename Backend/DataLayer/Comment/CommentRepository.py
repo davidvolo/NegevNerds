@@ -112,3 +112,48 @@ class CommentRepository:
             raise e
         finally:
             session.close()
+    
+    def delete_comments_by_question_id(self, question_id):
+        """
+        Deletes all comments associated with a specific question ID.
+
+        Args:
+            question_id (str): The ID of the question whose comments should be deleted.
+        """
+        session = self.Session()
+        try:
+            # Query to find all comments for the given question_id
+            comments = session.query(CommentModel).filter_by(question_id=question_id).all()
+
+            # Delete all retrieved comments
+            for comment in comments:
+                session.delete(comment)
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_comment_ids_by_question_id(self, question_id):
+        """
+        Retrieves all comment IDs associated with a specific question ID.
+
+        Args:
+            question_id (str): The ID of the question whose comment IDs should be retrieved.
+
+        Returns:
+            List[int]: A list of comment IDs.
+        """
+        session = self.Session()
+        try:
+            # Query to find all comments for the given question_id
+            comment_ids = session.query(CommentModel.comment_id).filter_by(question_id=question_id).all()
+
+            # Extract IDs from the query result
+            return [comment_id[0] for comment_id in comment_ids]
+        except Exception as e:
+            raise Exception(f"Error retrieving comment IDs: {str(e)}")
+        finally:
+            session.close()

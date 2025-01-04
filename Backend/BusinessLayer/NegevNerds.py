@@ -7,6 +7,13 @@ from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
 from Backend.BusinessLayer.Course.enums import Semester, Moed
+from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
+from Backend.DataLayer.Comment.CommentRepository import CommentRepository
+from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
+from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
+from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
+
 
 
 
@@ -171,6 +178,15 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
 
+    def get_user_name(self, user_id):
+        """Get the user full name."""
+        try:
+            result = self.userFacade.get_user_name(user_id)
+            return result
+        except Exception as e:
+            print(f"Error in NegevNerds.get_user_name: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
     def open_course(self, user_id, course_id, name, syllabus_content_pdf):
         """Opens a new course in the system and saves the syllabus file."""
         try:
@@ -188,6 +204,66 @@ class NegevNerds:
                 raise Exception("Failed to create course.")
         except Exception as e:
             return f"Error: {e}"
+    
+    def check_exam_full_pdf(self, course_id, year, semester, moed):
+        """Opens a new course in the system and saves the syllabus file."""
+        try:
+            return self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
+        except Exception as e:
+            return f"Error: {e}"
+    
+    def checkExistSolution(self, course_id, year, semester, moed,question_number):
+        """Opens a new course in the system and saves the syllabus file."""
+        try:
+            return self.courseFacade.checkExistSolution(course_id, year, semester, moed,question_number)
+        except Exception as e:
+            return f"Error: {e}"
+    
+    def get_exam_pdf_link(self, course_id, year, semester, moed):
+        try:
+            result = self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
+            return result
+        except Exception as e:
+            print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
+    
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
+        try:
+            exam_path = self._file_manager.save_exam_file1(course_id, year, semester, moed, pdf_file)
+            result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
+            return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
+        except Exception as e:
+            print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+        
+    def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
+        try:
+            answer_path = ""
+            if solution_file is not None:
+                if self.is_photo(answer_path):
+                    answer_path = self.fileManager.save_photo_answer_file(
+                        course_id=course_id,
+                        year=year,
+                        semester=semester,
+                        moed=moed,
+                        question_number=question_number,
+                        photo_file=solution_file
+                    )
+                else:
+                    answer_path = self.fileManager.save_answer_file_pdf(
+                        course_id=course_id,
+                        year=year,
+                        semester=semester,
+                        moed=moed,
+                        question_number=question_number,
+                        pdf_answer=solution_file
+                    )
+            result = self.courseFacade.uploadSolution(course_id, year, semester, moed, question_number, answer_path)
+            return {"status": "success", "message": "File uploaded and saved successfully.", "link": answer_path}
+        except Exception as e:
+            print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
 
     def remove_course(self, course_id, user_id):
         """Remove an existing course from the system and delete its corresponding folder."""
@@ -339,6 +415,12 @@ class NegevNerds:
         return False
 
 
+    def search_free_text(self , text):
+        ids = self._pdfFacade.search_free_text(text=text)
+        dtos = self.courseFacade.get_questions_dto_by_ids(ids)
+        return dtos
+
+
 
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
@@ -376,7 +458,7 @@ class NegevNerds:
                         question_number=question_number,
                         pdf_question=question_file
                     )
-                answer_path = None
+                answer_path = ""
                 if answer_file is not None:
                     if self.is_photo(answer_path):
                         answer_path = self.fileManager.save_photo_answer_file(
@@ -404,13 +486,49 @@ class NegevNerds:
                     self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_data=question_data)
                 else:
                     self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_data=question_data)
-            
 
             return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:
             raise e
         except Exception as e:
             raise Exception(f"Failed to add question with PDF: {e}")
+        
+    def is_user_manager(self, course_id, user_id):
+        """Delegates to CourseManagersRepository to check if user is a course manager."""
+        try:
+            course_managers_repo = CourseManagersRepository()
+            # return course_managers_repo.is_user_manager(course_id, user_id)
+            return course_managers_repo.is_exist(course_id, user_id)
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds.is_user_manager: {str(e)}")
+    
+    def delete_question(self, course_id, year, semester, moed, question_number):
+        """
+        Deletes a question from the course, ensuring all related data is removed.
+        """
+        try:
+            # Get the course and ensure it exists
+            question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
+            if not question_id:
+                raise Exception(
+                    f"Question {question_number} does not exist in the exam for course {course_id}, "
+                    f"Year: {year}, Semester: {semester}, Moed: {moed}."
+                )           
+            comment_repo = CommentRepository()
+            comments_Ids = comment_repo.get_comment_ids_by_question_id(question_id)
+            reactions_repo = ReactionRepository()
+            reactions_repo.delete_reactions_by_comment_ids(comments_Ids)
+            comment_repo.delete_comments_by_question_id(question_id)
+            words_questions_repo = WordsQuestionsRepository()
+            words_questions_repo.delete_question_words_from_all_tables(question_details)
+            question_topics_repo = QuestionTopicsRepository()
+            question_topics_repo.delete_topics_by_question_id(question_id)
+            question_repo = QuestionRepository()
+            question_repo.delete_question(question_id)
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+
+
 
     def get_user_courses(self, user_id):
         courses_ids = self.userFacade.get_user_courses(user_id)

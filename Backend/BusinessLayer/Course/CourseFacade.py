@@ -7,6 +7,9 @@ from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
+
+from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -38,6 +41,18 @@ class CourseFacade:
             course.add_student(user_id)
             #user_courses_rep = UserCoursesRepository()
             #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+
+
+
+
+    def get_questions_dto_by_ids(self , ids):
+        questions_repo = QuestionRepository()
+        dtos_list = []
+        questions = questions_repo.get_questions_by_ids_list(ids)
+        for question in questions:
+            dtos_list.append(question.to_dto())
+        return dtos_list
+
 
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
@@ -317,7 +332,61 @@ class CourseFacade:
         except Exception as e:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
-
+    
+    def check_exam_full_pdf(self, course_id, year, semester, moed, ):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.check_exam_full_pdf(year, semester, moed)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    def checkExistSolution(self, course_id, year, semester, moed,question_number ):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.checkExistSolution(year, semester, moed,question_number)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    def checkExistQuestion(self, course_id, year, semester, moed,question_number ):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.checkExistQuestion(year, semester, moed,question_number)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    
+    
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.upload_full_exam_pdf(year, semester, moed, exam_path)
+        except Exception as e:
+            print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
+            raise Exception(f"CourseFacade Error: {str(e)}")
+    
+    def uploadSolution(self, course_id, year, semester, moed, question_number, answer_path_path):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.uploadSolution(year, semester, moed,question_number, answer_path_path)
+        except Exception as e:
+            print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
+            raise Exception(f"CourseFacade Error: {str(e)}")
     def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text):
         try:
             course = self.get_course(course_id)

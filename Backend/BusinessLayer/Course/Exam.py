@@ -77,6 +77,13 @@ class Exam:
                                        link_to_answer=pdf__answer_path, link_to_exam=self.link,
                                        question_id=self.generate_question_id(), question_text=question_text)
 
+            if question is not None:
+                self.questions_list[question_number] = question
+            else :
+                raise Exception("error while creating question")
+            return question.generate_question_details_name()
+
+
             #ToDO
             if question is not None:
                 self.questions_list[question_number] = question
@@ -100,6 +107,22 @@ class Exam:
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)
+
+
+    def upload_full_exam_pdf(self, exam_path):
+        try:
+            # Update the in-memory link property
+            self.link = exam_path
+
+            # Update the record in the database
+            exam_repo = ExamRepository()  # Assuming you have an ExamRepository for database operations
+            exam_repo.update_exam_link(self.id, self.link)
+
+            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+        except Exception as e:
+            print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
 
     def remove_question(self, question_number):
         """

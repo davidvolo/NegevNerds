@@ -42,7 +42,7 @@ class Course:
         # for topic in course_topics:
         #     if not topics_repo.is_exist(topic=topic, course_id=course_id):
         #         topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
-        # return course
+        return course
 
     # Getters
     def get_id(self):
@@ -235,6 +235,85 @@ class Course:
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
+    def check_exam_full_pdf(self, year, semester, moed):
+        """
+        Checks if the full exam PDF exists and returns the result.
+        
+        Args:
+            year (int): Year of the exam.
+            semester (str): Semester of the exam.
+            moed (str): Exam session.
+        
+        Returns:
+            dict: Result indicating if the PDF link exists or not.
+        
+        Raises:
+            ExamIsNotExist: If the exam does not exist.
+        """
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        exam_pdf_link = exam.link  # Check for the exam link
+        if exam_pdf_link != "":
+            return {
+                "status": "success",
+                "message": "Exam PDF found.",
+                "has_link": True,
+                "link": exam_pdf_link
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "Exam PDF is not available.",
+                "has_link": False
+            }
+    
+    def checkExistSolution(self, year, semester, moed,question_number):
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        question_answer_pdf_link = question.link_to_answer  # Check for the exam link
+        if question_answer_pdf_link != "":
+            return {
+                "status": "success",
+                "message": "Exam PDF found.",
+                "has_link": True,
+                "link": question_answer_pdf_link
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "Exam PDF is not available.",
+                "has_link": False
+            }
+    
+    
+    def checkExistQuestion(self, year, semester, moed,question_number):
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        question_details = question.generate_question_details_name()
+        if not question:
+            return False
+        return question.id, question_details
+        
+        
+    def upload_full_exam_pdf(self, year, semester, moed, exam_path):
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.upload_full_exam_pdf(exam_path)
+
+    
+    def uploadSolution(self, year, semester, moed, question_number, answer_path_path):
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        question = exam.get_question(question_number)
+        return question.uploadSolution(answer_path_path)
+    
     def exist_manager(self, manager_id):
         manager_repo = CourseManagersRepository()
         return manager_id in self.managers or manager_repo.is_exist(user_id=manager_id, course_id=self.course_id)
