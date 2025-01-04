@@ -81,15 +81,7 @@ class Exam:
                 self.questions_list[question_number] = question
             else :
                 raise Exception("error while creating question")
-            return question.generate_question_details_name()
-
-
-            #ToDO
-            if question is not None:
-                self.questions_list[question_number] = question
-            else :
-                raise Exception("error while creating question")
-            return question.generate_question_details_name()
+            return question.id
 
     def check_add_question_possibility(self, year, semester, moed, question_number,question_text ):
         # Ensure exam details match
@@ -145,7 +137,10 @@ class Exam:
             if question_number in self.questions_list:
                 return self.questions_list[question_number]
             question_repo = QuestionRepository()
-            return question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
+            question = question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
+            if question is not None:
+                self.questions_list[question_number] = question
+            return question
 
     def get_questions_by_keywords(self, keywords):
         questions = []

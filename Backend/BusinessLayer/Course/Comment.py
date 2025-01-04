@@ -94,10 +94,10 @@ class Comment:
     def edit_text(self, new_text):
         self.text = new_text
 
-    def get_score(self):
-        """
-        Calculate and return the score of the Comment.
-        The score is the count of 'like' emojis minus the count of 'dislike' emojis.
-        """
-        return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])
-
+    # def get_score(self):
+    #     """
+    #     Calculate and return the score of the Comment.
+    #     The score is the count of 'like' emojis minus the count of 'dislike' emojis.
+    #     """
+    #     return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])
+    #

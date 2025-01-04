@@ -16,7 +16,7 @@ class WordIndexController:
         self.wordIndex1 = WordIndex1(common_words_en, common_words_he)
         self.wordIndex2 = WordIndex2(common_words_en, common_words_he)
 
-    def process_pdf(self, pdf_file_path, question_data):
+    def process_pdf(self, pdf_file_path, question_id, course_id):
         # Process PDF using both WordIndex classes
         # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
         # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
@@ -24,9 +24,9 @@ class WordIndexController:
         words2 = self.wordIndex2.process_pdf(pdf_file_path)
         total_words = set(words1+words2)
 
-        self.update_words(words=total_words, question_data=question_data)
+        self.update_words(words=total_words, question_id=question_id, course_id=course_id)
 
-    def process_photo(self, text, question_data):
+    def process_photo(self, text, question_id , course_id):
         # Process PDF using both WordIndex classes
         # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
         # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
@@ -54,44 +54,18 @@ class WordIndexController:
         words = split_english + split_hebrew
         words_set = set(words)
 
-        self.update_words(words=words_set, question_data=question_data)
+        self.update_words(words=words_set, question_id=question_id, course_id=course_id)
 
 
 
-
-        # Merge and update dictionaries
-        #self._update_main_dictionary(english_words1, english_words2, question_data, self.english_dict, self.common_words_en, lower=True)
-        #self._update_main_dictionary(hebrew_words1, hebrew_words2, question_data, self.hebrew_dict, self.common_words_he)
-
-        #sorted_english_dict, sorted_hebrew_dict = self.get_sorted_dictionaries()
-        #self.english_dict = sorted_english_dict
-        #self.hebrew_dict = sorted_hebrew_dict
-
-
-    # def _update_main_dictionary(self, words1, words2, question_data, main_dict, common_words, lower=False):
-    #     """
-    #     Merges words from two sources and updates the main dictionary, avoiding duplicates.
-    #     """
-    #     all_words = set(words1 + words2)  # Combine and remove duplicates
-    #     for word in all_words:
-    #         normalized_word = word.lower() if lower else word  # Convert to lowercase if specified
-    #         if normalized_word not in common_words and question_data not in main_dict[normalized_word]:
-    #             main_dict[normalized_word].append(question_data)
-
-
-    def update_words(self, words, question_data):
+    def update_words(self, words, question_id, course_id):
         for word in words:
             word = word.lower()
             if len(word)>1:
                 if word not in self.common_words_en and word not in self.common_words_he:
-                    self.words_repository.add_word_to_question(word, question_data)
+                    self.words_repository.add_word_to_question(word, question_id, course_id)
 
 
-    # def get_sorted_dictionaries(self):
-    #     # Return sorted versions of both dictionaries
-    #     sorted_english_dict = dict(sorted(self.english_dict.items()))
-    #     sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
-    #     return sorted_english_dict, sorted_hebrew_dict
 
     def search_free_text(self, text: str) -> list:
         """
@@ -111,6 +85,40 @@ class WordIndexController:
         # Step 3: Iterate over words and fetch associated question IDs
         for word in words:
             question_ids = self.words_repository.get_questions_id_by_word(word)
+            for question_id in question_ids:
+                question_word_count[question_id] += 1
+
+        # Step 4: Sort question IDs by the number of matching words (descending)
+        # If counts are equal, secondary sorting by question ID (optional)
+        sorted_questions = sorted(
+            question_word_count.items(),
+            key=lambda item: (-item[1], item[0])  # Sort by count descending, then by ID ascending
+        )
+
+        # Step 5: Extract the top 50 question IDs
+        top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
+
+        return top_50_questions
+
+
+    def search_free_text_with_course(self, text, course_id) -> list:
+        """
+        Search for the 50 best matching question IDs based on the number of words in common with the text.
+
+        :param text: The input free-text string.
+        :return: A list of up to 50 question IDs with the most words in common with the text.
+        """
+        from collections import defaultdict
+
+        # Step 1: Split the input text into words
+        words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
+
+        # Step 2: Dictionary to count the number of matching words for each question ID
+        question_word_count = defaultdict(int)
+
+        # Step 3: Iterate over words and fetch associated question IDs
+        for word in words:
+            question_ids = self.words_repository.get_questions_id_by_word_and_course(word, course_id)
             for question_id in question_ids:
                 question_word_count[question_id] += 1
 

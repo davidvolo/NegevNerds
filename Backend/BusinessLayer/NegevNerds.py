@@ -295,7 +295,7 @@ class NegevNerds:
         """Search for all the exams in the system for specific course"""
         try:
             # Fetch all exams for the course from coursefacade
-            exams = self.courseFacade.search_all_course_exmas(course_id)
+            exams = self.courseFacade.search_all_course_exams(course_id)
             return exams
         except Exception as e:
             raise Exception(f"Failed to search exams: {e}")
@@ -415,10 +415,14 @@ class NegevNerds:
         return False
 
 
-    def search_free_text(self , text):
-        ids = self._pdfFacade.search_free_text(text=text)
+    def search_free_text(self , text, course_id = None):
+        if course_id is None:
+            ids = self._pdfFacade.search_free_text(text=text)
+        else:
+            ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
         dtos = self.courseFacade.get_questions_dto_by_ids(ids)
         return dtos
+
 
 
 
@@ -479,13 +483,13 @@ class NegevNerds:
                             pdf_answer=answer_file
                         )
                 # Add the question to the course
-                question_data = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
+                question_id = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
                                                              question_number=question_number,is_american=is_american,
                                                              question_topics=question_topics,pdf_question_path=question_path, pdf_answer_path=answer_path, question_text=question_text)
                 if self.is_photo(question_file):
-                    self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_data=question_data)
+                    self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_id=question_id, course_id = course_id)
                 else:
-                    self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_data=question_data)
+                    self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_id=question_id, course_id = course_id)
 
             return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:
@@ -555,14 +559,24 @@ class NegevNerds:
 
     def upload_answer(self, course_id, year, semester, moed, question_number, pdf_answer):
         try:
-            self.fileManager.save_answer_file(
-                course_id,
-                year,
-                semester,
-                moed,
-                question_number,
-                pdf_answer
-            )
+            if self.is_photo(pdf_answer):
+                self.fileManager.save_photo_answer_file(
+                    course_id,
+                    year,
+                    semester,
+                    moed,
+                    question_number,
+                    pdf_answer
+                )
+            else:
+                self.fileManager.save_answer_file_pdf(
+                    course_id,
+                    year,
+                    semester,
+                    moed,
+                    question_number,
+                    pdf_answer
+                )
             return "Answer added successfully to the question."
         except (CourseIsNotExist, ExamIsNotExist) as e:
             raise e

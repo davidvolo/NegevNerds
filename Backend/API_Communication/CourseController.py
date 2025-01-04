@@ -901,8 +901,9 @@ def search_questions_by_text():
 
         # Extract the data
         text = data.get('text')
+        course_id = data.get('course_id')  # Optional
 
-        result = serviceLayer.search_free_text(text=text)
+        result = serviceLayer.search_free_text(text=text, course_id=course_id)
         print(f"Service Layer Result: {result}")
 
         # Parse the JSON string
