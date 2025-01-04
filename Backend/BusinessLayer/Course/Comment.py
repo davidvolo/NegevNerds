@@ -10,12 +10,13 @@ from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name, date=None, prev_id=None, comment_text="", reactions=None):
+    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", reactions=None):
         """
         Initialize a Comment instance.
         """
         self.comment_id = comment_id
         self.writer_name = writer_name
+        self.writer_id = writer_id
         self.date = date if date else datetime.now()  # Default to current date if not provided
         self.prev_id = prev_id
         self.comment_text = comment_text
@@ -24,7 +25,7 @@ class Comment:
         self.reactions_lock = threading.Lock()
 
     @classmethod
-    def create(cls, comment_id, writer_name, date, prev_id, comment_text, question_id):
+    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, question_id):
         """
         Class method to create a new comment and save to database
         Returns:
@@ -34,6 +35,7 @@ class Comment:
         comment = cls(
             comment_id=comment_id,
             writer_name=writer_name,
+            writer_id = writer_id,
             date=date,
             prev_id=prev_id,
             comment_text=comment_text,

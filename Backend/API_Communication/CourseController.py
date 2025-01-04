@@ -665,11 +665,12 @@ def add_comment():
         moed = request.form.get('moed')
         question_number = int(request.form.get('question_number'))
         writer_name = request.form.get('writer_name')
+        writer_id = request.form.get('writer_id')
         prev_id = request.form.get('prev_id')
         comment_text = request.form.get('comment_text')  # Optional
 
         # Validate required fields
-        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text]
+        required_fields = [course_id, year,writer_id, semester, moed, question_number, writer_name, prev_id, comment_text]
         if any(field is None for field in required_fields):
             return jsonify({
                 "success": False,
@@ -679,7 +680,7 @@ def add_comment():
         # Call the service layer
         result = serviceLayer.add_comment(
             course_id, year, semester, moed, question_number,
-            writer_name, prev_id, comment_text
+            writer_name,writer_id ,prev_id, comment_text
         )
 
         # Parse the service response
@@ -1291,4 +1292,58 @@ def delete_question():
         print(f"Error in delete_question: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
+@course_controller.route('/api/course/get_comments_metadata', methods=['GET'])
+@cross_origin()
+def get_comments_metadata():
+    try:
+        # Extract the question_id from query parameters
+        question_id = request.args.get('question_id')
 
+        # Validate input
+        if not question_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: question_id"
+            }), 400
+
+        # Fetch comment metadata from the service layer
+        result = serviceLayer.get_comments_metadata(question_id)
+
+        # Parse the result from the service layer
+        parsed_result = json.loads(result)  # Assuming the service layer returns a JSON string
+        if parsed_result.get("status") != "success":
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 500
+
+        # Return only the required metadata
+        return jsonify({
+            "success": True,
+            "comments_metadata": parsed_result.get("message")
+        }), 200
+    except Exception as e:
+        print(f"Error in get_comments_metadata: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/delete_comment', methods=['DELETE'])
+@cross_origin()
+def delete_comment():
+    try:
+        data = request.get_json()
+        comment_id = data.get('comment_id')
+       
+
+        # Validate input
+        if not all([comment_id]):
+            return jsonify({"success": False, "message": "Missing parameters"}), 400
+
+        # Call the service layer to delete the question
+        serviceLayer.delete_comment(comment_id)
+        return jsonify({"success": True, "message": "Comment deleted successfully."}), 200
+    except Exception as e:
+        print(f"Error in delete_comment: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500

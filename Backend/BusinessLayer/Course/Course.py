@@ -396,7 +396,7 @@ class Course:
             else:
                 raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 
-    def add_comment(self, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+    def add_comment(self, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
         """
         Add a Comment to specific question.
         """
@@ -406,7 +406,7 @@ class Course:
         question = exam.get_question(question_number)
         if question is None:
             raise QuestionNotFound
-        question.add_comment(writer_name, prev_id, comment_text)
+        question.add_comment(writer_name, writer_id,prev_id, comment_text)
 
     def add_reaction(self, year, semester, moed, question_number, comment_id, user_id, emoji):
         """

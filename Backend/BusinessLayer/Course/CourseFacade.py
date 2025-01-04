@@ -387,12 +387,12 @@ class CourseFacade:
         except Exception as e:
             print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
             raise Exception(f"CourseFacade Error: {str(e)}")
-    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text):
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            course.add_comment(year, semester, moed, question_number, writer_name, prev_id, comment_text)
+            course.add_comment(year, semester, moed, question_number, writer_name,writer_id, prev_id, comment_text)
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 

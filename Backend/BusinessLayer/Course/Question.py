@@ -117,13 +117,14 @@ class Question:
             else:
                 print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, writer_name, prev_id, comment_text):
+    def add_comment(self, writer_name, writer_id,prev_id, comment_text):
         """
         Add a Comment to the comments list.
         """
         with self.comments_lock:
             comment = Comment.create(comment_id=self.generate_comment_id(),
                                      writer_name=writer_name,
+                                     writer_id = writer_id,
                                      date=datetime.now(),
                                      prev_id=prev_id,
                                      comment_text=comment_text,
