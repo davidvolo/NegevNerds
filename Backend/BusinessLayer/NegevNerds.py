@@ -356,7 +356,7 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
-    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, prev_id,
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
                     comment_text):
         """
                 Add a comment to a question discussion.
@@ -364,7 +364,8 @@ class NegevNerds:
         try:
             self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
                                                            moed=moed, question_number=question_number,
-                                                          writer_name=writer_name, prev_id=prev_id, comment_text=comment_text)
+                                                          writer_name=writer_name, 
+                                                          writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
             return "Comment added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
             raise e
@@ -497,6 +498,14 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Error in NegevNerds.is_user_manager: {str(e)}")
     
+    def get_comments_metadata(self, question_id):
+        try:         
+            comment_repo = CommentRepository()
+            comments_metaData = comment_repo.get_comments_metadata_by_question_id(question_id)
+            return comments_metaData
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+
     def delete_question(self, course_id, year, semester, moed, question_number):
         """
         Deletes a question from the course, ensuring all related data is removed.
@@ -520,6 +529,30 @@ class NegevNerds:
             question_topics_repo.delete_topics_by_question_id(question_id)
             question_repo = QuestionRepository()
             question_repo.delete_question(question_id)
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+
+    def delete_comment(self, comment_id):
+        """
+        Deletes a comment from the question, ensuring all related data is removed.
+        """
+        try:
+            # Get the course and ensure it exists
+            # question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
+            # if not question_id:
+            #     raise Exception(
+            #         f"Question {question_number} does not exist in the exam for course {course_id}, "
+            #         f"Year: {year}, Semester: {semester}, Moed: {moed}."
+            #     )   
+            reactions_repo = ReactionRepository()
+            reactions_repo.delete_reactions_by_comment_id(comment_id)        
+            comment_repo = CommentRepository()
+            replies_to_comment = comment_repo.get_replies_by_comment_id(comment_id)
+            comment_prev = comment_repo.get_prev_id_by_comment_id(comment_id)
+            comment_repo.update_replies_prev_id(replies_to_comment, comment_prev)
+            comment_repo.delete_comment(comment_id)
+            
+           
         except Exception as e:
             raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 

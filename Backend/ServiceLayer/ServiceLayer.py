@@ -482,7 +482,8 @@ class ServiceLayer:
             })
 
     def add_comment(self, course_id, year, semester, moed, question_number,
-                     writer_name
+                     writer_name,
+                     writer_id
                      , prev_id,
                      comment_text):
         """
@@ -492,7 +493,7 @@ class ServiceLayer:
         try:
 
             result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
-                                                  writer_name, prev_id, comment_text)
+                                                  writer_name,writer_id, prev_id, comment_text)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -521,6 +522,25 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+        
+    def get_comments_metadata(self, question_id):
+        """
+        Fetch metadata for all comments of a question.
+        :param question_id: ID of the question.
+        :return: JSON string with success or error message.
+        """
+        try:
+            result = self.negev_nerds.get_comments_metadata(question_id)
+            return json.dumps({
+                "status": "success",
+                "message": result  # List of metadata dictionaries
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
 
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
         """
@@ -615,6 +635,24 @@ class ServiceLayer:
         try:
             # Call the NegevNerds logic to delete the question
             self.negev_nerds.delete_question(course_id, year, semester, moed, question_number)
+            return json.dumps({
+                "status": "success",
+                "message": "Question deleted successfully."
+            })
+        except Exception as e:
+            # Handle errors and return an error response
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+        
+    def delete_comment(self, comment_id):
+        """
+        Deletes a specific comment from the question and its related data.
+        """
+        try:
+            # Call the NegevNerds logic to delete the question
+            self.negev_nerds.delete_comment(comment_id)
             return json.dumps({
                 "status": "success",
                 "message": "Question deleted successfully."
