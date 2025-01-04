@@ -17,7 +17,8 @@ def create_letter_model(letter, is_hebrew=False):
     return type(f"Letter{letter}Model", (Base,), {
         '__tablename__': table_name,
         'word': Column(String,primary_key=True, nullable=False),
-        'question_id': Column(Integer,primary_key=True)
+        'question_id': Column(String, primary_key=True),
+        'course_id': Column(String)
     })
 
 
@@ -46,11 +47,11 @@ class WordsQuestionsRepository:
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
-    def add_word_to_question(self, word, question_id):
+    def add_word_to_question(self, word, question_id, course_id):
         session = self.Session()
         first_letter= word[0]
         model = MODELS[first_letter]
-        entry = model(word=word,question_id=question_id)
+        entry = model(word=word,question_id=question_id, course_id=course_id)
         try:
             session.add(entry)
             session.commit()
@@ -63,13 +64,29 @@ class WordsQuestionsRepository:
     def get_questions_id_by_word(self, word):
         session = self.Session()
         try:
+            ids = []
             first_letter = word[0]
-            words = session.query(MODELS[first_letter]).filter_by(word=word).all()
+            models = session.query(MODELS[first_letter]).filter_by(word=word).all()
             session.close()
-            return words
+            for model in models:
+                ids.append(model.question_id)
+            return ids
         finally:
             session.close()
-    
+
+
+    def get_questions_id_by_word_and_course(self, word, course_id):
+        session = self.Session()
+        try:
+            ids = []
+            first_letter = word[0]
+            models = session.query(MODELS[first_letter]).filter_by(word=word, course_id=course_id).all()
+            session.close()
+            for model in models:
+                ids.append(model.question_id)
+            return ids
+        finally:
+            session.close()
 
    
 

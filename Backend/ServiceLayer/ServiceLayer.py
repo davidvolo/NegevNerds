@@ -305,10 +305,10 @@ class ServiceLayer:
             })
 
 
-    def search_free_text(self, text):
+    def search_free_text(self, text, course_id =None):
         """Handle user logout and return JSON."""
         try:
-            result = self.negev_nerds.search_free_text(text=text)
+            result = self.negev_nerds.search_free_text(text=text, course_id=course_id)
 
             questions_dict = [question.to_dict() for question in result]
 
