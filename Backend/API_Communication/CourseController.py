@@ -876,6 +876,64 @@ def search_question_by_specifics():
         }), 500
 
 
+@course_controller.route('/api/course/search_questions_by_text', methods=['OPTIONS', 'POST'])
+@cross_origin()
+def search_questions_by_text():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+
+        print("Received data:", data)
+
+        # Validate input
+        if not all(key in data for key in ['text']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract the data
+        text = data.get('text')
+        course_id = data.get('course_id')  # Optional
+
+        result = serviceLayer.search_free_text(text=text, course_id=course_id)
+        print(f"Service Layer Result: {result}")
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [question.to_dict() if isinstance(question, QuestionDTO) else question for question in result]
+        else:
+            result = result.to_dict() if isinstance(result, QuestionDTO) else result
+
+        # Return the response
+        print(f"Formatted result: {result}")
+
+        # Return the response
+        return jsonify({
+            "success": True,
+            "data": result
+        }), 200
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 @course_controller.route('/api/course/upload_answer', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def upload_answer():
