@@ -415,6 +415,12 @@ class NegevNerds:
         return False
 
 
+    def search_free_text(self , text):
+        ids = self._pdfFacade.search_free_text(text=text)
+        dtos = self.courseFacade.get_questions_dto_by_ids(ids)
+        return dtos
+
+
 
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
@@ -480,7 +486,6 @@ class NegevNerds:
                     self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_data=question_data)
                 else:
                     self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_data=question_data)
-            
 
             return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:

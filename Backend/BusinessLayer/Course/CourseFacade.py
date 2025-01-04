@@ -5,6 +5,9 @@ from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
+
+from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -34,6 +37,18 @@ class CourseFacade:
             course.add_student(user_id)
             #user_courses_rep = UserCoursesRepository()
             #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+
+
+
+    def get_questions_dto_by_ids(self , ids):
+        questions_repo = QuestionRepository()
+        dtos_list = []
+        questions = questions_repo.get_questions_by_ids_list(ids)
+        for question in questions:
+            dtos_list.append(question.to_dto())
+        return dtos_list
+
+
 
 
     def remove_student_from_course(self, course_id, user_id):
