@@ -297,7 +297,7 @@ class Course:
         question_details = question.generate_question_details_name()
         if not question:
             return False
-        return question.id, question_details
+        return question.id, question_details, question.link_to_question, question.link_to_answer
         
         
     def upload_full_exam_pdf(self, year, semester, moed, exam_path):

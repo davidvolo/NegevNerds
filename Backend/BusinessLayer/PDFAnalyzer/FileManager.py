@@ -298,3 +298,24 @@ class FileManager:
         return photo_file_path
 
 
+    import os
+
+    def delete_file(file_path):
+        """
+        Deletes a file (PDF or photo) from the specified path.
+
+        :param file_path: Full path to the file to be deleted
+        :return: Boolean indicating whether the file was successfully deleted
+        :raises: FileNotFoundError if the file does not exist
+        """
+        try:
+            # Check if the file exists
+            if os.path.exists(file_path):
+                os.remove(file_path)  # Delete the file
+                print(f"File deleted successfully: {file_path}")
+                return True
+            else:
+                raise FileNotFoundError(f"File not found: {file_path}")
+        except Exception as e:
+            print(f"Error deleting file: {str(e)}")
+            return False

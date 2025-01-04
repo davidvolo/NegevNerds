@@ -521,7 +521,7 @@ class NegevNerds:
         """
         try:
             # Get the course and ensure it exists
-            question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
+            question_id, question_details, pathQuestion, pathAnswer = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
             if not question_id:
                 raise Exception(
                     f"Question {question_number} does not exist in the exam for course {course_id}, "
@@ -538,6 +538,10 @@ class NegevNerds:
             question_topics_repo.delete_topics_by_question_id(question_id)
             question_repo = QuestionRepository()
             question_repo.delete_question(question_id)
+            self.fileManager.delete_file(pathQuestion)
+            if pathAnswer != "":
+                self.fileManager.delete_file(pathAnswer)
+
         except Exception as e:
             raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 
