@@ -832,6 +832,7 @@ def search_question_by_specifics():
         # Extract data from the request
         data = request.get_json()
 
+
         # הדפסת המידע שהתקבל מהלקוח
         print("Received data:", data)
 
