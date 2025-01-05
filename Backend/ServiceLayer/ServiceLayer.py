@@ -192,10 +192,10 @@ class ServiceLayer:
         #         "message": str(e)
         #     })
 
-    def logout(self, email):
+    def logout(self, user_id):
         """Handle user logout and return JSON."""
         try:
-            result = self.negev_nerds.logout(email)
+            result = self.negev_nerds.logout(user_id)
 
             if "Error" in result:
                 return json.dumps({

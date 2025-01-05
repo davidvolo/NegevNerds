@@ -135,10 +135,10 @@ class NegevNerds:
 
 
 
-    def logout(self, email):
+    def logout(self, user_id):
         """Log the user out."""
         try:
-            result = self.userFacade.logout(email)
+            result = self.userFacade.logout(user_id)
             return result  # Return the result from the facade
         except Exception as e:
             return f"Error: {e}"

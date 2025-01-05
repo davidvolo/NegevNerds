@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
@@ -10,6 +11,9 @@ from Backend.DataLayer.WordsQuestions import WordsQuestionsRepository
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 app = Flask(__name__)
+
+app.config['JWT_SECRET_KEY'] = 'negev_nerds'  # סוד ה-JWT שלך
+jwt = JWTManager(app)
 
 db = SQLAlchemy()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # For SQLite
@@ -24,6 +28,12 @@ CORS(app, resources={
     }
 })
 
+
+# Register controllers
+app.register_blueprint(user_controller)
+app.register_blueprint(course_controller)
+
+
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path):
     response = app.make_response('')
@@ -32,12 +42,13 @@ def handle_options(path):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
-# Register controllers
-app.register_blueprint(user_controller)
-app.register_blueprint(course_controller)
 
-
-
+@app.errorhandler(401)
+def custom_401(error):
+    return jsonify({
+        "success": False,
+        "message": "Unauthorized access, please provide a valid token"
+    }), 401
 
 
 def main():
