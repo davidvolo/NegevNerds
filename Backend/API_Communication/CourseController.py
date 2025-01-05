@@ -1,5 +1,6 @@
 import ast
 import json
+import mimetypes
 import os
 
 from flask import Blueprint, request, jsonify, send_file
@@ -405,7 +406,19 @@ def get_question_pdf():
             }), 404
 
         # שליחת הקובץ ללקוח
-        return send_file(question_path, mimetype='application/pdf')
+
+        mime_type, _ = mimetypes.guess_type(question_path)
+
+        if mime_type == 'application/pdf':
+            # If it's a PDF, send as PDF
+            return send_file(question_path, mimetype='application/pdf')
+        elif mime_type and mime_type.startswith('image/'):
+            # If it's an image (JPEG, PNG, etc.), send as an image
+
+            return send_file(question_path, mimetype=mime_type)
+        else:
+            # Handle unsupported file types
+            return 'Unsupported file type', 400
     except Exception as e:
         print(f"Error in get_pdf: {e}")
         return jsonify({
@@ -452,7 +465,17 @@ def get_answer_pdf():
             }), 404
 
         # שליחת הקובץ ללקוח
-        return send_file(answer_path, mimetype='application/pdf')
+        mime_type, _ = mimetypes.guess_type(answer_path)
+
+        if mime_type == 'application/pdf':
+            # If it's a PDF, send as PDF
+            return send_file(answer_path, mimetype='application/pdf')
+        elif mime_type and mime_type.startswith('image/'):
+            # If it's an image (JPEG, PNG, etc.), send as an image
+
+            return send_file(answer_path, mimetype=mime_type)
+
+        #return send_file(answer_path, mimetype='application/pdf')
     except Exception as e:
         print(f"Error in get_pdf: {e}")
         return jsonify({
