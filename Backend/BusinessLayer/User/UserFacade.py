@@ -313,16 +313,16 @@ class UserFacade:
             print(f"Login failed: Incorrect email or password for {email}")
             return None, None, None, "אימייל או סיסמה שגויים. אנא נסה שוב."
 
-    def logout(self, email):
+    def logout(self, user_id):
         # Check if the user exists
-        user = self.getUser_by_email(email)
+        user = self.getUser_by_id(user_id)
         if user is None:
             raise UserOrPasswordIncorrectError()
         if not user.loggedIn:
-            raise UserIsNotLoggedInError(email)
+            raise UserIsNotLoggedInError(user_id)
         user.logout()
         
-        logging.info(f"User {email} logged out successfully.")
+        logging.info(f"User {user_id} logged out successfully.")
         message = "התנתקות בוצעה בהצלחה"
         return message
 
