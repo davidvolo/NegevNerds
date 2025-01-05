@@ -408,6 +408,20 @@ class Course:
             raise QuestionNotFound
         question.add_comment(writer_name, writer_id,prev_id, comment_text)
 
+
+    def get_question_path(self, year, semester, moed, question_number):
+        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        if exam is not None:
+            return exam.get_question_path(question_number)
+        else:
+            raise ExamIsNotExist
+
+    def get_answer_path(self, year, semester, moed, question_number):
+        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        if exam is not None:
+            return exam.get_answer_path(question_number)
+        else:
+            raise ExamIsNotExist
     def add_reaction(self, year, semester, moed, question_number, comment_id, user_id, emoji):
         """
         Add a reaction to specific question.

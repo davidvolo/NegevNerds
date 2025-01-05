@@ -342,7 +342,7 @@ class NegevNerds:
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
-            return self.fileManager.get_question_path(course_id, year, semester, moed, question_number)
+            return self.courseFacade.get_question_path(course_id, year, semester, moed, question_number)
         except (CourseIsNotExist, ExamIsNotExist) as e:
             raise e
         except Exception as e:
@@ -350,7 +350,7 @@ class NegevNerds:
 
     def get_answer_path(self, course_id, year, semester, moed, question_number):
         try:
-            return self.fileManager.get_answer_path(course_id, year, semester, moed, question_number)
+            return self.courseFacade.get_answer_path(course_id, year, semester, moed, question_number)
         except (CourseIsNotExist, ExamIsNotExist) as e:
             raise e
         except Exception as e:
@@ -465,7 +465,7 @@ class NegevNerds:
                     )
                 answer_path = ""
                 if answer_file is not None:
-                    if self.is_photo(answer_path):
+                    if self.is_photo(answer_file):
                         answer_path = self.fileManager.save_photo_answer_file(
                             course_id=course_id,
                             year=year,
