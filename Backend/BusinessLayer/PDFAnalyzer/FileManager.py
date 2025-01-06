@@ -60,6 +60,22 @@ class FileManager:
         answers_folder = os.path.join(exam_folder, "answers")
         answer_file_path = os.path.join(answers_folder, f"answer_{question_number}.pdf")
         return answer_file_path
+      
+    # def get_question_path(self, course_id, year, semester, moed, question_number):
+    #     course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+    #     year_folder = os.path.join(course_folder, str(year))
+    #     exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+    #     questions_folder = os.path.join(exam_folder, "questions")
+    #     question_file_path = os.path.join(questions_folder, f"question_{question_number}.pdf")
+    #     return question_file_path
+    #
+    # def get_answer_path(self, course_id, year, semester, moed, question_number):
+    #     course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+    #     year_folder = os.path.join(course_folder, str(year))
+    #     exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+    #     answers_folder = os.path.join(exam_folder, "answers")
+    #     answer_file_path = os.path.join(answers_folder, f"answer_{question_number}.pdf")
+    #     return answer_file_path
 
     def save_syllabus_file(self, course_id, syllabus_content):
         """Saves the syllabus file in the course folder, replacing the existing one if present."""

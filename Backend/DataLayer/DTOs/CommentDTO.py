@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class CommentDTO:
     def __init__(self, comment_id, writer_name, date, prev_id, comment_text, reactions):
         """
@@ -19,7 +22,7 @@ class CommentDTO:
         return {
             "comment_id": self.comment_id,
             "writer_name": self.writer_name,
-            "date": self.date,
+            "date": self.date.isoformat() if isinstance(self.date, datetime) else self.date,
             "prev_id": self.prev_id,
             "comment_text": self.comment_text,
             "reactions": [

@@ -135,10 +135,10 @@ class NegevNerds:
 
 
 
-    def logout(self, email):
+    def logout(self, user_id):
         """Log the user out."""
         try:
-            result = self.userFacade.logout(email)
+            result = self.userFacade.logout(user_id)
             return result  # Return the result from the facade
         except Exception as e:
             return f"Error: {e}"
@@ -465,7 +465,7 @@ class NegevNerds:
                     )
                 answer_path = ""
                 if answer_file is not None:
-                    if self.is_photo(answer_path):
+                    if self.is_photo(answer_file):
                         answer_path = self.fileManager.save_photo_answer_file(
                             course_id=course_id,
                             year=year,

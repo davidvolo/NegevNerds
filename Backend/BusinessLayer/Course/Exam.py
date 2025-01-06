@@ -96,6 +96,17 @@ class Exam:
 
         return True
 
+    def get_question_path(self , question_number):
+        question = self.get_question(question_number)
+        if (question is None):
+            raise QuestionNotFound
+        return question.link_to_question
+
+    def get_answer_path(self , question_number):
+        question = self.get_question(question_number)
+        if (question is None):
+            raise QuestionNotFound
+        return question.link_to_answer
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)

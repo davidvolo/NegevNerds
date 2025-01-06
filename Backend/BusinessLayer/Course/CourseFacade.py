@@ -112,6 +112,20 @@ class CourseFacade:
             else:
                 raise CourseIsNotExist(course_id)
 
+    def get_question_path(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id=course_id)
+        if course is not None:
+            return course.get_question_path(year, semester, moed, question_number)
+        else:
+            raise CourseIsNotExist(course_id)
+
+    def get_answer_path(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id=course_id)
+        if course is not None:
+            return course.get_answer_path(year, semester, moed, question_number)
+        else:
+            raise CourseIsNotExist(course_id)
+
     def get_course(self, course_id):
         """
         Retrieves a course by its ID.

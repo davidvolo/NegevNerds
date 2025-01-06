@@ -1,12 +1,12 @@
 import json
+from datetime import timedelta
 
 from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS, cross_origin
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.NegevNerds import NegevNerds
-from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
-from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 user_controller = Blueprint('user_controller', __name__)
@@ -35,8 +35,6 @@ def parse_jsonify(parsed_result):
             "success": False,
             "message": parsed_result['message']
         }), 400
-
-
 
 
 @user_controller.route('/api/register', methods=['POST', 'OPTIONS'])
@@ -87,8 +85,6 @@ def register():
             return jsonify({"success": True, "message": result["message"], "password": result["password"]}), 200
         return jsonify({"success": False, "message": result["message"]}), 400
 
-
-
     except json.JSONDecodeError:
         # Handle JSON decoding error
         return jsonify({
@@ -102,6 +98,7 @@ def register():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
+
 
 @user_controller.route('/api/register_authentication_part', methods=['POST', 'OPTIONS'])
 @cross_origin()
@@ -129,7 +126,6 @@ def register_authentication_part():
         auth_code = data.get('auth_code')
 
         email = data.get('email')
-
 
         # Call the service layer's register method directly
         result = serviceLayer.register_authentication_part(email, auth_code)
@@ -162,7 +158,8 @@ def register_authentication_part():
             "message": "An unexpected error occurred",
             "error": str(e)
         }), 500
-    
+
+
 @user_controller.route('/api/register_termOfUse_part', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def register_termOfUse_part():
@@ -190,7 +187,6 @@ def register_termOfUse_part():
         password = data.get('password')
         first_name = data.get('first_name')
         last_name = data.get('last_name')
-        
 
         # Call the service layer's register method directly
         result = serviceLayer.register_termOfUse_part(email, password, first_name, last_name)
@@ -200,10 +196,14 @@ def register_termOfUse_part():
 
         # Check the status and return appropriate response
         if parsed_result['status'] == 'success':
+            user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
+            access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=6))
+            print("token: ", access_token)
             return jsonify({
                 "success": True,
                 "message": parsed_result['message'],
-                "user_id": parsed_result['user_id']  # Explicitly fetch user_id
+                "user_id": parsed_result['user_id'],  # Explicitly fetch user_id
+                "access_token": access_token  # Include the generated token in the response
             }), 200
         else:
             return jsonify({
@@ -352,6 +352,7 @@ def register_termOfUse_part():
 #             "error": str(e)
 #         }), 500
 
+
 @user_controller.route('/api/login', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def login_user():
@@ -387,6 +388,10 @@ def login_user():
                 "message": parsed_result.get('message', 'Login failed')
             }), 400
 
+        user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
+        access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=6))
+        print("token: ", access_token)
+
         # Successful login response
         return jsonify({
             "success": True,
@@ -394,6 +399,7 @@ def login_user():
             "user_id": parsed_result.get('user_id'),
             "first_name": parsed_result.get('first_name'),
             "last_name": parsed_result.get('last_name'),
+            "access_token": access_token,
         }), 200
 
     except Exception as e:
@@ -407,6 +413,7 @@ def login_user():
 
 @user_controller.route('/api/logout', methods=['POST', 'OPTIONS'])
 @cross_origin()
+@jwt_required()
 def logout_user():
     # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':
@@ -417,36 +424,29 @@ def logout_user():
         return response
 
     try:
-        # Extract data from the request
-        data = request.get_json()
+        # Get user identity from the JWT token
+        current_user = get_jwt_identity()  # שמור את המידע מתוך ה-JWT
+        print(f"Current user from JWT: {current_user}")  # הדפסת המידע שנמצא בטוקן
 
-        # Validate input
-
-        if 'email' not in data:
-            return jsonify({
-                "success": False,
-                "message": "Email is required for logout"
-            }), 400
-
-        # Extract data
-        email = data.get('email')
-
-        # Call the service layer's login method directly
-        result = serviceLayer.logout(email)
+        # Call the service layer's logout method directly
+        result = serviceLayer.logout(current_user)
+        print(f"Logout result from service layer: {result}")  # הדפסת תוצאת פעולת ה-logout
 
         # Parse the JSON string
         parsed_result = json.loads(result)
+        print(f"Parsed result: {parsed_result}")  # הדפסת התוצאה אחרי הפענוח
 
         return parse_jsonify(parsed_result)
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
+        print("Error decoding JSON")  # הדפסת הודעה אם יש בעיה בפענוח ה-JSON
         return jsonify({
             "success": False,
             "message": "Invalid JSON response from service"
         }), 500
     except Exception as e:
-        print(f"Error in logout: {str(e)}")
+        print(f"Error in logout: {str(e)}")  # הדפסת שגיאה במקרה של בעיה אחרת
         return jsonify({
             "success": False,
             "message": "An unexpected error occurred",
@@ -456,6 +456,7 @@ def logout_user():
 
 @user_controller.route('/api/get_user_courses', methods=['GET', 'OPTIONS'])
 @cross_origin()
+@jwt_required()
 def get_user_courses():
     # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':
@@ -466,18 +467,10 @@ def get_user_courses():
         return response
 
     try:
-        # Extract user_id from query parameters
-        user_id = request.args.get('user_id')  # Use request.args for query params
-
-        # Validate input
-        if not user_id:
-            return jsonify({
-                "success": False,
-                "message": "User ID is required"
-            }), 400  # Return 400 if user_id is missing
+        current_user = get_jwt_identity()
 
         # Fetch the user courses from the service layer
-        result = serviceLayer.get_user_courses(user_id)
+        result = serviceLayer.get_user_courses(current_user)  # השתמש במידע מתוך הטוקן
 
         result = json.loads(result)  # Convert the JSON string to a Python dict
 
@@ -505,7 +498,7 @@ def get_user_courses():
             "message": "Invalid JSON response from service"
         }), 500
     except Exception as e:
-        print(f"Error in logout: {str(e)}")
+        print(f"Error in get user courses: {str(e)}")
         return jsonify({
             "success": False,
             "message": "An unexpected error occurred",
@@ -525,18 +518,10 @@ def get_user_name():
         return response
 
     try:
-        # Extract user_id from query parameters
-        user_id = request.args.get('user_id')  # Use request.args for query params
-
-        # Validate input
-        if not user_id:
-            return jsonify({
-                "success": False,
-                "message": "User ID is required"
-            }), 400  # Return 400 if user_id is missing
+        current_user = get_jwt_identity()
 
         # Fetch the user courses from the service layer
-        result = serviceLayer.get_user_name(user_id)
+        result = serviceLayer.get_user_name(current_user)
 
         result = json.loads(result)  # Convert the JSON string to a Python dict
 
