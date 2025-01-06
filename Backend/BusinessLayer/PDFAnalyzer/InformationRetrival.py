@@ -1,12 +1,11 @@
-from tika import parser
-from collections import defaultdict
+
 from bidi.algorithm import get_display
 import arabic_reshaper
 import re
 import pdfplumber
 from collections import defaultdict
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
-from hebrew_tokenizer import tokenizer
+
 
 class WordIndexController:
     def __init__(self, common_words_en, common_words_he):
@@ -231,35 +230,35 @@ class WordIndex1:
     #     return english_words, hebrew_words
 
 
-    def normalize_text_direction(self, text):
-        """Normalize RTL directionality in mixed-language text."""
-        lines = text.split("\n")
-        normalized_lines = []
-
-        for line in lines:
-            if self.contains_hebrew(line):
-                # Reverse only Hebrew text for RTL consistency
-                normalized_lines.append(self.reverse_hebrew_words(line))
-            else:
-                # Add LTR lines as-is
-                normalized_lines.append(line)
-
-        return "\n".join(normalized_lines)
-
-    def contains_hebrew(self, text):
-        """Check if a string contains Hebrew characters."""
-        return bool(self.hebrew_characters.search(text))
-
-    def reverse_hebrew_words(self, line):
-        """Reverse Hebrew words in the line while preserving order for non-Hebrew words."""
-        words = line.split()
-        reversed_words = []
-        for word in words:
-            if self.contains_hebrew(word):
-                reversed_words.append(word[::-1])  # Reverse Hebrew word
-            else:
-                reversed_words.append(word)  # Keep non-Hebrew word as-is
-        return " ".join(reversed_words)
+    # def normalize_text_direction(self, text):
+    #     """Normalize RTL directionality in mixed-language text."""
+    #     lines = text.split("\n")
+    #     normalized_lines = []
+    #
+    #     for line in lines:
+    #         if self.contains_hebrew(line):
+    #             # Reverse only Hebrew text for RTL consistency
+    #             normalized_lines.append(self.reverse_hebrew_words(line))
+    #         else:
+    #             # Add LTR lines as-is
+    #             normalized_lines.append(line)
+    #
+    #     return "\n".join(normalized_lines)
+    #
+    # def contains_hebrew(self, text):
+    #     """Check if a string contains Hebrew characters."""
+    #     return bool(self.hebrew_characters.search(text))
+    #
+    # def reverse_hebrew_words(self, line):
+    #     """Reverse Hebrew words in the line while preserving order for non-Hebrew words."""
+    #     words = line.split()
+    #     reversed_words = []
+    #     for word in words:
+    #         if self.contains_hebrew(word):
+    #             reversed_words.append(word[::-1])  # Reverse Hebrew word
+    #         else:
+    #             reversed_words.append(word)  # Keep non-Hebrew word as-is
+    #     return " ".join(reversed_words)
         
     # def get_sorted_dictionaries(self):
     #     # Return sorted versions of both dictionaries
@@ -380,15 +379,15 @@ class WordIndex2:
     #
     #     return processed_words
 
-    def is_hebrew(self, word):
-        return all(0x590 <= ord(char) <= 0x5FF for char in word)
-
-    def reverse_hebrew_word(self, word):
-        # Reverse the Hebrew word if needed
-        return "".join(reversed(word))
-
-    def reverse_word_if_needed(self, word):
-        # Reverse the word only if it is not in the correct direction (LTR -> RTL issue)
-        if word != word[::-1]:  # This checks if the word is reversed (LTR).
-            return word[::-1]
-        return word
+    # def is_hebrew(self, word):
+    #     return all(0x590 <= ord(char) <= 0x5FF for char in word)
+    #
+    # def reverse_hebrew_word(self, word):
+    #     # Reverse the Hebrew word if needed
+    #     return "".join(reversed(word))
+    #
+    # def reverse_word_if_needed(self, word):
+    #     # Reverse the word only if it is not in the correct direction (LTR -> RTL issue)
+    #     if word != word[::-1]:  # This checks if the word is reversed (LTR).
+    #         return word[::-1]
+    #     return word
