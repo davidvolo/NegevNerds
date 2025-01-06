@@ -342,7 +342,7 @@ class NegevNerds:
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
-            return self.courseFacade.get_question_path(course_id, year, semester, moed, question_number)
+            return self.courseFacade.get_link_to_question(course_id, year, semester, moed, question_number)
         except (CourseIsNotExist, ExamIsNotExist) as e:
             raise e
         except Exception as e:
@@ -350,7 +350,7 @@ class NegevNerds:
 
     def get_answer_path(self, course_id, year, semester, moed, question_number):
         try:
-            return self.courseFacade.get_answer_path(course_id, year, semester, moed, question_number)
+            return self.courseFacade.get_link_to_answer(course_id, year, semester, moed, question_number)
         except (CourseIsNotExist, ExamIsNotExist) as e:
             raise e
         except Exception as e:
