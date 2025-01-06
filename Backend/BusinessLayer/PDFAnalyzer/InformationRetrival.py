@@ -1,10 +1,12 @@
 from tika import parser
 from collections import defaultdict
+from bidi.algorithm import get_display
+import arabic_reshaper
 import re
 import pdfplumber
 from collections import defaultdict
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
-
+from hebrew_tokenizer import tokenizer
 
 class WordIndexController:
     def __init__(self, common_words_en, common_words_he):
@@ -141,6 +143,8 @@ class WordIndexController:
 
 class WordIndex1:
     def __init__(self, common_words_en, common_words_he):
+        self.hebrew_characters = re.compile(r'[\u0590-\u05FF]')
+        self.hebrew_pattern = re.compile(r'[\u0590-\u05FF\uFB1D-\uFB4F]+')
         self.english_dict = defaultdict(list)
         self.hebrew_dict = defaultdict(list)
         self.common_words_en = set(common_words_en)
@@ -172,17 +176,90 @@ class WordIndex1:
         return split_english , split_hebrew
 
 
+    # def process_pdf(self, pdf_file_path):
+    #     # Parse the PDF
+    #     parsed = parser.from_file(pdf_file_path)
+    #     text = parsed.get('content', '')
+    #     normalized_text = self.normalize_text_direction(text)
+    #     # Extract English and Hebrew words
+    #     english_words, hebrew_words = self.extract_words(normalized_text)
+    #     #print(hebrew_words)
+    #     #reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
+    #     print ("rev" , hebrew_words)
+    #     return english_words + hebrew_words
+
     def process_pdf(self, pdf_file_path):
-        # Parse the PDF
-        parsed = parser.from_file(pdf_file_path)
-        text = parsed.get('content', '')
+        try:
+            with pdfplumber.open(pdf_file_path) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    text += page.extract_text() + " "
 
-        # Extract English and Hebrew words
-        english_words, hebrew_words = self.extract_words(text)
-        reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
+            normalized_text = self.normalize_mixed_text(text)
+            english_words, hebrew_words = self.extract_words(normalized_text)
+            print("proc" , hebrew_words)
+            return english_words + hebrew_words
+
+        except Exception as e:
+            print(f"Error processing PDF: {e}")
+            return []
+
+    def normalize_mixed_text(self, text):
+        # Split into lines to preserve structure
+        lines = text.split('\n')
+        normalized_lines = []
+
+        for line in lines:
+            # Process each line separately
+            reshaped_text = arabic_reshaper.reshape(line)
+            bidi_text = get_display(reshaped_text)
+            normalized_lines.append(bidi_text)
+
+        return '\n'.join(normalized_lines)
+
+    # def extract_words(self, text):
+    #     words = text.split()
+    #     english_words = []
+    #     hebrew_words = []
+    #
+    #     for word in words:
+    #         if self.hebrew_pattern.search(word):
+    #             hebrew_words.append(word)
+    #         else:
+    #             english_words.append(word)
+    #
+    #     return english_words, hebrew_words
 
 
-        return english_words + reversed_hebrew_words
+    def normalize_text_direction(self, text):
+        """Normalize RTL directionality in mixed-language text."""
+        lines = text.split("\n")
+        normalized_lines = []
+
+        for line in lines:
+            if self.contains_hebrew(line):
+                # Reverse only Hebrew text for RTL consistency
+                normalized_lines.append(self.reverse_hebrew_words(line))
+            else:
+                # Add LTR lines as-is
+                normalized_lines.append(line)
+
+        return "\n".join(normalized_lines)
+
+    def contains_hebrew(self, text):
+        """Check if a string contains Hebrew characters."""
+        return bool(self.hebrew_characters.search(text))
+
+    def reverse_hebrew_words(self, line):
+        """Reverse Hebrew words in the line while preserving order for non-Hebrew words."""
+        words = line.split()
+        reversed_words = []
+        for word in words:
+            if self.contains_hebrew(word):
+                reversed_words.append(word[::-1])  # Reverse Hebrew word
+            else:
+                reversed_words.append(word)  # Keep non-Hebrew word as-is
+        return " ".join(reversed_words)
         
     # def get_sorted_dictionaries(self):
     #     # Return sorted versions of both dictionaries
@@ -191,11 +268,16 @@ class WordIndex1:
     #     return sorted_english_dict, sorted_hebrew_dict
 
 
-
+    # def reverse_word_if_needed(self, word):
+    #     # Reverse the word only if it is not in the correct direction (LTR -> RTL issue)
+    #     if word != word[::-1]:  # This checks if the word is reversed (LTR).
+    #         return word[::-1]
+    #     return word
 
 
 class WordIndex2:
     def __init__(self, common_words_en, common_words_he):
+        self.hebrew_characters = re.compile(r'[\u0590-\u05FF]')
         self.english_dict = defaultdict(list)
         self.hebrew_dict = defaultdict(list)
         self.common_words_en = set(common_words_en)
@@ -234,13 +316,79 @@ class WordIndex2:
                 for page in pdf.pages:
                     text += page.extract_text() + " "  # Combine text from all pages
 
+
+            normalized_text = self.normalize_text_direction(text)
+
             # Extract English and Hebrew words
-            english_words, hebrew_words = self.extract_words(text)
-            reversed_hebrew_words = ["".join(reversed(word)) for word in hebrew_words]
+            english_words, hebrew_words = self.extract_words(normalized_text)
+            # Extract English and Hebrew words
+            # english_words, hebrew_words = self.extract_words(text)
+            #
+            # reversed_hebrew_words = [self.reverse_word_if_needed(word) for word in hebrew_words]
 
-
-            return english_words + reversed_hebrew_words
+            #return english_words + reversed_hebrew_words
+            print("nor" , hebrew_words)
+            return english_words + hebrew_words
 
         except Exception as e:
             print(f"Error processing PDF: {e}")
 
+    def normalize_text_direction(self, text):
+        """Normalize RTL directionality in mixed-language text."""
+        lines = text.split("\n")
+        normalized_lines = []
+
+        for line in lines:
+            if self.contains_hebrew(line):
+                # Reverse only Hebrew text for RTL consistency
+                normalized_lines.append(self.reverse_hebrew_words(line))
+            else:
+                # Add LTR lines as-is
+                normalized_lines.append(line)
+
+        return "\n".join(normalized_lines)
+
+    def contains_hebrew(self, text):
+        """Check if a string contains Hebrew characters."""
+        return bool(self.hebrew_characters.search(text))
+
+    def reverse_hebrew_words(self, line):
+        """Reverse Hebrew words in the line while preserving order for non-Hebrew words."""
+        words = line.split()
+        reversed_words = []
+        for word in words:
+            if self.contains_hebrew(word):
+                reversed_words.append(word[::-1])  # Reverse Hebrew word
+            else:
+                reversed_words.append(word)  # Keep non-Hebrew word as-is
+        return " ".join(reversed_words)
+
+    # def process_text(self, text):
+    #     # Tokenize the text
+    #     heb_tokenizer = tokenizer()
+    #     tokens = heb_tokenizer.tokenize(text)
+    #     processed_words = []
+    #
+    #     for token in tokens:
+    #         token_type, token_text = token
+    #
+    #         # Handle different token types
+    #         if token_type in ['HEBREW', 'HEBREW_WITH_ENGLISH']:
+    #             processed_words.append(token_text)
+    #         elif token_type == 'ENGLISH':
+    #             processed_words.append(token_text)
+    #
+    #     return processed_words
+
+    def is_hebrew(self, word):
+        return all(0x590 <= ord(char) <= 0x5FF for char in word)
+
+    def reverse_hebrew_word(self, word):
+        # Reverse the Hebrew word if needed
+        return "".join(reversed(word))
+
+    def reverse_word_if_needed(self, word):
+        # Reverse the word only if it is not in the correct direction (LTR -> RTL issue)
+        if word != word[::-1]:  # This checks if the word is reversed (LTR).
+            return word[::-1]
+        return word
