@@ -4,6 +4,9 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 
+from waitress import serve
+from multiprocessing import cpu_count
+
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
@@ -64,7 +67,10 @@ def main():
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
 
-    app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False)
+    threads = (cpu_count() * 2) + 1
+    serve(app, host='0.0.0.0', port=5001, threads=threads)
+
+    #app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False , threaded=True)
 
 
 if __name__ == "__main__":
