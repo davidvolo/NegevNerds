@@ -62,7 +62,7 @@ def main():
     #     db.create_all()
 
     print("Starting the Exam Preparation System API...")
-    wordsQuestionsRepository =WordsQuestionsRepository
+    #wordsQuestionsRepository =WordsQuestionsRepository
 
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
