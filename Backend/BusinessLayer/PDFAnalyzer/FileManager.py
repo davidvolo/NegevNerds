@@ -50,13 +50,8 @@ class FileManager:
         else:
             return False
 
-    def get_question_path(self, course_id, year, semester, moed, question_number):
-        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
-        year_folder = os.path.join(course_folder, str(year))
-        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
-        questions_folder = os.path.join(exam_folder, "questions")
-        question_file_path = os.path.join(questions_folder, f"question_{question_number}.pdf")
-        return question_file_path
+    def get_question_path(self, link_to_question):
+        return os.path.join(self._base_dir, link_to_question)
 
     def get_answer_path(self, course_id, year, semester, moed, question_number):
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")

@@ -93,6 +93,12 @@ class Question:
         with self.question_topics_lock:
             return self.question_topics
 
+    def get_link_to_question(self):
+        return self.link_to_question
+
+    def get_link_to_answer(self):
+        return self.link_to_answer
+
     def add_question_topic(self, question_topic):
         """
         Add a topic for the question from it's course_topics.

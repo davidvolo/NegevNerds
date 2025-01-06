@@ -446,3 +446,11 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
+
+    def get_link_to_question(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id)
+        return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_question()
+
+    def get_link_to_answer(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id)
+        return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_answer()
