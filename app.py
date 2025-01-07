@@ -10,7 +10,6 @@ from multiprocessing import cpu_count
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
-from Backend.DataLayer.WordsQuestions import WordsQuestionsRepository
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 app = Flask(__name__)
@@ -62,7 +61,7 @@ def main():
     #     db.create_all()
 
     print("Starting the Exam Preparation System API...")
-    #wordsQuestionsRepository =WordsQuestionsRepository
+
 
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
