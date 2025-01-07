@@ -674,13 +674,13 @@ class ServiceLayer:
                 "message": str(e)
             })
         
-    def delete_comment(self, comment_id):
+    def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """
         Deletes a specific comment from the question and its related data.
         """
         try:
             # Call the NegevNerds logic to delete the question
-            self.negev_nerds.delete_comment(comment_id)
+            self.negev_nerds.delete_comment(course_id, year, semester, moed, question_number, comment_id)
             return json.dumps({
                 "status": "success",
                 "message": "Question deleted successfully."

@@ -406,7 +406,7 @@ class Course:
         question = exam.get_question(question_number)
         if question is None:
             raise QuestionNotFound
-        question.add_comment(writer_name, writer_id,prev_id, comment_text)
+        question.add_comment(writer_name, writer_id,prev_id, comment_text, False)
 
 
     def get_question_path(self, year, semester, moed, question_number):
@@ -433,6 +433,18 @@ class Course:
         if question is None:
             raise QuestionNotFound
         question.add_reaction(comment_id, user_id, emoji)
+
+    def delete_comment(self, year, semester, moed, question_number, comment_id):
+        """
+        Add a reaction to specific question.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if exam is None:
+            raise ExamIsNotExist
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound
+        question.delete_comment(comment_id)
 
     def remove_reaction(self, year, semester, moed, question_number, comment_id, reaction_id):
         """

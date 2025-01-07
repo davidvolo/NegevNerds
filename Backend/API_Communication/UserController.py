@@ -508,6 +508,7 @@ def get_user_courses():
 
 @user_controller.route('/api/get_user_name', methods=['GET', 'OPTIONS'])
 @cross_origin()
+@jwt_required()
 def get_user_name():
     # Handle OPTIONS preflight request
     if request.method == 'OPTIONS':

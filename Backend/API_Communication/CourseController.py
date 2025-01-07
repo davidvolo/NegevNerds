@@ -1384,23 +1384,76 @@ def get_comments_metadata():
             "message": str(e)
         }), 500
 
-
-@course_controller.route('/api/course/delete_comment', methods=['DELETE'])
+@course_controller.route('/api/course/delete_comment', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
 def delete_comment():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
     try:
-        data = request.get_json()
-        comment_id = data.get('comment_id')
-       
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = int(request.form.get('year'))
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = int(request.form.get('question_number'))
+        comment_id = request.form.get('comment_id')
 
-        # Validate input
-        if not all([comment_id]):
-            return jsonify({"success": False, "message": "Missing parameters"}), 400
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number, comment_id]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
 
-        # Call the service layer to delete the question
-        serviceLayer.delete_comment(comment_id)
-        return jsonify({"success": True, "message": "Comment deleted successfully."}), 200
+        # Call the service layer
+        result = serviceLayer.delete_comment(
+            course_id, year, semester, moed, question_number, comment_id
+        )
+
+        # Parse the service response
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
     except Exception as e:
         print(f"Error in delete_comment: {str(e)}")
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+# @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
+# @cross_origin()
+# @jwt_required()
+# def delete_comment():
+#     if request.method == 'OPTIONS':
+#         response = jsonify(success=True)
+#         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'POST')
+#         return response
+#     try:
+#         data = request.get_json()
+#         comment_id = data.get('comment_id')
+#
+#
+#         # Validate input
+#         if not all([comment_id]):
+#             return jsonify({"success": False, "message": "Missing parameters"}), 400
+#
+#         # Call the service layer to delete the question
+#         serviceLayer.delete_comment(comment_id)
+#         return jsonify({"success": True, "message": "Comment deleted successfully."}), 200
+#     except Exception as e:
+#         print(f"Error in delete_comment: {str(e)}")
+#         return jsonify({"success": False, "message": str(e)}), 500

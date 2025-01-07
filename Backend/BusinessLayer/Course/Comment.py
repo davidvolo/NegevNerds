@@ -10,7 +10,7 @@ from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", reactions=None):
+    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", deleted=None, reactions=None):
         """
         Initialize a Comment instance.
         """
@@ -21,11 +21,11 @@ class Comment:
         self.prev_id = prev_id
         self.comment_text = comment_text
         self.reactions = reactions if reactions is not None else [] #reactions_list
-
+        self.deleted = deleted
         self.reactions_lock = threading.Lock()
 
     @classmethod
-    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, question_id):
+    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, question_id):
         """
         Class method to create a new comment and save to database
         Returns:
@@ -39,6 +39,7 @@ class Comment:
             date=date,
             prev_id=prev_id,
             comment_text=comment_text,
+            deleted=deleted
         )
         comment_repo = CommentRepository()
         comment_repo.add_comment(comment, question_id)
@@ -57,11 +58,17 @@ class Comment:
             date=self.date,
             prev_id=self.prev_id,
             comment_text=self.comment_text,
+            deleted=self.deleted,
             reactions=reaction_dtos
         )
 
     def generate_reaction_id(self):
         return "reaction" + str(uuid.uuid4())
+
+    def delete_comment(self):
+        self.deleted = True
+        comment_repo = CommentRepository()
+        comment_repo.update_deleted_comment(self)
 
     def add_reaction(self, user_id, emoji):
         """

@@ -122,7 +122,7 @@ class Question:
             else:
                 print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, writer_name, writer_id,prev_id, comment_text):
+    def add_comment(self, writer_name, writer_id,prev_id, comment_text, deleted):
         """
         Add a Comment to the comments list.
         """
@@ -133,28 +133,36 @@ class Question:
                                      date=datetime.now(),
                                      prev_id=prev_id,
                                      comment_text=comment_text,
+                                     deleted=deleted,
                                      question_id=self.id)
             if comment is not None:
                 self.comments.append(comment)
             else:
                 raise Exception("Problem to create comment")
 
-    def remove_comment(self, comment_id):
-        """
-        Remove a Comment from the comments list if it exists.
-        Raise an exception if the Comment is not found.
-        """
-        with self.comments_lock:
-            for comment in self.comments:
-                if comment.comment_id == comment_id:
-                    self.comments.remove(comment)
-                    return
-            raise CommentNotFound(comment_id)
+    # def remove_comment(self, comment_id):
+    #     """
+    #     Remove a Comment from the comments list if it exists.
+    #     Raise an exception if the Comment is not found.
+    #     """
+    #     with self.comments_lock:
+    #         for comment in self.comments:
+    #             if comment.comment_id == comment_id:
+    #                 self.comments.remove(comment)
+    #                 return
+    #         raise CommentNotFound(comment_id)
 
     def add_reaction(self, comment_id, user_id, emoji):
         for comment in self.comments:
             if comment.comment_id == comment_id:
                 comment.add_reaction(user_id, emoji)
+                return
+        raise CommentNotFound
+
+    def delete_comment(self, comment_id):
+        for comment in self.comments:
+            if comment.comment_id == comment_id:
+                comment.delete_comment()
                 return
         raise CommentNotFound
     
