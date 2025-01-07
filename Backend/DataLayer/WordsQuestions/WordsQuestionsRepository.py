@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 from Backend.DataLayer.Base import Base
+from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 
 
 #
@@ -61,16 +62,16 @@ class WordsQuestionsRepository:
         finally:
             session.close()
 
-    def get_questions_id_by_word(self, word):
+    def get_search_dto_by_word(self, word):
         session = self.Session()
         try:
-            ids = []
+            dtos = []
             first_letter = word[0]
             models = session.query(MODELS[first_letter]).filter_by(word=word).all()
             session.close()
             for model in models:
-                ids.append(model.question_id)
-            return ids
+                dtos.append(SearchDTO(question_id=model.question_id, course_id=model.course_id))
+            return dtos
         finally:
             session.close()
 

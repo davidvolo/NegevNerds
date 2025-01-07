@@ -81,25 +81,25 @@ class WordIndexController:
         words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
 
         # Step 2: Dictionary to count the number of matching words for each question ID
-        question_word_count = defaultdict(int)
+        dto_count = defaultdict(int)
 
         # Step 3: Iterate over words and fetch associated question IDs
         for word in words:
-            question_ids = self.words_repository.get_questions_id_by_word(word)
-            for question_id in question_ids:
-                question_word_count[question_id] += 1
+            search_dtos = self.words_repository.get_search_dto_by_word(word)
+            for dto in search_dtos:
+                dto_count[dto] += 1
 
-        # Step 4: Sort question IDs by the number of matching words (descending)
-        # If counts are equal, secondary sorting by question ID (optional)
-        sorted_questions = sorted(
-            question_word_count.items(),
-            key=lambda item: (-item[1], item[0])  # Sort by count descending, then by ID ascending
+            # Step 4: Sort SearchDTOs by frequency (descending), with a secondary sort by course ID and question ID
+        sorted_dtos = sorted(
+            dto_count.items(),
+            key=lambda item: (-item[1], item[0].course_id, item[0].question_id)
+            # Primary sort by count, then course/question IDs
         )
 
-        # Step 5: Extract the top 50 question IDs
-        top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
+        # Step 5: Extract the top 50 SearchDTOs
+        top_50_dtos = [dto for dto, _ in sorted_dtos[:50]]
 
-        return top_50_questions
+        return top_50_dtos
 
 
     def search_free_text_with_course(self, text, course_id) -> list:

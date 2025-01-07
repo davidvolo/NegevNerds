@@ -1,8 +1,6 @@
 import threading
 import uuid
 
-from flask_sqlalchemy.session import Session
-
 from Backend.BusinessLayer.Course.Comment import Comment
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from datetime import datetime
@@ -28,6 +26,7 @@ class Question:
         self.link_to_answer = link_to_answer
         self.link_to_exam = link_to_exam
         self.id = question_id
+        #self.course_id = course_id
         self.comments = comments if comments is not None else []# Default to an empty list
         self.text = text
 
@@ -55,8 +54,7 @@ class Question:
             link_to_answer=link_to_answer,
             question_id=question_id,
             question_topics=question_topics,
-            text=question_text
-
+            text=question_text,
         )
         question_repo = QuestionRepository()
         question_repo.add_question(question, exam_id)
@@ -68,7 +66,7 @@ class Question:
 
         return question
 
-    def to_dto(self):
+    def to_dto(self, course_id):
         """
         Converts the Question instance to a QuestionDTO.
         :return: QuestionDTO instance.
@@ -83,7 +81,8 @@ class Question:
             question_topics=self.question_topics,
             is_american=self.is_american,
             link_to_question=self.link_to_question,
-            comments_list=comment_dtos
+            comments_list=comment_dtos,
+            course_id=course_id
         )
 
     def generate_comment_id(self):
@@ -168,7 +167,7 @@ class Question:
             question_repo = QuestionRepository()  # Assuming you have an ExamRepository for database operations
             question_repo.uploadSolution(self.id, self.link_to_answer)
 
-            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link_to_answer}
         except Exception as e:
             print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}

@@ -418,11 +418,13 @@ class NegevNerds:
 
     def search_free_text(self , text, course_id = None):
         if course_id is None:
-            ids = self._pdfFacade.search_free_text(text=text)
+            search_dtos = self._pdfFacade.search_free_text(text=text)
+            ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+            return ques_dtos
         else:
             ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-        dtos = self.courseFacade.get_questions_dto_by_ids(ids)
-        return dtos
+            dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
+            return dtos
 
 
 
@@ -533,7 +535,7 @@ class NegevNerds:
             reactions_repo.delete_reactions_by_comment_ids(comments_Ids)
             comment_repo.delete_comments_by_question_id(question_id)
             words_questions_repo = WordsQuestionsRepository()
-            words_questions_repo.delete_question_words_from_all_tables(question_details)
+            words_questions_repo.delete_question_words_from_all_tables(question_id)
             question_topics_repo = QuestionTopicsRepository()
             question_topics_repo.delete_topics_by_question_id(question_id)
             question_repo = QuestionRepository()

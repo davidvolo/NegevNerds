@@ -218,7 +218,7 @@ class Exam:
         else:
             question= self.get_question(question_number=question_number)
             if question is not None:
-                questions.append(question.to_dto())
+                questions.append(question.to_dto(course_id=self.course_id))
         return questions  # Will return an empty list if no question was found
 
     def __str__(self):
