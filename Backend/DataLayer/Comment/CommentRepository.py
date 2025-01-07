@@ -1,5 +1,6 @@
 import os
 
+from requests import delete
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -47,6 +48,7 @@ class CommentRepository:
                 date=comment.date,
                 prev_id=comment.prev_id,
                 text=comment.comment_text,
+                deleted=comment.deleted,
                 question_id=question_id
             )
 
@@ -73,7 +75,7 @@ class CommentRepository:
 
 
 
-    def update_comment(self, comment):
+    def update_deleted_comment(self, comment):
 
         session = self.Session()
         try:
@@ -83,13 +85,8 @@ class CommentRepository:
             if not comment_model:
                 raise ValueError(f"No comment found with ID {comment.comment_id}")
 
-            # Update fields
-            comment_model.comment_id = comment.comment_id
-            comment_model.writer_name = comment.writer_name
-            comment_model.writer_id = comment.writer_id,
-            comment_model.date = comment.date
-            comment_model.prev_id = comment.prev_id
-            comment_model.text = comment.text
+            # Update field
+            comment_model.deleted = 1
 
             session.commit()
         except Exception as e:

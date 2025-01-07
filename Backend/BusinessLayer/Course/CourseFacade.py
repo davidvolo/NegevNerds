@@ -419,6 +419,15 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
+    def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.delete_comment(year, semester, moed, question_number, comment_id)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
         try:
             course = self.get_course(course_id)
@@ -454,12 +463,12 @@ class CourseFacade:
 
     """--------------Comment functionality--------------"""
 
-    def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
-        """
-        Delegates Comment removal to the specified Exam and Question.
-        """
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
+    # def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
+    #     """
+    #     Delegates Comment removal to the specified Exam and Question.
+    #     """
+    #     course = self.get_course(course_id)
+    #     course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
 
     def get_link_to_question(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)

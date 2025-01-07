@@ -545,29 +545,43 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 
-    def delete_comment(self, comment_id):
+    def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """
-        Deletes a comment from the question, ensuring all related data is removed.
+            delete comment.
         """
         try:
-            # Get the course and ensure it exists
-            # question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
-            # if not question_id:
-            #     raise Exception(
-            #         f"Question {question_number} does not exist in the exam for course {course_id}, "
-            #         f"Year: {year}, Semester: {semester}, Moed: {moed}."
-            #     )   
-            reactions_repo = ReactionRepository()
-            reactions_repo.delete_reactions_by_comment_id(comment_id)        
-            comment_repo = CommentRepository()
-            replies_to_comment = comment_repo.get_replies_by_comment_id(comment_id)
-            comment_prev = comment_repo.get_prev_id_by_comment_id(comment_id)
-            comment_repo.update_replies_prev_id(replies_to_comment, comment_prev)
-            comment_repo.delete_comment(comment_id)
-            
-           
+            self.courseFacade.delete_comment(course_id=course_id, year=year, semester=semester,
+                                           moed=moed, question_number=question_number,
+                                           comment_id=comment_id)
+            return "Comment deleted successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
+            raise e
         except Exception as e:
-            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+            raise Exception(f"Failed to delete comment: {e}")
+
+    # def delete_comment(self, comment_id):
+    #     """
+    #     Deletes a comment from the question, ensuring all related data is removed.
+    #     """
+    #     try:
+    #         # Get the course and ensure it exists
+    #         # question_id, question_details = self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number)
+    #         # if not question_id:
+    #         #     raise Exception(
+    #         #         f"Question {question_number} does not exist in the exam for course {course_id}, "
+    #         #         f"Year: {year}, Semester: {semester}, Moed: {moed}."
+    #         #     )
+    #         reactions_repo = ReactionRepository()
+    #         reactions_repo.delete_reactions_by_comment_id(comment_id)
+    #         comment_repo = CommentRepository()
+    #         replies_to_comment = comment_repo.get_replies_by_comment_id(comment_id)
+    #         comment_prev = comment_repo.get_prev_id_by_comment_id(comment_id)
+    #         comment_repo.update_replies_prev_id(replies_to_comment, comment_prev)
+    #         comment_repo.delete_comment(comment_id)
+    #
+    #
+    #     except Exception as e:
+    #         raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 
 
 
