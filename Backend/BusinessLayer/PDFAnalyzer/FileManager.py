@@ -300,7 +300,7 @@ class FileManager:
 
     import os
 
-    def delete_file(file_path):
+    def delete_file(self, file_path):
         """
         Deletes a file (PDF or photo) from the specified path.
 

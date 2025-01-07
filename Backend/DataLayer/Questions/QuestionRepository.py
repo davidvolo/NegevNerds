@@ -107,6 +107,17 @@ class QuestionRepository:
         finally:
             session.close()
 
+    def get_questions_by_dto(self, dto):
+        session = self.Session()
+        try:
+            question_model = session.query(QuestionModel).filter_by(question_id=dto.question_id).first()
+            if question_model is not None:
+                return question_model.to_business_model()
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
+
     def get_question_by_number(self, exam_id, question_number):
         session = self.Session()
         try:

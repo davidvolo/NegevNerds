@@ -1,4 +1,5 @@
 import threading
+from typing import List
 
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -8,6 +9,7 @@ import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
 
+from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -43,14 +45,21 @@ class CourseFacade:
             #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
 
 
+    def get_questions_dto_by_search_dtos(self , dtos: List[SearchDTO]):
+        questions_repo = QuestionRepository()
+        dtos_list = []
+        for dto in dtos:
+            question = questions_repo.get_questions_by_dto(dto)
+            dtos_list.append(question.to_dto(dto.course_id))
+        return dtos_list
 
 
-    def get_questions_dto_by_ids(self , ids):
+    def get_questions_dto_by_ids(self , ids, course_id):
         questions_repo = QuestionRepository()
         dtos_list = []
         questions = questions_repo.get_questions_by_ids_list(ids)
         for question in questions:
-            dtos_list.append(question.to_dto())
+            dtos_list.append(question.to_dto(course_id=course_id))
         return dtos_list
 
 
