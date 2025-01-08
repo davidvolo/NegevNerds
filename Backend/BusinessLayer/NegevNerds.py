@@ -1,6 +1,7 @@
 import mimetypes
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
+from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationFacade
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.PDFAnalyzer.QuestionAnalyzer import QuestionAnalyzer
 from Backend.BusinessLayer.User.UserFacade import UserFacade
@@ -33,13 +34,14 @@ class NegevNerds:
                     cls._instance = super().__new__(cls)
                     resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
                     print(f"Resolved base directory for NegevNerds: {resolved_dir}")
-                    # Initialize critical attributes in __new__
+                    #Initialize critical attributes in __new__
                     cls._instance._user_facade = UserFacade()
                     cls._instance._course_facade = CourseFacade()
                     cls._instance._pdfFacade = PDFAnalyzerFacade()
                     cls._instance._file_manager = FileManager(resolved_dir)
                     cls._instance._system_managers = []
                     cls._instance._initialized = True
+                    cls._instance._notification_facade = NotificationFacade()
         return cls._instance
 
     def __init__(self, mkdir):
@@ -53,6 +55,7 @@ class NegevNerds:
             self._file_manager = FileManager(resolved_dir)
             self._system_managers = []
             self._initialized = True
+            self._notification_facade = NotificationFacade()
 
     # Getter methods for accessing the facades and file manager
     @property
@@ -366,10 +369,12 @@ class NegevNerds:
                 Add a comment to a question discussion.
         """
         try:
-            self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+            comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
                                                            moed=moed, question_number=question_number,
                                                           writer_name=writer_name, 
                                                           writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
+            for commenter in comment_writers:
+                self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
             return "Comment added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
             raise e
@@ -381,9 +386,11 @@ class NegevNerds:
             Add a reaction to a comment.
         """
         try:
-            self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
+            receiver_id = self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
                                           moed=moed, question_number=question_number,
                                           comment_id=comment_id, user_id=user_id, emoji=emoji)
+
+            self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
             return "Reaction added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
@@ -659,3 +666,28 @@ class NegevNerds:
         except Exception as e:
             print(f"Error occurred: {str(e)}")
             raise Exception(f"Failed to search questions: {e}")
+
+    def get_user_notifications(self, user_id):
+        """Search for questions based on the provided specifics for the course."""
+        # try:
+
+            # Fetch questions based on the specifics from the course
+        notifications = self._notification_facade.get_user_notifications(user_id)
+        return notifications
+
+        # except Exception as e:
+        #     print(f"Error occurred: {str(e)}")
+        #     raise Exception(f"Failed to search questions: {e}")
+
+    def get_user_last_notifications(self, user_id, number_of_notifications):
+        """Search for questions based on the provided specifics for the course."""
+        # try:
+
+            # Fetch questions based on the specifics from the course
+        notifications = self._notification_facade.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
+        return notifications
+        # except Exception as e:
+        #     print(f"Error occurred: {str(e)}")
+        #     raise Exception(f"Failed to search questions: {e}")
+
+

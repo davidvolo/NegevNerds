@@ -137,6 +137,7 @@ class Question:
                                      question_id=self.id)
             if comment is not None:
                 self.comments.append(comment)
+                return set(comment.writer_id for comment in self.comments)
             else:
                 raise Exception("Problem to create comment")
 
@@ -155,8 +156,7 @@ class Question:
     def add_reaction(self, comment_id, user_id, emoji):
         for comment in self.comments:
             if comment.comment_id == comment_id:
-                comment.add_reaction(user_id, emoji)
-                return
+                return comment.add_reaction(user_id, emoji)
         raise CommentNotFound
 
     def delete_comment(self, comment_id):

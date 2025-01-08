@@ -1,3 +1,4 @@
+from Backend.DataLayer.DTOs.NotificationDTO import NotificationDTO
 from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
 
 
@@ -31,5 +32,15 @@ class Notification:
         return notification
 
 
+    def to_dto(self):
+        notification_dto = NotificationDTO(
+            receiver_user_id=self.receiver_user_id,
+            sender_user_id=self.sender_user_id,
+            message=self.message,
+            timestamp=self.timestamp,
+            need_approval=self.need_approval,
+            notification_id=self.notification_id
+        )
+        return notification_dto
     def __str__(self):
         return f"Notification for User {self.receiver_user_id}: from user{self.sender_user_id}- {self.message} (Sent at {self.timestamp})"

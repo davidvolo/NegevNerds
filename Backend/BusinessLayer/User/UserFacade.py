@@ -22,7 +22,7 @@ class UserFacade:
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, 'users'):  # Initialize only once
+        if not hasattr(self, 'users_byEmail'):  # Initialize only once
             self.users_byEmail = {}
             self.users_byId = {}
             self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
