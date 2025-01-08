@@ -12,6 +12,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
 from Backend.BusinessLayer.User.UserFacade import UserFacade
+from Backend.DataLayer.DTOs.NotificationDTO import NotificationDTO
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
@@ -250,6 +251,102 @@ def remove_student_from_course():
 
         # Call the service layer's register method directly
         result = serviceLayer.remove_student_from_course(course_id, user_id)
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        # Check the status and return appropriate response
+        return parse_jsonify(parsed_result)
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500
+    except Exception as e:
+        print(f"Error in registration: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
+
+
+@course_controller.route('/api/course/get_user_notifications', methods=['POST', 'GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_user_notifications():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        # data = request.get_json()
+
+        user_id = get_jwt_identity()
+
+        # Call the service layer's register method directly
+        result = serviceLayer.get_user_notifications(user_id)
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [notification.to_dict() if isinstance(notification, NotificationDTO) else notification for notification in result]
+        else:
+            result = result.to_dict() if isinstance(result, NotificationDTO) else result
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        # Check the status and return appropriate response
+        return parse_jsonify(parsed_result)
+
+    except json.JSONDecodeError:
+        # Handle JSON decoding error
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response from service"
+        }), 500
+    except Exception as e:
+        print(f"Error in registration: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred",
+            "error": str(e)
+        }), 500
+
+
+@course_controller.route('/api/course/get_user_last_notifications', methods=['POST', 'GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_user_last_notifications():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+
+        user_id = get_jwt_identity()
+
+        # Call the service layer's register method directly
+        result = serviceLayer.get_user_last_notifications(user_id, 5)
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [notification.to_dict() if isinstance(notification, NotificationDTO) else notification for
+                      notification in result]
+        else:
+            result = result.to_dict() if isinstance(result, NotificationDTO) else result
 
         # Parse the JSON string
         parsed_result = json.loads(result)

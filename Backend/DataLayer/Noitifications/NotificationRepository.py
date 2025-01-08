@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
 from Backend.DataLayer.Noitifications.NotificationModel import Base
 from Backend.DataLayer.Noitifications.NotificationModel import NotificationModel
@@ -36,7 +36,7 @@ class NotificationRepository:
         Add a new exam to the database
 
         Args:
-            exam (exam): Business layer exam object
+            notification (notification): Business layer exam object
 
         Returns:
             int: ID of the newly created exam
@@ -45,7 +45,7 @@ class NotificationRepository:
         try:
             # Convert business model to SQLAlchemy model
             notificationModel = NotificationModel(
-                sender_user_id= notification.sender_id,
+                sender_user_id= notification.sender_user_id,
                 receiver_user_id= notification.receiver_user_id,
                 massage= notification.message,
                 need_approval= notification.need_approval,
@@ -76,7 +76,40 @@ class NotificationRepository:
         session = self.Session()
         notifications= []
         try:
-            notification_model = session.query(NotificationModel).filter_by(receiver_user_id=user_id).all()
+            notification_model = (session.query(NotificationModel).
+                                  filter_by(receiver_user_id=user_id)
+                                  .order_by(desc(NotificationModel.timestamp))
+                                  .all())
+            for notification in notification_model:
+                if notification is not None:
+                    notifications.append(notification.to_business_model())
+            return notifications
+        finally:
+            session.close()
+
+    def get_last_notifications_by_user_id(self, user_id:str, number_of_notifications:int):
+        """
+        Retrieve the last 5 notifications for a user by their ID, sorted by time_stamp.
+
+        Args:
+            user_id (int): User's unique identifier.
+
+        Returns:
+            list: A list of the last 5 notifications as business layer objects.
+        """
+        session = self.Session()
+        notifications = []
+        try:
+            # Query the database for the last 5 notifications
+            notification_model = (
+                session.query(NotificationModel)
+                .filter_by(receiver_user_id=user_id)
+                .order_by(desc(NotificationModel.timestamp))  # Order by time_stamp descending
+                .limit(number_of_notifications)
+                .all()
+            )
+
+            # Convert to business model and return
             for notification in notification_model:
                 if notification is not None:
                     notifications.append(notification.to_business_model())

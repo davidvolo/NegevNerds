@@ -779,7 +779,45 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-    
+
+    def get_user_notifications(self, user_id):
+        """Fetches all courses and returns them in JSON format."""
+        try:
+            # Call the business layer to get the course
+            notifications = self.negev_nerds.get_user_notifications(user_id=user_id)
+
+            notifications_dict = [notifications.to_dict() for notification in notifications]
+            # Return the result as a dictionary, serialized to JSON
+            return json.dumps({
+                "status": "success",
+                "data": notifications_dict
+            })
+        except Exception as e:
+            # Return an error response as a JSON string
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def get_user_last_notifications(self, user_id, number_of_notifications):
+        """Fetches all courses and returns them in JSON format."""
+        try:
+            # Call the business layer to get the course
+            notifications = self.negev_nerds.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
+
+            notifications_dict = [notifications.to_dict() for notification in notifications]
+            # Return the result as a dictionary, serialized to JSON
+            return json.dumps({
+                "status": "success",
+                "data": notifications_dict
+            })
+        except Exception as e:
+            # Return an error response as a JSON string
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def check_exam_full_pdf(self, course_id, year, semester, moed):
         
         try:

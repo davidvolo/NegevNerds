@@ -415,7 +415,8 @@ class CourseFacade:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            course.add_comment(year, semester, moed, question_number, writer_name,writer_id, prev_id, comment_text)
+            return course.add_comment(year, semester, moed, question_number, writer_name,writer_id, prev_id, comment_text)
+
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
@@ -424,7 +425,7 @@ class CourseFacade:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            course.add_reaction(year, semester, moed, question_number, comment_id, user_id, emoji)
+            return course.add_reaction(year, semester, moed, question_number, comment_id, user_id, emoji)
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
