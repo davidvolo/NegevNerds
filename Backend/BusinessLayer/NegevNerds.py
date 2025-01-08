@@ -229,6 +229,8 @@ class NegevNerds:
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
             result = self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
+            print("result negev nerds")
+            print(result)
             return result
         except Exception as e:
             print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")

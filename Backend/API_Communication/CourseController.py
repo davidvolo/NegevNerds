@@ -2,6 +2,7 @@ import ast
 import json
 import mimetypes
 import os
+from flask import Response
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_cors import cross_origin, CORS
@@ -1258,20 +1259,40 @@ def download_exam_pdf():
 
         # Call service layer to get the link
         result = serviceLayer.get_exam_pdf_link(course_id, year, semester, moed)
+        print("result from service ")
+        print(result)     
         parsed_result = json.loads(result)
 
+        # if parsed_result.get("has_link"):
+        #     # If the file exists, send it
+        #     file_path = parsed_result.get("link")
+        #     if os.path.exists(file_path):
+        #         filename = f"{course_id}_{year}_{semester}_{moed}.pdf"
+        #         return send_file(file_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
+        #         # return send_file(file_path, as_attachment=True, mimetype='application/pdf')
+        #     else:
+        #         return jsonify({
+        #             "success": False,
+        #             "message": "The file path does not exist on the server."
+        #         }), 404
         if parsed_result.get("has_link"):
-            # If the file exists, send it
             file_path = parsed_result.get("link")
             if os.path.exists(file_path):
                 filename = f"{course_id}_{year}_{semester}_{moed}.pdf"
-                return send_file(file_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
-                # return send_file(file_path, as_attachment=True, mimetype='application/pdf')
-            else:
-                return jsonify({
-                    "success": False,
-                    "message": "The file path does not exist on the server."
-                }), 404
+                
+                # Log the file size and first few bytes for debugging
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    print(f"File size: {len(file_content)} bytes")
+                    print(f"First 100 bytes of file: {file_content[:100]}")
+
+                return send_file(
+                    file_path,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype='application/pdf'
+                )
+
         else:
             # No file link exists
             return jsonify({
@@ -1286,6 +1307,7 @@ def download_exam_pdf():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
+
 
 
 @course_controller.route('/api/checkExistSolution', methods=['POST', 'OPTIONS'])

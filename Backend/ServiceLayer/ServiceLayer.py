@@ -928,7 +928,8 @@ class ServiceLayer:
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
             result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)
-
+            print("result from negevnerds ")
+            print(result)        
             if result.get("status") == "success":
                 return json.dumps({
                     "success": True,
