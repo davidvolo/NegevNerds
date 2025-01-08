@@ -1308,11 +1308,11 @@ def is_course_manager():
     try:
         data = request.get_json()
         course_id = data.get('course_id')
-        user_id = data.get('user_id')
 
-        if not course_id or not user_id:
+        if not course_id:
             return jsonify({"success": False, "message": "Missing parameters"}), 400
 
+        user_id = get_jwt_identity()
         result = serviceLayer.is_user_manager(course_id, user_id)
         print(f"Is user manager result for course {course_id} and user {user_id}: {result}")
 

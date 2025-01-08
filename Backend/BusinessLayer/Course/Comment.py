@@ -74,14 +74,14 @@ class Comment:
         """
         Add a reaction to the Comment.
         """
+        # Check if the user already reacted
+        for reaction in self.reactions:
+            if reaction.user_id == user_id:
+                if reaction.emoji != emoji:
+                    self.remove_reaction(reaction.reaction_id)
+                else:
+                    return
         with self.reactions_lock:
-            # Check if the user already reacted
-            for reaction in self.reactions:
-                if reaction.user_id == user_id:
-                    if reaction.emoji != emoji:
-                        self.remove_reaction(reaction.reaction_id)
-                    else:
-                        return
             reaction = Reaction.create(self.generate_reaction_id(), user_id, emoji, self.comment_id)
             if reaction is not None:
                 self.reactions.append(reaction)

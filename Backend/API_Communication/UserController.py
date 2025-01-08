@@ -519,10 +519,10 @@ def get_user_name():
         return response
 
     try:
-        current_user = get_jwt_identity()
+        user_id = request.args.get('user_id')  # Get the user_id from query parameters
 
         # Fetch the user courses from the service layer
-        result = serviceLayer.get_user_name(current_user)
+        result = serviceLayer.get_user_name(user_id)
 
         result = json.loads(result)  # Convert the JSON string to a Python dict
 

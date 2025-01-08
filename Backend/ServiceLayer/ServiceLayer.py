@@ -332,7 +332,6 @@ class ServiceLayer:
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions by specific criteria."""
         try:
-            print("in service layer")
             result = self.negev_nerds.search_question_by_specifics(course_id, year, semester, moed, question_number)
             print(result)
 
@@ -538,7 +537,6 @@ class ServiceLayer:
         :return: JSON response indicating success or failure.
         """
         try:
-
             result = self.negev_nerds.add_reaction(course_id, year, semester, moed, question_number,
                                                   comment_id, user_id, emoji)
             return json.dumps({
