@@ -8,6 +8,7 @@ from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
+from datetime import datetime
 
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
@@ -315,9 +316,11 @@ class CourseFacade:
             logging.error(f"{semester} is not a valid Semester.")
             raise ValueError(f"Invalid Semester: {semester}")
         # Validate year
-        if year < 1960:
-            logging.error(f"{year} is not a valid year. Must be 1960 or later.")
-            raise ValueError(f"Invalid year: {year}")
+        current_year = datetime.now().year
+        if year < 1960 or year > current_year:
+            logging.error(f"{year} is not a valid year. Must be between 1960 and {current_year}.")
+            raise ValueError(f"Invalid year: {year}. Year must be between 1960 and {current_year}.")            
+
 
         # Validate question number
         if question_number < 0:
