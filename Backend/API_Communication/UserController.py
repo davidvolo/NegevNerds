@@ -196,7 +196,7 @@ def register_termOfUse_part():
         # Check the status and return appropriate response
         if parsed_result['status'] == 'success':
             user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
-            access_token = create_access_token(identity=user_id, expires_delta=timedelta(seconds=1))
+            access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=10))
             print("token: ", access_token)
             return jsonify({
                 "success": True,
@@ -388,7 +388,7 @@ def login_user():
             }), 400
 
         user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
-        access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=1))
+        access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=10))
         print("token: ", access_token)
 
         # Successful login response

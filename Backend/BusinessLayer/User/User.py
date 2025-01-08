@@ -12,7 +12,7 @@ class User:
         self.password = password
         self.first_name = first_name
         self.last_name = last_name
-        # self.loggedIn = loggedIn
+        self.loggedIn = loggedIn
         self.courses = []
 
         self.courses_lock = threading.Lock()
@@ -62,15 +62,15 @@ class User:
         """
         Log in the user and update the database
         """
-        # self.loggedIn = True
-        # self._repo.update_user(self)
+        self.loggedIn = True
+        self._repo.update_user(self)
 
     def logout(self):
         """
         Log out the user and update the database
         """
-        # self.loggedIn = False
-        # self._repo.update_user(self)
+        self.loggedIn = False
+        self._repo.update_user(self)
 
     def registerToCourse(self, course_id):
         """
