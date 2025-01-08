@@ -24,7 +24,7 @@ migrate = Migrate(app, db)
 
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",  # Or specify exact origin like "http://localhost:3000"
+        "origins": ["http://localhost:3000", "http://132.72.116.86:3000"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
