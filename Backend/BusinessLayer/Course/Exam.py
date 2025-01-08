@@ -213,8 +213,8 @@ class Exam:
         """
         questions = []
         if question_number is None:
-            for exam in self.get_all_exam_question():
-                questions.append(exam.to_dto())
+            for question in self.get_all_exam_question():
+                questions.append(question.to_dto(course_id=self.course_id))
         else:
             question= self.get_question(question_number=question_number)
             if question is not None:
