@@ -318,8 +318,8 @@ class UserFacade:
         user = self.getUser_by_id(user_id)
         if user is None:
             raise UserOrPasswordIncorrectError()
-        if not user.loggedIn:
-            raise UserIsNotLoggedInError(user_id)
+        # if not user.loggedIn:
+        #     raise UserIsNotLoggedInError(user_id)
         user.logout()
         
         logging.info(f"User {user_id} logged out successfully.")

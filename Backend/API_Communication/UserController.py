@@ -3,8 +3,7 @@ from datetime import timedelta
 
 from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS, cross_origin
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
@@ -197,13 +196,13 @@ def register_termOfUse_part():
         # Check the status and return appropriate response
         if parsed_result['status'] == 'success':
             user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
-            access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=6))
+            access_token = create_access_token(identity=user_id, expires_delta=timedelta(seconds=1))
             print("token: ", access_token)
             return jsonify({
                 "success": True,
                 "message": parsed_result['message'],
                 "user_id": parsed_result['user_id'],  # Explicitly fetch user_id
-                "access_token": access_token  # Include the generated token in the response
+                "access_token": access_token,  # Include the generated token in the response
             }), 200
         else:
             return jsonify({
@@ -389,7 +388,7 @@ def login_user():
             }), 400
 
         user_id = parsed_result.get('user_id')  # assuming user_id is returned from your service layer
-        access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=6))
+        access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=1))
         print("token: ", access_token)
 
         # Successful login response
