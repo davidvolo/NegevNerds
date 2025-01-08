@@ -10,26 +10,43 @@ class FileManager:
     _instance = None
     _lock = threading.Lock()
 
-    def __new__(cls, base_dir='./files'):
+    # def __new__(cls, base_dir='./NegevNerds/files'):
+    #     if not cls._instance:
+    #         with cls._lock:
+    #             # Double-checked locking pattern
+    #             if not cls._instance:
+    #                 cls._instance = super().__new__(cls)
+                    # Initialize attributes here
+    #                 cls._instance._base_dir = base_dir
+    #                 cls._instance._initialized = True
+    #                 # Ensure the base directory exists
+    #                 os.makedirs(base_dir, exist_ok=True)
+    #     return cls._instance
+
+    # def __init__(self, base_dir='./NegevNerds/files'):
+    #     # This method might be called multiple times, so we use the _initialized check
+    #     if not hasattr(self, '_initialized'):
+    #         self._base_dir = base_dir
+    #         self._initialized = True
+    #         os.makedirs(self._base_dir, exist_ok=True)
+    
+    def __new__(cls, base_dir=None):
         if not cls._instance:
             with cls._lock:
-                # Double-checked locking pattern
                 if not cls._instance:
                     cls._instance = super().__new__(cls)
-                    # Initialize attributes here
-                    cls._instance._base_dir = base_dir
+                    # Set base directory, defaulting to './files' if not provided
+                    cls._instance._base_dir = os.path.abspath(base_dir or './files')
                     cls._instance._initialized = True
-                    # Ensure the base directory exists
-                    os.makedirs(base_dir, exist_ok=True)
+                    os.makedirs(cls._instance._base_dir, exist_ok=True)
+                    print(f"FileManager base directory: {cls._instance._base_dir}")
         return cls._instance
 
-    def __init__(self, base_dir='./files'):
-        # This method might be called multiple times, so we use the _initialized check
+    def __init__(self, base_dir=None):
         if not hasattr(self, '_initialized'):
-            self._base_dir = base_dir
+            self._base_dir = os.path.abspath(base_dir or './files')
             self._initialized = True
             os.makedirs(self._base_dir, exist_ok=True)
-
 
     def create_course_folder(self, course_id):
         """Creates a folder for the course if it doesn't exist."""

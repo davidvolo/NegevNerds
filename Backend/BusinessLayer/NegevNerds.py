@@ -19,6 +19,7 @@ from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 import threading
+import os
 
 class NegevNerds:
 
@@ -30,11 +31,13 @@ class NegevNerds:
             with cls._lock:  # Ensure thread-safe instance creation
                 if cls._instance is None:  # Double-checked locking
                     cls._instance = super().__new__(cls)
+                    resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
+                    print(f"Resolved base directory for NegevNerds: {resolved_dir}")
                     # Initialize critical attributes in __new__
                     cls._instance._user_facade = UserFacade()
                     cls._instance._course_facade = CourseFacade()
                     cls._instance._pdfFacade = PDFAnalyzerFacade()
-                    cls._instance._file_manager = FileManager(mkdir)
+                    cls._instance._file_manager = FileManager(resolved_dir)
                     cls._instance._system_managers = []
                     cls._instance._initialized = True
         return cls._instance
@@ -42,10 +45,12 @@ class NegevNerds:
     def __init__(self, mkdir):
         # Prevent reinitialization
         if not hasattr(self, '_initialized'):
+            resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
+
             self._user_facade = UserFacade()
             self._course_facade = CourseFacade()
             self._pdfFacade = PDFAnalyzerFacade()
-            self._file_manager = FileManager(mkdir)
+            self._file_manager = FileManager(resolved_dir)
             self._system_managers = []
             self._initialized = True
 
@@ -76,7 +81,6 @@ class NegevNerds:
             return self.userFacade.register(email, password, password_confirm, first_name, last_name)
         except Exception as e:
             return None, {"Error": str(e)}  # Always return a tuple
-
 
 
     def registerWithoutAuth(self, email, password, first_name, last_name):
@@ -446,6 +450,8 @@ class NegevNerds:
                 question_text = question_analyzer.extract_text_from_pdf_file(question_file)
             if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
                 # Save the PDF file with a custom name
+                print(f"Base directory: {self.fileManager._base_dir}")
+
                 if self.is_photo(question_file):
                     question_path= self.fileManager.save_photo_question_file(
                         course_id=course_id,
