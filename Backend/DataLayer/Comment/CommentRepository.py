@@ -49,6 +49,7 @@ class CommentRepository:
                 prev_id=comment.prev_id,
                 text=comment.comment_text,
                 deleted=comment.deleted,
+                edited=comment.edited,
                 question_id=question_id
             )
 
@@ -89,6 +90,28 @@ class CommentRepository:
             comment_model.deleted = 1
 
             session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def edit_comment_text(self, comment):
+
+        session = self.Session()
+        try:
+
+            comment_model = session.query(CommentModel).filter_by(comment_id=comment.comment_id).first()
+
+            if not comment_model:
+                raise ValueError(f"No comment found with ID {comment.comment_id}")
+
+            # Update field
+            comment_model.text = comment.comment_text
+            comment_model.edited = 1
+
+            session.commit()
+
         except Exception as e:
             session.rollback()
             raise e

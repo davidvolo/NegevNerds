@@ -681,7 +681,25 @@ class ServiceLayer:
             self.negev_nerds.delete_comment(course_id, year, semester, moed, question_number, comment_id)
             return json.dumps({
                 "status": "success",
-                "message": "Question deleted successfully."
+                "message": "Comment deleted successfully."
+            })
+        except Exception as e:
+            # Handle errors and return an error response
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def edit_comment_text(self, course_id, year, semester, moed, question_number, comment_id, new_text):
+        """
+        Deletes a specific comment from the question and its related data.
+        """
+        try:
+            # Call the NegevNerds logic to delete the question
+            self.negev_nerds.edit_comment_text(course_id, year, semester, moed, question_number, comment_id, new_text)
+            return json.dumps({
+                "status": "success",
+                "message": "Comment text edited successfully."
             })
         except Exception as e:
             # Handle errors and return an error response

@@ -122,7 +122,7 @@ class Question:
             else:
                 print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, writer_name, writer_id,prev_id, comment_text, deleted):
+    def add_comment(self, writer_name, writer_id,prev_id, comment_text, deleted, edited):
         """
         Add a Comment to the comments list.
         """
@@ -134,6 +134,7 @@ class Question:
                                      prev_id=prev_id,
                                      comment_text=comment_text,
                                      deleted=deleted,
+                                     edited=edited,
                                      question_id=self.id)
             if comment is not None:
                 self.comments.append(comment)
@@ -163,6 +164,13 @@ class Question:
         for comment in self.comments:
             if comment.comment_id == comment_id:
                 comment.delete_comment()
+                return
+        raise CommentNotFound
+
+    def edit_comment_text(self, comment_id, new_text):
+        for comment in self.comments:
+            if comment.comment_id == comment_id:
+                comment.edit_comment_text(new_text)
                 return
         raise CommentNotFound
     
