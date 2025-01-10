@@ -441,6 +441,15 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
+    def edit_comment_text(self, course_id, year, semester, moed, question_number, comment_id, new_text):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            course.edit_comment_text(year, semester, moed, question_number, comment_id, new_text)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
         try:
             course = self.get_course(course_id)

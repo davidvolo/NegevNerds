@@ -576,6 +576,20 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to delete comment: {e}")
 
+    def edit_comment_text(self, course_id, year, semester, moed, question_number, comment_id, new_text):
+        """
+            delete comment.
+        """
+        try:
+            self.courseFacade.edit_comment_text(course_id=course_id, year=year, semester=semester,
+                                           moed=moed, question_number=question_number,
+                                           comment_id=comment_id, new_text=new_text)
+            return "Comment edited successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to delete comment: {e}")
+
     # def delete_comment(self, comment_id):
     #     """
     #     Deletes a comment from the question, ensuring all related data is removed.

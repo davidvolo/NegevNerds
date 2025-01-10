@@ -18,6 +18,7 @@ class CommentModel(Base):
     prev_id = Column(String, nullable=False)
     text = Column(String, nullable=False)
     deleted = Column(Boolean, nullable=False)
+    edited = Column(Boolean, nullable=False)
     question_id = Column(String, ForeignKey('questions.question_id'), nullable=False)
 
     question = relationship('QuestionModel',
@@ -38,6 +39,7 @@ class CommentModel(Base):
             prev_id=self.prev_id,
             comment_text=self.text,
             deleted=self.deleted,
+            edited=self.edited,
             reactions=business_reactions
         )
         return comment
@@ -52,5 +54,6 @@ class CommentModel(Base):
             date=comment.date,
             prev_id=comment.prev_id,
             text=comment.text,
-            deleted=comment.deleted
+            deleted=comment.deleted,
+            edited=comment.edited
         )

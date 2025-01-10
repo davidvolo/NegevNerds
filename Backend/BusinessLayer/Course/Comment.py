@@ -10,7 +10,7 @@ from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", deleted=None, reactions=None):
+    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", deleted=None, edited=None, reactions=None):
         """
         Initialize a Comment instance.
         """
@@ -22,10 +22,11 @@ class Comment:
         self.comment_text = comment_text
         self.reactions = reactions if reactions is not None else [] #reactions_list
         self.deleted = deleted
+        self.edited = edited
         self.reactions_lock = threading.Lock()
 
     @classmethod
-    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, question_id):
+    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, edited, question_id):
         """
         Class method to create a new comment and save to database
         Returns:
@@ -39,7 +40,8 @@ class Comment:
             date=date,
             prev_id=prev_id,
             comment_text=comment_text,
-            deleted=deleted
+            deleted=deleted,
+            edited=edited
         )
         comment_repo = CommentRepository()
         comment_repo.add_comment(comment, question_id)
@@ -59,6 +61,7 @@ class Comment:
             prev_id=self.prev_id,
             comment_text=self.comment_text,
             deleted=self.deleted,
+            edited=self.edited,
             reactions=reaction_dtos
         )
 
@@ -69,6 +72,13 @@ class Comment:
         self.deleted = True
         comment_repo = CommentRepository()
         comment_repo.update_deleted_comment(self)
+
+    def edit_comment_text(self, new_text):
+        if self.comment_text != new_text:
+            self.comment_text = new_text
+            self.edited = True
+            comment_repo = CommentRepository()
+            comment_repo.edit_comment_text(self)
 
     def add_reaction(self, user_id, emoji):
         """
