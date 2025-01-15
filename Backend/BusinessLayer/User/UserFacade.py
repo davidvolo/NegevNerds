@@ -2,6 +2,7 @@ import smtplib
 import random
 import datetime
 import os
+from dotenv import load_dotenv
 import re
 import threading
 import uuid
@@ -225,6 +226,8 @@ class UserFacade:
         auth_code = str(auth_code)
         auth_code_expiry = datetime.datetime.now() + datetime.timedelta(minutes=3)
         self.pending_auth_codes[email] =(auth_code, auth_code_expiry)
+
+        load_dotenv()
 
         sender_email = os.getenv("EMAIL_ADDRESS")
         sender_password = os.getenv("EMAIL_PASSWORD")
