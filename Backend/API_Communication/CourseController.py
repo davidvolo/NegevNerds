@@ -2,17 +2,12 @@ import ast
 import json
 import mimetypes
 import os
-from flask import Response
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_cors import cross_origin, CORS
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-
-from Backend.BusinessLayer.NegevNerds import NegevNerds
-from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
-from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.DataLayer.DTOs.NotificationDTO import NotificationDTO
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
@@ -136,7 +131,7 @@ def open_course():
         user_id = get_jwt_identity()
 
         # Save file to the specified directory
-        base_dir = os.path.join(os.getcwd(), 'Backend', 'BusinessLayer', 'PDFAnalyzer')
+        base_dir = os.path.join(os.getcwd(), 'Backend', 'BusinessLayer', 'Analyzer')
         os.makedirs(base_dir, exist_ok=True)  # Ensure the directory exists
         file_path = os.path.join(base_dir, secure_filename(syllabus_file.filename))
         syllabus_file.save(file_path)

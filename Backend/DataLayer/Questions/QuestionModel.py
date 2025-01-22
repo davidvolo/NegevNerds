@@ -20,8 +20,8 @@ class QuestionModel(Base):
     moed = Column(String, nullable=False)
     question_number = Column(Integer, nullable=False, primary_key=True)
     is_american = Column(Boolean, nullable=False)
-    link_to_question = Column(String, nullable=True)
-    link_to_exam = Column(String, nullable=True)
+    link_to_question = Column(String, nullable=False)
+    # link_to_exam = Column(String, nullable=True)
     link_to_answer = Column(String, nullable=True)
     exam_id = Column(String, ForeignKey('exams.exam_id'), primary_key=True)
 
@@ -47,7 +47,7 @@ class QuestionModel(Base):
             year=self.year,
             is_american=self.is_american,
             link_to_question=self.link_to_question,
-            link_to_exam=self.link_to_question,
+            # link_to_exam=self.link_to_question,
             link_to_answer=self.link_to_answer,
             semester=Semester(self.semester),
             moed=Moed(self.moed),
@@ -59,14 +59,14 @@ class QuestionModel(Base):
         return question
 
     @classmethod
-    def from_business_model(cls, question, exam_id):
+    def from_business_model(cls, question):
 
         return cls(
             question_id=question.id,
             year=question.year,
             is_american=question.is_american,
             link_to_question=question.link_to_question,
-            link_to_exam=question.link_to_question,
+            # link_to_exam=question.link_to_question,
             semester=question.semester.value,
             moed=question.moed.value,
             question_number=question.question_number,

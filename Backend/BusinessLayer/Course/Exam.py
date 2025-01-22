@@ -74,7 +74,7 @@ class Exam:
             question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
                                        question_number=question_number, is_american=is_american,
                                        question_topics=question_topics, link_to_question=pdf__question_path,
-                                       link_to_answer=pdf__answer_path, link_to_exam=self.link,
+                                       link_to_answer=pdf__answer_path,
                                        question_id=self.generate_question_id(), question_text=question_text)
 
             if question is not None:

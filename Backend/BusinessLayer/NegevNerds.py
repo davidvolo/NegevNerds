@@ -2,12 +2,11 @@ import mimetypes
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationFacade
-from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager
-from Backend.BusinessLayer.PDFAnalyzer.QuestionAnalyzer import QuestionAnalyzer
+from Backend.BusinessLayer.FileManager.FileManager import FileManager
+from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.BusinessLayer.PDFAnalyzer.PDFAnalyzerFacade import PDFAnalyzerFacade
-from Backend.BusinessLayer.Course.enums import Semester, Moed
+from Backend.BusinessLayer.Analyzer.AnalyzerFacade import AnalyzerFacade
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.Comment.CommentRepository import CommentRepository
 from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
@@ -37,7 +36,7 @@ class NegevNerds:
                     #Initialize critical attributes in __new__
                     cls._instance._user_facade = UserFacade()
                     cls._instance._course_facade = CourseFacade()
-                    cls._instance._pdfFacade = PDFAnalyzerFacade()
+                    cls._instance._pdfFacade = AnalyzerFacade()
                     cls._instance._file_manager = FileManager(resolved_dir)
                     cls._instance._system_managers = []
                     cls._instance._initialized = True
@@ -51,7 +50,7 @@ class NegevNerds:
 
             self._user_facade = UserFacade()
             self._course_facade = CourseFacade()
-            self._pdfFacade = PDFAnalyzerFacade()
+            self._pdfFacade = AnalyzerFacade()
             self._file_manager = FileManager(resolved_dir)
             self._system_managers = []
             self._initialized = True
@@ -239,7 +238,7 @@ class NegevNerds:
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
-            exam_path = self._file_manager.save_exam_file1(course_id, year, semester, moed, pdf_file)
+            exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
             result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
             return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
         except Exception as e:
@@ -452,11 +451,11 @@ class NegevNerds:
         """
         try:
             # Get course name for filename generation
-            question_analyzer = QuestionAnalyzer()
+            # question_analyzer = QuestionAnalyzer()
             if self.is_photo(question_file):
-                question_text= question_analyzer.extract_text_from_image(question_file)
+                question_text= self._pdfFacade.extract_text_from_image(question_file)
             else:
-                question_text = question_analyzer.extract_text_from_pdf_file(question_file)
+                question_text = self._pdfFacade.extract_text_from_pdf_file(question_file)
             if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
                 # Save the PDF file with a custom name
                 print(f"Base directory: {self.fileManager._base_dir}")

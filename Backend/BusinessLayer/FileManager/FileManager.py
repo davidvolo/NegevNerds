@@ -117,7 +117,7 @@ class FileManager:
 
         return syllabus_file_path
 
-    def save_exam_file(self, course_id, year, semester, moed, exam_content):
+    def save_exam_file_by_path(self, course_id, year, semester, moed, exam_content):
         """Saves the exam file in the course's year folder."""
 
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
@@ -134,7 +134,7 @@ class FileManager:
 
         return exam_file_path
     
-    def save_exam_file1(self, course_id, year, semester, moed, pdf_file):
+    def save_exam_file(self, course_id, year, semester, moed, pdf_file):
         """Saves the exam file in the course's year folder."""
         try:
             # Define folder paths
