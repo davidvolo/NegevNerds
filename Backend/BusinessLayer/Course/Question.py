@@ -12,7 +12,7 @@ from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 class Question:
     def __init__(self, year, semester, moed, question_number, is_american,
-                 link_to_question, link_to_answer, link_to_exam, question_topics=None, question_id=None, comments=None, text = ""):
+                 link_to_question, link_to_answer, question_topics=None, question_id=None, comments=None, text = ""):
         """
         Initialize a Question instance.
         """
@@ -24,7 +24,6 @@ class Question:
         self.question_topics = question_topics if question_topics is not None else []  # Default to an empty list
         self.link_to_question = link_to_question
         self.link_to_answer = link_to_answer
-        self.link_to_exam = link_to_exam
         self.id = question_id
         #self.course_id = course_id
         self.comments = comments if comments is not None else []# Default to an empty list
@@ -35,7 +34,7 @@ class Question:
 
     @classmethod
     def create(cls, year, semester, moed, question_number, is_american,
-               link_to_question, link_to_answer, link_to_exam,exam_id, question_id=None,
+               link_to_question, link_to_answer,exam_id, question_id=None,
                question_topics=None, question_text=""):
         """
         Class method to create a new user and save to database
@@ -50,7 +49,6 @@ class Question:
             question_number=question_number,
             is_american=is_american,
             link_to_question=link_to_question,
-            link_to_exam=link_to_exam,
             link_to_answer=link_to_answer,
             question_id=question_id,
             question_topics=question_topics,

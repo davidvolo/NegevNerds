@@ -7,15 +7,16 @@ from collections import defaultdict
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 
 
-class WordIndexController:
-    def __init__(self, common_words_en, common_words_he):
+
+class InformationRetrival:
+    def __init__(self):
         # self.english_dict = defaultdict(list)  # English word dictionary
         # self.hebrew_dict = defaultdict(list)   # Hebrew word dictionary
-        self.common_words_en = set(common_words_en)  # Set of common English words
-        self.common_words_he = set(common_words_he)  # Set of common Hebrew words
+        self.common_words_en = set(self.get_english_common_words())  # Set of common English words
+        self.common_words_he = set(self.get_common_hebrew())  # Set of common Hebrew words
         self.words_repository = WordsQuestionsRepository()
-        self.wordIndex1 = WordIndex1(common_words_en, common_words_he)
-        self.wordIndex2 = WordIndex2(common_words_en, common_words_he)
+        self.wordIndex1 = WordIndex1(self.common_words_en, self.common_words_he)
+        self.wordIndex2 = WordIndex2(self.common_words_en, self.common_words_he)
 
     def process_pdf(self, pdf_file_path, question_id, course_id):
         # Process PDF using both WordIndex classes
@@ -137,6 +138,66 @@ class WordIndexController:
 
 
 
+    def get_english_common_words(self):
+        return {'i', 'me', 'my', 'myself', 'we', 'our', 'ours',
+                'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself',
+                'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself',
+                'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves',
+                'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are',
+                'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did',
+                'doing',
+                'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by',
+                'for',
+                'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above',
+                'below', 'to',
+                'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then',
+                'once',
+                'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
+                'most',
+                'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+                's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm',
+                'o',
+                're', 've', 'y',
+                'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't",
+                'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn',
+                "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't",
+                'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"}
+
+    def get_common_hebrew(self):
+        return {'אני', 'את', 'אתה', 'אנחנו', 'אתן', 'אתם', 'הם', 'הן', 'היא', 'הוא', 'שלי', 'שלו',
+                'שלך', 'שלה', 'שלנו', 'שלכם', 'שלכן', 'שלהם', 'שלהן', 'לי', 'לו', 'לה', 'לנו',
+                'לכם', 'לכן', 'להם', 'להן', 'אותה', 'אותו', 'זה', 'זאת', 'אלה', 'אלו', 'תחת',
+                'מתחת', 'מעל', 'בין', 'עם', 'עד', 'נגר', 'על', 'אל', 'מול', 'של', 'אצל', 'כמו', 'אחר',
+                'אותו', 'בלי', 'לפני', 'אחרי', 'מאחורי', 'עלי', 'עליו', 'עליה', 'עליך', 'עלינו', 'עליכם',
+                'לעיכן', 'עליהם', 'עליהן', 'כל', 'כולם', 'כולן', 'כך', 'ככה', 'כזה', 'זה', 'זות', 'אותי',
+                'אותה', 'אותם', 'אותך', 'אותו', 'אותן', 'אותנו', 'ואת', 'את', 'אתכם', 'אתכן', 'איתי', 'איתו',
+                'איתך',
+                'איתה', 'איתם', 'איתן', 'איתנו', 'איתכם', 'איתכן', 'יהיה', 'תהיה', 'היתי', 'היתה', 'היה',
+                'להיות',
+                'עצמי',
+                'עצמו', 'עצמה', 'עצמם', 'עצמן', 'זו', 'עצמנו', 'עצמהם', 'עצמהן', 'מי', 'מה', 'איפה', 'היכן',
+                'במקום שבו', 'אם',
+                'לאן', 'למקום שבו', 'מקום בו', 'איזה', 'מהיכן', 'איך', 'כיצד', 'באיזו מידה', 'מתי', 'בשעה ש',
+                'כאשר',
+                'כש',
+                'למרות', 'לפני', 'אחרי', 'מאיזו סיבה', 'הסיבה שבגללה', 'למה', 'מדוע', 'לאיזו תכלית', 'כי', 'יש',
+                'אין', 'אך',
+                'מנין', 'מאין', 'מאיפה', 'יכל', 'יכלה', 'יכלו', 'יכול', 'יכולה', 'יכולים', 'יכולות', 'יוכלו',
+                'יוכל',
+                'מסוגל',
+                'לא', 'רק', 'אולי', 'אין', 'לאו', 'אי', 'כלל', 'נגד', 'אם', 'עם', 'אל', 'אלה', 'אלו', 'אף', 'על',
+                'מעל', 'מתחת', 'מצד', 'בשביל',
+                'לבין', 'באמצע', 'בתוך', 'דרך', 'מבעד', 'באמצעות', 'למעלה', 'למטה', 'מחוץ', 'מן', 'לעבר', 'מכאן',
+                'כאן', 'הנה', 'הרי', 'פה', 'שם', 'אך', 'ברם', 'שוב', 'אבל', 'מבלי', 'בלי', 'מלבד', 'רק', 'בגלל',
+                'מכיוון', 'עד', 'אשר',
+                'ואילו', 'למרות', 'אס', 'כמו', 'כפי', 'אז', 'אחרי', 'כן', 'לכן', 'לפיכך', 'מאד', 'עז', 'מעט',
+                'מעטים', 'במידה', 'שוב',
+                'יותר', 'מדי', 'גם', 'כן', 'נו', 'להלן', 'לפי', 'אחר', 'אחרת', 'אחרים', 'אחרות', 'אשר', 'או'}
+
+
+
+
+
     
 
 
@@ -215,63 +276,6 @@ class WordIndex1:
             normalized_lines.append(bidi_text)
 
         return '\n'.join(normalized_lines)
-
-    # def extract_words(self, text):
-    #     words = text.split()
-    #     english_words = []
-    #     hebrew_words = []
-    #
-    #     for word in words:
-    #         if self.hebrew_pattern.search(word):
-    #             hebrew_words.append(word)
-    #         else:
-    #             english_words.append(word)
-    #
-    #     return english_words, hebrew_words
-
-
-    # def normalize_text_direction(self, text):
-    #     """Normalize RTL directionality in mixed-language text."""
-    #     lines = text.split("\n")
-    #     normalized_lines = []
-    #
-    #     for line in lines:
-    #         if self.contains_hebrew(line):
-    #             # Reverse only Hebrew text for RTL consistency
-    #             normalized_lines.append(self.reverse_hebrew_words(line))
-    #         else:
-    #             # Add LTR lines as-is
-    #             normalized_lines.append(line)
-    #
-    #     return "\n".join(normalized_lines)
-    #
-    # def contains_hebrew(self, text):
-    #     """Check if a string contains Hebrew characters."""
-    #     return bool(self.hebrew_characters.search(text))
-    #
-    # def reverse_hebrew_words(self, line):
-    #     """Reverse Hebrew words in the line while preserving order for non-Hebrew words."""
-    #     words = line.split()
-    #     reversed_words = []
-    #     for word in words:
-    #         if self.contains_hebrew(word):
-    #             reversed_words.append(word[::-1])  # Reverse Hebrew word
-    #         else:
-    #             reversed_words.append(word)  # Keep non-Hebrew word as-is
-    #     return " ".join(reversed_words)
-        
-    # def get_sorted_dictionaries(self):
-    #     # Return sorted versions of both dictionaries
-    #     sorted_english_dict = dict(sorted(self.english_dict.items()))
-    #     sorted_hebrew_dict = dict(sorted(self.hebrew_dict.items()))
-    #     return sorted_english_dict, sorted_hebrew_dict
-
-
-    # def reverse_word_if_needed(self, word):
-    #     # Reverse the word only if it is not in the correct direction (LTR -> RTL issue)
-    #     if word != word[::-1]:  # This checks if the word is reversed (LTR).
-    #         return word[::-1]
-    #     return word
 
 
 class WordIndex2:
@@ -391,3 +395,4 @@ class WordIndex2:
     #     if word != word[::-1]:  # This checks if the word is reversed (LTR).
     #         return word[::-1]
     #     return word
+

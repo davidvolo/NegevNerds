@@ -1,7 +1,6 @@
 import unittest
 import os
-from io import BytesIO
-from Backend.BusinessLayer.PDFAnalyzer.FileManager import FileManager  # Importing the FileManager class
+from Backend.BusinessLayer.FileManager.FileManager import FileManager  # Importing the FileManager class
 
 
 class TestFileManager(unittest.TestCase):
@@ -58,7 +57,7 @@ class TestFileManager(unittest.TestCase):
         year = 2023
         semester = "Summer"
         moed = "A"
-        exam_file_path = self.file_manager.save_exam_file(course_id, year, semester, moed, exam_content)
+        exam_file_path = self.file_manager.save_exam_file_by_path(course_id, year, semester, moed, exam_content)
 
         # Assert that the exam file exists in the correct folder
         self.assertTrue(os.path.exists(exam_file_path))
@@ -72,7 +71,7 @@ class TestFileManager(unittest.TestCase):
         moed = "A"
         question_content = b"Sample question content"  # Sample question content as bytes
         question_number = 1
-        question_file_path = self.file_manager.save_question_file(course_id, year, semester, moed, question_content,
+        question_file_path = self.file_manager.save_question_file_pdf(course_id, year, semester, moed, question_content,
                                                                   question_number)
 
         # Assert that the question file exists in the correct folder
