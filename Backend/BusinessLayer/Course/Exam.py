@@ -89,7 +89,7 @@ class Exam:
             raise QuestionDoesNotMeetExamFields(question_number)
 
         # Ensure the question does not already exist
-        #TODO
+
         question_repo = QuestionRepository()
         if question_repo.is_exist(year, semester.value, moed.value, question_text):
             raise QuestionAlreadyInExam(f"Question {question_number} already exists in this exam.")

@@ -2,6 +2,7 @@ import threading
 from typing import List
 
 from Backend.BusinessLayer.Course.Course import Course
+from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
 from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
@@ -74,13 +75,18 @@ class CourseFacade:
 
     def open_course(self, course_id, name, course_topics):
         """Opens a new course"""
-        with self.courses_lock:
-            course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
-            if course is not None:
+
+        # course = self.get_course(course_id)
+        # if (course==None):
+        course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
+        if course is not None:
+            with self.courses_lock:
                 self.courses[course_id] = course
-            else:
-                raise Exception("error while creating course")
-    
+        else:
+            raise Exception("error while creating course")
+        # else:
+        #     raise Exception(Exceptions.CourseAlreadyExists(course_id))
+
     def open_course_possibility(self, course_id, course_name):
         """Opens a new course"""
 

@@ -636,23 +636,23 @@ class ServiceLayer:
     
     
 
-    def upload_answer(self, course_id, year, semester, moed, questionNumber, pdf_answer):
-        """
-        Handles uploading an answer to an existing question.
-        :return: JSON response indicating success or failure.
-        """
-        try:
-
-            result = self.negev_nerds.upload_answer(course_id, year, semester, moed, questionNumber, pdf_answer)
-            return json.dumps({
-                "status": "success",
-                "message": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def upload_answer(self, course_id, year, semester, moed, questionNumber, pdf_answer):
+    #     """
+    #     Handles uploading an answer to an existing question.
+    #     :return: JSON response indicating success or failure.
+    #     """
+    #     try:
+    #
+    #         result = self.negev_nerds.upload_answer(course_id, year, semester, moed, questionNumber, pdf_answer)
+    #         return json.dumps({
+    #             "status": "success",
+    #             "message": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
     def get_question_path(self, course_id, year, semester, moed, questionNumber):
         try:

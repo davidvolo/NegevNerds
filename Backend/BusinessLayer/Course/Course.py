@@ -255,18 +255,9 @@ class Course:
             raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
-            return {
-                "status": "success",
-                "message": "Exam PDF found.",
-                "has_link": True,
-                "link": exam_pdf_link
-            }
+            return False
         else:
-            return {
-                "status": "success",
-                "message": "Exam PDF is not available.",
-                "has_link": False
-            }
+            return True
     
     def checkExistSolution(self, year, semester, moed,question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
@@ -275,18 +266,10 @@ class Course:
         question = exam.get_question(question_number)
         question_answer_pdf_link = question.link_to_answer  # Check for the exam link
         if question_answer_pdf_link != "":
-            return {
-                "status": "success",
-                "message": "Exam PDF found.",
-                "has_link": True,
-                "link": question_answer_pdf_link
-            }
+            return True
         else:
-            return {
-                "status": "success",
-                "message": "Exam PDF is not available.",
-                "has_link": False
-            }
+            return False
+
     
     
     def checkExistQuestion(self, year, semester, moed,question_number):
