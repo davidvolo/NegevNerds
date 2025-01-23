@@ -304,6 +304,31 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def search_by_topic(self, course_id, topic):
+        """Search for questions by a specific topic in a course."""
+        try:
+            # Call the relevant method from the business layer
+            result = self.negev_nerds.search_by_topic(course_id, topic)
+
+            # Check if any questions are found
+            if not result:
+                return json.dumps({
+                    "status": "error",
+                    "message": "No questions found for the given topic."
+                })
+
+            # Convert the result to a dictionary for returning
+            questions_dict = [question.to_dict() for question in result]
+
+            return json.dumps({
+                "status": "success",
+                "data": questions_dict  # Returning the questions as JSON
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
 
     def search_free_text(self, text, course_id =None):
         """Handle user logout and return JSON."""

@@ -88,6 +88,9 @@ class Question:
 
     def get_question_topics(self):
         with self.question_topics_lock:
+            question_topics_repo = QuestionTopicsRepository()
+            topics = question_topics_repo.get_question_topics(self.id)
+            self.question_topics = topics
             return self.question_topics
 
     def get_link_to_question(self):

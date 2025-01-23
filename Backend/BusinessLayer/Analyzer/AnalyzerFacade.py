@@ -19,17 +19,17 @@ class AnalyzerFacade:
             self.course_syllabus = SyllabusAnalyzer()
 
 
-        self.information_retrival =  InformationRetrival(common_words_en,common_words_he)
+        self.information_retrival =  InformationRetrival()
         self.question_analyser= QuestionAnalyzer()
 
 
 
 
     def extract_text_from_pdf_file(self, question_file):
-        self.question_analyser.extract_text_from_pdf_file(question_file)
+        return self.question_analyser.extract_text_from_pdf_file(question_file)
 
     def extract_text_from_image(self, question_file):
-        self.question_analyser.extract_text_from_image(question_file)
+        return self.question_analyser.extract_text_from_image(question_file)
 
     def extract_syllabus_topic_total(self, pdf_path):
         syllabus = self.course_syllabus.extract_syllabus_topic_total(pdf_path)
