@@ -87,7 +87,7 @@ class ExamRepository:
         finally:
             session.close()
 
-    def get_exam_by_date(self, year, semester, moed):
+    def get_exam_by_date(self,course_id, year, semester, moed):
         """
         Retrieve a exam by their email
 
@@ -103,7 +103,7 @@ class ExamRepository:
             moed =moed.value
         session = self.Session()
         try:
-            exam_model = session.query(ExamModel).filter_by(year=year, moed=moed, semester=semester).first()
+            exam_model = session.query(ExamModel).filter_by(course_id=course_id , year=year, moed=moed, semester=semester).first()
             return exam_model.to_business_model() if exam_model else None
         except Exception as e:
             # Log the exception if needed

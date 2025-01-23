@@ -867,20 +867,34 @@ class ServiceLayer:
             # Call the Negev Nerds business logic to check for the exam
             result = self.negev_nerds.check_exam_full_pdf(course_id, year, semester, moed)
 
-            # Parse the result from the Negev Nerds logic
-            if result.get("status") == "success":
-                return json.dumps({
-                    "status": "success",
-                    "message": result.get("message", "Operation successful."),
-                    "has_link": result.get("has_link"),
-                    "link": result.get("link", None)
-                })
-            else:
-                # Handle known failures returned by Negev Nerds
-                return json.dumps({
-                    "status": "error",
-                    "message": result.get("message", "Unknown error occurred.")
-                })
+            return json.dumps({
+                "status": "success",
+                "message": "Operation successful.",
+                "has_link": result,
+                # "link": result.get("link", None)
+            })
+
+        except Exception as e:
+            # Handle unexpected errors gracefully
+            print(f"Error in check_exam_full_pdf: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "An unexpected error occurred.",
+                "error": str(e)
+            })
+
+    def get_exam_full_pdf(self, course_id, year, semester, moed):
+
+        try:
+            # Call the Negev Nerds business logic to check for the exam
+            result = self.negev_nerds.get_exam_full_pdf(course_id, year, semester, moed)
+
+            return json.dumps({
+                "status": "success",
+                "message": "Operation successful.",
+                "has_link": result!= "",
+                "link": result
+            })
 
         except Exception as e:
             # Handle unexpected errors gracefully
@@ -891,26 +905,25 @@ class ServiceLayer:
                 "error": str(e)
             })
         
-    def checkExistSolution(self, course_id, year, semester, moed,question_number):
+    def ExistSolution(self, course_id, year, semester, moed,question_number):
         
         try:
             # Call the Negev Nerds business logic to check for the exam
             result = self.negev_nerds.checkExistSolution(course_id, year, semester, moed,question_number)
 
             # Parse the result from the Negev Nerds logic
-            if result.get("status") == "success":
-                return json.dumps({
-                    "status": "success",
-                    "message": result.get("message", "Operation successful."),
-                    "has_link": result.get("has_link"),
-                    "link": result.get("link", None)
+            return json.dumps({
+                "status": "success",
+                "message": "Operation successful.",
+                "has_link": result
+                # "link": result.get("link", None)
                 })
-            else:
-                # Handle known failures returned by Negev Nerds
-                return json.dumps({
-                    "status": "error",
-                    "message": result.get("message", "Unknown error occurred.")
-                })
+            # else:
+            #     # Handle known failures returned by Negev Nerds
+            #     return json.dumps({
+            #         "status": "error",
+            #         "message": result.get("message", "Unknown error occurred.")
+            #     })
 
         except Exception as e:
             # Handle unexpected errors gracefully
@@ -973,18 +986,18 @@ class ServiceLayer:
             result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)
             print("result from negevnerds ")
             print(result)        
-            if result.get("status") == "success":
-                return json.dumps({
-                    "success": True,
-                    "has_link": result.get("has_link", False),
-                    "message": result.get("message", "Operation successful."),
-                    "link": result.get("link", None)  # Link will be used only if needed
-                })
-            else:
-                return json.dumps({
-                    "success": False,
-                    "message": result.get("message", "Unknown error occurred.")
-                })
+            # if result.get("status") == "success":
+            return json.dumps({
+                "success": True,
+                "has_link": result!="",
+                "message": "Operation successful.",
+                "link": result  # Link will be used only if needed
+            })
+            # else:
+            #     return json.dumps({
+            #         "success": False,
+            #         "message": result.get("message", "Unknown error occurred.")
+            #     })
         except Exception as e:
             print(f"Error in get_exam_pdf_link: {str(e)}")
             return json.dumps({

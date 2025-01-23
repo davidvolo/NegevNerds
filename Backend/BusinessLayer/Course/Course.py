@@ -1,6 +1,7 @@
 import threading
 
 from Backend.BusinessLayer.Course.Exam import Exam
+from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Course.CourseRepository import CourseRepository
@@ -115,7 +116,7 @@ class Course:
                 if exam.semester == semester and exam.moed == moed:
                     return exam
         exam_repo = ExamRepository()
-        exam = exam_repo.get_exam_by_date(year, semester, moed)
+        exam = exam_repo.get_exam_by_date(year=year, semester=semester, moed=moed, course_id=self.course_id)
         if exam:
             if year not in self.exams:
                 self.exams[year] = []  # Create a new list for this year if it doesn't exist
@@ -235,6 +236,31 @@ class Course:
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
+    def get_exam_full_pdf(self, year, semester, moed):
+        """
+        Checks if the full exam PDF exists and returns the result.
+
+        Args:
+            year (int): Year of the exam.
+            semester (str): Semester of the exam.
+            moed (str): Exam session.
+
+        Returns:
+            dict: Result indicating if the PDF link exists or not.
+
+        Raises:
+            ExamIsNotExist: If the exam does not exist.
+        """
+        exam = self.get_exam(year, semester, moed)  # Retrieve the exam
+        if not exam:
+            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.link  # Check for the exam link
+        #
+        # return exam_pdf_link
+        # else:
+        #     raise Exception("exam did not uploaded yet")
+
+
     def check_exam_full_pdf(self, year, semester, moed):
         """
         Checks if the full exam PDF exists and returns the result.
@@ -255,9 +281,9 @@ class Course:
             raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
-            return False
-        else:
             return True
+        else:
+            return False
     
     def checkExistSolution(self, year, semester, moed,question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
