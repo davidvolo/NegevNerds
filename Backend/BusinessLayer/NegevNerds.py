@@ -1130,7 +1130,7 @@ class NegevNerds:
     #         return "Question added successfully."
     #     except Exception as e:
     #         raise Exception(f"Failed to add question: {e}")
-    
+
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions based on the provided specifics for the course."""

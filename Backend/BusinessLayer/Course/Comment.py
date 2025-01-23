@@ -70,6 +70,8 @@ class Comment:
 
     def delete_comment(self):
         self.deleted = True
+        reactions_repo = ReactionRepository()
+        reactions_repo.delete_reactions_by_comment_id(self.comment_id)      
         comment_repo = CommentRepository()
         comment_repo.update_deleted_comment(self)
 
