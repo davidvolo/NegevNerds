@@ -19,7 +19,7 @@ class AnalyzerFacade:
             self.course_syllabus = SyllabusAnalyzer()
 
 
-        self.information_retrival =  InformationRetrival(common_words_en,common_words_he)
+        self.information_retrival =  InformationRetrival()
         self.question_analyser= QuestionAnalyzer()
 
 

@@ -90,6 +90,14 @@ class CourseAlreadyExists(BaseError):
         message = f"Course {course_id} is already exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
+class SolutionAlreadyExists(BaseError):
+    """Exception raised when the user is not exist."""
+
+    def __init__(self):
+        message = f"solution is already exist."
+        super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
+
 class InvalidCourseIdFormat(BaseError):
     """Exception raised when course Id is in invalid format."""
     def __init__(self, course_id):

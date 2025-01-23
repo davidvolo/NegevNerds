@@ -5,6 +5,7 @@ from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationF
 from Backend.BusinessLayer.FileManager.FileManager import FileManager
 from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 from Backend.BusinessLayer.User.UserFacade import UserFacade
+from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Analyzer.AnalyzerFacade import AnalyzerFacade
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
@@ -26,6 +27,7 @@ class NegevNerds:
     _instance = None
     _lock = threading.Lock()
 
+
     def __new__(cls, mkdir):
         if cls._instance is None:
             with cls._lock:  # Ensure thread-safe instance creation
@@ -34,13 +36,13 @@ class NegevNerds:
                     resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
                     print(f"Resolved base directory for NegevNerds: {resolved_dir}")
                     #Initialize critical attributes in __new__
-                    cls._instance._user_facade = UserFacade()
-                    cls._instance._course_facade = CourseFacade()
-                    cls._instance._pdfFacade = AnalyzerFacade()
-                    cls._instance._file_manager = FileManager(resolved_dir)
-                    cls._instance._system_managers = []
-                    cls._instance._initialized = True
-                    cls._instance._notification_facade = NotificationFacade()
+                    # cls._instance._user_facade = UserFacade()
+                    # cls._instance._course_facade = CourseFacade()
+                    # cls._instance._pdfFacade = AnalyzerFacade()
+                    # cls._instance._file_manager = FileManager(resolved_dir)
+                    # cls._instance._system_managers = []
+                    # cls._instance._initialized = True
+                    # cls._instance._notification_facade = NotificationFacade()
         return cls._instance
 
     def __init__(self, mkdir):
@@ -55,6 +57,10 @@ class NegevNerds:
             self._system_managers = []
             self._initialized = True
             self._notification_facade = NotificationFacade()
+            self.open_course_lock = threading.Lock()
+            self.add_question_lock = threading.Lock()
+            self.upload_exam_lock = threading.Lock()
+            self.upload_question_solution_lock = threading.Lock()
 
     # Getter methods for accessing the facades and file manager
     @property
@@ -196,18 +202,16 @@ class NegevNerds:
     def open_course(self, user_id, course_id, name, syllabus_content_pdf):
         """Opens a new course in the system and saves the syllabus file."""
         try:
-            # Check if the course already exists using CourseFacade
-            if self.courseFacade.open_course_possibility(course_id, name):
-                # Save the syllabus to the course folder using FileManager
-                syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
-                # syllabus_file_path = self.fileManager.save_syllabus_file(course_id, syllabus_content)
-                # self.courseFacade.set_syllabus_of_course(course_id, syllabus_file_path)
-                self.courseFacade.open_course(course_id,name,syllabus )
-                self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
-                self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student
-                return f"Course {name} opened successfully "
-            else:
-                raise Exception("Failed to create course.")
+            with self.open_course_lock:
+                # Check if the course already exists using CourseFacade
+                if self.courseFacade.open_course_possibility(course_id, name):
+                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
+                    self.courseFacade.open_course(course_id,name,syllabus )
+                    self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
+                    self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student
+                    return f"Course {name} opened successfully "
+                else:
+                    raise Exception("Failed to create course.")
         except Exception as e:
             return f"Error: {e}"
     
@@ -238,40 +242,46 @@ class NegevNerds:
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
-            exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
-            result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
-            return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
+            with self.upload_exam_lock:
+                if self._course_facade.check_exam_full_pdf(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
+                    raise Exceptions.CourseAlreadyExists
+                exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
+                result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
+                return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
         except Exception as e:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
         
     def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
-        try:
-            answer_path = ""
-            if solution_file is not None:
-                if self.is_photo(answer_path):
-                    answer_path = self.fileManager.save_photo_answer_file(
-                        course_id=course_id,
-                        year=year,
-                        semester=semester,
-                        moed=moed,
-                        question_number=question_number,
-                        photo_file=solution_file
-                    )
-                else:
-                    answer_path = self.fileManager.save_answer_file_pdf(
-                        course_id=course_id,
-                        year=year,
-                        semester=semester,
-                        moed=moed,
-                        question_number=question_number,
-                        pdf_answer=solution_file
-                    )
-            result = self.courseFacade.uploadSolution(course_id, year, semester, moed, question_number, answer_path)
-            return {"status": "success", "message": "File uploaded and saved successfully.", "link": answer_path}
-        except Exception as e:
-            print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
-            return {"status": "error", "message": str(e)}
+        with self.upload_question_solution_lock:
+            try:
+                if self._course_facade.checkExistSolution(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
+                    raise Exceptions.CourseAlreadyExists
+                answer_path = ""
+                if solution_file is not None:
+                    if self.is_photo(answer_path):
+                        answer_path = self.fileManager.save_photo_answer_file(
+                            course_id=course_id,
+                            year=year,
+                            semester=semester,
+                            moed=moed,
+                            question_number=question_number,
+                            photo_file=solution_file
+                        )
+                    else:
+                        answer_path = self.fileManager.save_answer_file_pdf(
+                            course_id=course_id,
+                            year=year,
+                            semester=semester,
+                            moed=moed,
+                            question_number=question_number,
+                            pdf_answer=solution_file
+                        )
+                result = self.courseFacade.uploadSolution(course_id, year, semester, moed, question_number, answer_path)
+                return {"status": "success", "message": "File uploaded and saved successfully.", "link": answer_path}
+            except Exception as e:
+                print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
+                return {"status": "error", "message": str(e)}
 
     def remove_course(self, course_id, user_id):
         """Remove an existing course from the system and delete its corresponding folder."""
@@ -449,6 +459,7 @@ class NegevNerds:
         ining question details.
         :return: Path to the saved PDF file.
         """
+
         try:
             # Get course name for filename generation
             # question_analyzer = QuestionAnalyzer()
@@ -456,59 +467,60 @@ class NegevNerds:
                 question_text= self._pdfFacade.extract_text_from_image(question_file)
             else:
                 question_text = self._pdfFacade.extract_text_from_pdf_file(question_file)
-            if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
-                # Save the PDF file with a custom name
-                print(f"Base directory: {self.fileManager._base_dir}")
+            with self.add_question_lock:
+                if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
+                    # Save the PDF file with a custom name
+                    print(f"Base directory: {self.fileManager._base_dir}")
 
-                if self.is_photo(question_file):
-                    question_path= self.fileManager.save_photo_question_file(
-                        course_id=course_id,
-                        year=year,
-                        semester=semester,
-                        moed=moed,
-                        question_number=question_number,
-                        photo_file=question_file
-                    )
-
-                else :
-                    question_path = self.fileManager.save_question_file_pdf(
-                        course_id=course_id,
-                        year=year,
-                        semester=semester,
-                        moed=moed,
-                        question_number=question_number,
-                        pdf_question=question_file
-                    )
-                answer_path = ""
-                if answer_file is not None:
-                    if self.is_photo(answer_file):
-                        answer_path = self.fileManager.save_photo_answer_file(
+                    if self.is_photo(question_file):
+                        question_path= self.fileManager.save_photo_question_file(
                             course_id=course_id,
                             year=year,
                             semester=semester,
                             moed=moed,
                             question_number=question_number,
-                            photo_file=answer_file
+                            photo_file=question_file
                         )
+
+                    else :
+                        question_path = self.fileManager.save_question_file_pdf(
+                            course_id=course_id,
+                            year=year,
+                            semester=semester,
+                            moed=moed,
+                            question_number=question_number,
+                            pdf_question=question_file
+                        )
+                    answer_path = ""
+                    if answer_file is not None:
+                        if self.is_photo(answer_file):
+                            answer_path = self.fileManager.save_photo_answer_file(
+                                course_id=course_id,
+                                year=year,
+                                semester=semester,
+                                moed=moed,
+                                question_number=question_number,
+                                photo_file=answer_file
+                            )
+                        else:
+                            answer_path = self.fileManager.save_answer_file_pdf(
+                                course_id=course_id,
+                                year=year,
+                                semester=semester,
+                                moed=moed,
+                                question_number=question_number,
+                                pdf_answer=answer_file
+                            )
+                    # Add the question to the course
+                    question_id = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
+                                                                 question_number=question_number,is_american=is_american,
+                                                                 question_topics=question_topics,pdf_question_path=question_path, pdf_answer_path=answer_path, question_text=question_text)
+                    if self.is_photo(question_file):
+                        self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_id=question_id, course_id = course_id)
                     else:
-                        answer_path = self.fileManager.save_answer_file_pdf(
-                            course_id=course_id,
-                            year=year,
-                            semester=semester,
-                            moed=moed,
-                            question_number=question_number,
-                            pdf_answer=answer_file
-                        )
-                # Add the question to the course
-                question_id = self.courseFacade.add_question(course_id=course_id, year=year, semester=semester, moed=moed,
-                                                             question_number=question_number,is_american=is_american,
-                                                             question_topics=question_topics,pdf_question_path=question_path, pdf_answer_path=answer_path, question_text=question_text)
-                if self.is_photo(question_file):
-                    self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_id=question_id, course_id = course_id)
-                else:
-                    self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_id=question_id, course_id = course_id)
+                        self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_id=question_id, course_id = course_id)
 
-            return "Question added successfully."
+                return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:
             raise e
         except Exception as e:
@@ -637,32 +649,6 @@ class NegevNerds:
     #         return "Question added successfully."
     #     except Exception as e:
     #         raise Exception(f"Failed to add question: {e}")
-
-    def upload_answer(self, course_id, year, semester, moed, question_number, pdf_answer):
-        try:
-            if self.is_photo(pdf_answer):
-                self.fileManager.save_photo_answer_file(
-                    course_id,
-                    year,
-                    semester,
-                    moed,
-                    question_number,
-                    pdf_answer
-                )
-            else:
-                self.fileManager.save_answer_file_pdf(
-                    course_id,
-                    year,
-                    semester,
-                    moed,
-                    question_number,
-                    pdf_answer
-                )
-            return "Answer added successfully to the question."
-        except (CourseIsNotExist, ExamIsNotExist) as e:
-            raise e
-        except Exception as e:
-            raise Exception(f"Failed to upload answer: {e}")
 
 
 
