@@ -668,7 +668,15 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to upload answer: {e}")
 
+    def search_by_topic(self, course_id, topic):
+        """Search for questions by topic in a specific course."""
+        try:
+            # Fetch all questions for the given course from the course facade
+            questions = self.courseFacade.search_questions_by_topic(course_id, topic)
 
+            return questions
+        except Exception as e:
+            raise Exception(f"Error while searching by topic: {str(e)}")
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions based on the provided specifics for the course."""
