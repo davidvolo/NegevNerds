@@ -1,75 +1,87 @@
-import unittest
+import pytest
+import threading
 from datetime import datetime
+from unittest.mock import Mock, patch
 from Backend.BusinessLayer.Course.Comment import Comment
-from Backend.BusinessLayer.Util.Exceptions import UserAlreadyPostEmoji, EmojiNotFounded
+from Backend.BusinessLayer.Course.Reaction import Reaction
 
 
-class TestComment(unittest.TestCase):
-    def setUp(self):
-        """
-        Set up a Comment instance for testing.
-        """
-        self.comment = Comment(
-            comment_id=1,
-            writer_name="TestUser",
-            date=datetime(2024, 1, 1, 10, 0, 0),
-            prev_id=None,
-            text="This is a test Comment."
+class TestComment:
+    def test_comment_initialization(self):
+        comment = Comment(
+            comment_id="test1",
+            writer_name="John",
+            writer_id="user123",
+            comment_text="Hello world"
         )
-
-    def test_add_emoji_success(self):
-        """
-        Test adding an emoji successfully.
-        """
-        self.comment.add_emoji("like", "user1")
-        self.assertIn("user1", self.comment.emoji_counter_map["like"])
-
-    def test_add_duplicate_emoji_raises_exception(self):
-        """
-        Test adding the same emoji by the same user raises an exception.
-        """
-        self.comment.add_emoji("like", "user1")
-        with self.assertRaises(UserAlreadyPostEmoji):
-            self.comment.add_emoji("like", "user1")
-
-    def test_remove_emoji_success(self):
-        """
-        Test removing an emoji from the Comment successfully.
-        """
-        self.comment.add_emoji("like", "user1")
-        self.comment.remove_emoji("like", "user1")  # Pass the userId as well
-        self.assertNotIn("user1", self.comment.emoji_counter_map["like"])
-
-    def test_remove_nonexistent_emoji_raises_exception(self):
-        """
-        Test that attempting to remove an emoji that does not exist raises an exception.
-        """
-        with self.assertRaises(EmojiNotFounded):
-            self.comment.remove_emoji("like", "user1")  # Pass both 'like' and 'userId'
-
-    def test_edit_text(self):
-        """
-        Test editing the text of a Comment.
-        """
-        new_text = "Updated Comment text."
-        self.comment.edit_text(new_text)
-        self.assertEqual(self.comment.text, new_text)
-
-    def test_get_score(self):
-        """
-        Test the score calculation of the Comment based on likes and dislikes.
-        """
-        self.comment.add_emoji("like", "user1")
-        self.comment.add_emoji("like", "user2")
-        self.comment.add_emoji("dislike", "user3")
-        self.assertEqual(self.comment.get_score(), 1)  # 2 likes - 1 dislike = 1
-
-    def test_get_score_no_emojis(self):
-        """
-        Test calculating the score when there are no emojis.
-        """
-        self.assertEqual(self.comment.get_score(), 0)
+        assert comment.comment_id == "test1"
+        assert comment.writer_name == "John"
+        assert comment.comment_text == "Hello world"
+        assert comment.reactions == []
 
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_delete_comment(self, mocker):
+        mock_repo = mocker.patch('Backend.BusinessLayer.Course.Comment.CommentRepository.update_deleted_comment')
+        comment = Comment(comment_id="test1", writer_name="John", writer_id="user123")
+        comment.delete_comment()
+
+        assert comment.deleted is True
+        mock_repo.assert_called_once()
+
+    def test_edit_comment_text(self, mocker):
+        mock_repo = mocker.patch('Backend.BusinessLayer.Course.Comment.CommentRepository.edit_comment_text')
+        comment = Comment(comment_id="test1", writer_name="John", writer_id="user123")
+
+        comment.edit_comment_text("Updated text")
+
+        assert comment.comment_text == "Updated text"
+        assert comment.edited is True
+        mock_repo.assert_called_once()
+
+    def test_add_reaction(self, mocker):
+        mocker.patch('Backend.BusinessLayer.Course.Reaction.Reaction.create',
+                     return_value=Mock(reaction_id="r1", user_id="user1", emoji="👍"))
+        comment = Comment(comment_id="test1", writer_name="John", writer_id="user123")
+
+        result = comment.add_reaction("user1", "👍")
+
+        assert len(comment.reactions) == 1
+        assert comment.reactions[0].emoji == "👍"
+        assert result == "user123"
+
+    def test_add_reaction_replace_existing(self, mocker):
+        comment = Comment(comment_id="test1", writer_name="John", writer_id="user123")
+
+        # Mock Reaction.create to return different reactions
+        mocker.patch('Backend.BusinessLayer.Course.Reaction.Reaction.create',
+                     side_effect=[
+                         Mock(reaction_id="r1", user_id="user1", emoji="👍"),
+                         Mock(reaction_id="r2", user_id="user1", emoji="👎")
+                     ])
+
+        # Mock remove_reaction to actually remove the reaction
+        def remove_mock(reaction_id):
+            comment.reactions = [r for r in comment.reactions if r.reaction_id != reaction_id]
+
+        mocker.patch('Backend.BusinessLayer.Course.Reaction.ReactionRepository.remove_reaction')
+        mocker.patch.object(comment, 'remove_reaction', side_effect=remove_mock)
+
+        comment.add_reaction("user1", "👍")
+        assert len(comment.reactions) == 1
+        assert comment.reactions[0].emoji == "👍"
+
+        comment.add_reaction("user1", "👎")
+
+        assert len(comment.reactions) == 1
+        assert comment.reactions[0].emoji == "👎"
+
+    def test_remove_reaction(self, mocker):
+        mock_repo = mocker.patch('Backend.BusinessLayer.Course.Reaction.ReactionRepository.remove_reaction')
+        mock_reaction = Mock(reaction_id="r1", user_id="user1", emoji="👍")
+        comment = Comment(comment_id="test1", writer_name="John", writer_id="user123")
+        comment.reactions = [mock_reaction]
+
+        comment.remove_reaction("r1")
+
+        assert len(comment.reactions) == 0
+        mock_repo.assert_called_once_with("r1")
