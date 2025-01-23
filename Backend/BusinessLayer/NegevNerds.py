@@ -239,12 +239,15 @@ class NegevNerds:
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
+            if pdf_file.content_type != 'application/pdf':
+                raise ValueError("The uploaded file is not a valid PDF.")
             exam_path = self._file_manager.save_exam_file1(course_id, year, semester, moed, pdf_file)
             result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
             return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
         except Exception as e:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
+
         
     def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
         try:
