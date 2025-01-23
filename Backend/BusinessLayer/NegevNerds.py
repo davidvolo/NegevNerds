@@ -242,15 +242,19 @@ class NegevNerds:
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
+
             with self.upload_exam_lock:
                 if self._course_facade.check_exam_full_pdf(course_id=course_id, year=year , semester=semester, moed=moed):
                     raise Exceptions.CourseAlreadyExists
+                if pdf_file.content_type != 'application/pdf':
+                    raise ValueError("The uploaded file is not a valid PDF.")
                 exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
                 result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
                 return {"status": "success", "message": "File uploaded and saved successfully.", "link": exam_path}
         except Exception as e:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
+
         
     def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
         with self.upload_question_solution_lock:
@@ -651,6 +655,10 @@ class NegevNerds:
     #         raise Exception(f"Failed to add question: {e}")
 
 
+
+            return questions
+        except Exception as e:
+            raise Exception(f"Error while searching by topic: {str(e)}")
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions based on the provided specifics for the course."""

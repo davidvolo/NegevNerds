@@ -78,8 +78,12 @@ class QuestionTopicsRepository:
 
         session = self.Session()
         try:
-            associations = session.query().filter_by(question_id=question_id).all()
-            return [association.topic for association in associations]
+            topics = session.query(QuestionTopicsModel).filter_by(question_id=question_id).all()
+
+            if not topics:
+                return []
+
+            return [topic.topic for topic in topics]
         except Exception as e:
             raise e
         finally:

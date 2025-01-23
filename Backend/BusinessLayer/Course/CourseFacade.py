@@ -484,6 +484,19 @@ class CourseFacade:
         course = self.get_course(course_id)
         return course.get_questions_by_specific(year, semester, moed, question_number)
 
+    def search_questions_by_topic(self, course_id, topic):
+        course = self.get_course(course_id)
+        if not course:
+            raise CourseIsNotExist(course_id)
+
+        all_questions = []
+        for exam in course.get_all_exams():
+            for question in exam.get_all_exam_question():
+                if topic in question.get_question_topics():
+                    all_questions.append(question.to_dto(course_id))
+
+        return all_questions
+
     def get_questions_by_keywords(self, course_id, keywords):
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)

@@ -1012,6 +1012,64 @@ def search_question_by_specifics():
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/search_questions_by_topic', methods=['OPTIONS', 'POST'])
+@cross_origin()
+@jwt_required()
+def search_questions_by_topic():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+
+        print("Received data:", data)
+
+        # Validate input
+        if not all(key in data for key in ['topic']):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields"
+            }), 400
+
+        # Extract the data
+        topic = data.get('topic')
+        course_id = data.get('course_id')  # Optional
+
+        result = serviceLayer.search_by_topic(topic=topic, course_id=course_id)
+        print(f"Service Layer Result: {result}")
+
+        # Parse the JSON string
+        if isinstance(result, list):
+            result = [question.to_dict() if isinstance(question, QuestionDTO) else question for question in result]
+        else:
+            result = result.to_dict() if isinstance(result, QuestionDTO) else result
+
+        # Return the response
+        print(f"Formatted result: {result}")
+
+        return jsonify({
+            "success": True,
+            "data": result
+        }), 200
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 
 @course_controller.route('/api/course/search_questions_by_text', methods=['OPTIONS', 'POST'])
 @cross_origin()

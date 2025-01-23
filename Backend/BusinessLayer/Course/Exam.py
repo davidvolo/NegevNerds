@@ -107,6 +107,7 @@ class Exam:
         if (question is None):
             raise QuestionNotFound
         return question.link_to_answer
+
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)
