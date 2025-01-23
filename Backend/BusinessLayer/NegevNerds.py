@@ -201,8 +201,8 @@ class NegevNerds:
 
     def open_course(self, user_id, course_id, name, syllabus_content_pdf):
         """Opens a new course in the system and saves the syllabus file."""
-        try:
-            with self.open_course_lock:
+        with self.open_course_lock:
+            try:
                 # Check if the course already exists using CourseFacade
                 if self.courseFacade.open_course_possibility(course_id, name):
                     syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
@@ -212,8 +212,8 @@ class NegevNerds:
                     return f"Course {name} opened successfully "
                 else:
                     raise Exception("Failed to create course.")
-        except Exception as e:
-            return f"Error: {e}"
+            except Exception as e:
+                return f"Error: {e}"
     
     def check_exam_full_pdf(self, course_id, year, semester, moed):
         """Opens a new course in the system and saves the syllabus file."""
@@ -243,7 +243,7 @@ class NegevNerds:
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
             with self.upload_exam_lock:
-                if self._course_facade.check_exam_full_pdf(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
+                if self._course_facade.check_exam_full_pdf(course_id=course_id, year=year , semester=semester, moed=moed):
                     raise Exceptions.CourseAlreadyExists
                 exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
                 result = self.courseFacade.upload_full_exam_pdf(course_id, year, semester, moed, exam_path)
