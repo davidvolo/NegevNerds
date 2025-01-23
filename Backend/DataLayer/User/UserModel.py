@@ -24,6 +24,8 @@ class UserModel(Base):
     # Define the relationship
     courses = relationship('UserCoursesModel', back_populates='user', cascade='all, delete-orphan')
     course_managers = relationship('CourseManagersModel', back_populates='manager')
+    reactions = relationship('ReactionModel',
+                            back_populates='user')
 
     def to_business_model(self):
         from Backend.BusinessLayer.User.User import User

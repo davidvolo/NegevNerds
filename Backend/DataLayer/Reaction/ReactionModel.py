@@ -18,6 +18,9 @@ class ReactionModel(Base):
     comment = relationship('CommentModel',
                             back_populates='reactions')
 
+    user = relationship('UserModel',
+                            back_populates='reactions')
+
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Reaction import Reaction
 
