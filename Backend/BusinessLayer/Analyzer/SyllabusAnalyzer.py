@@ -5,7 +5,7 @@ import pdfplumber
 from tabula import read_pdf
 import pandas as pd
 
-class Course_syllabus:
+class SyllabusAnalyzer:
     def __init__(self):
         pass
 

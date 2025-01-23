@@ -48,7 +48,7 @@ class QuestionRepository:
                 is_american=question.is_american,
                 link_to_question=question.link_to_question,
                 link_to_answer = question.link_to_answer,
-                link_to_exam=question.link_to_exam,
+                # link_to_exam=question.link_to_exam,
                 semester=question.semester,
                 moed=question.moed,
                 question_number=question.question_number,
@@ -146,7 +146,7 @@ class QuestionRepository:
             question_model.year = question.year,
             question_model.is_american = question.is_american,
             question_model.link_to_question = question.link_to_question,
-            question_model.link_to_exam = question.link_to_exam,
+            #question_model.link_to_exam = question.link_to_exam,
             question_model.link_to_answer = question.link_to_answer
             question_model.semester = question.semester,
             question_model.moed = question.moed,

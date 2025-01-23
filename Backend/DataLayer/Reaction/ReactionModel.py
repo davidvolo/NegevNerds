@@ -11,7 +11,7 @@ class ReactionModel(Base):
     # Primary key
     reaction_id = Column(String, primary_key=True)
 
-    user_id = Column(String, nullable=False)
+    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
     emoji = Column(String, nullable=False)
     comment_id = Column(String, ForeignKey('comments.comment_id'), nullable=False)
 
