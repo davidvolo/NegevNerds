@@ -78,6 +78,7 @@ class CourseFacade:
 
         # course = self.get_course(course_id)
         # if (course==None):
+        course_topics.add("אחר")
         course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
         if course is not None:
             with self.courses_lock:
