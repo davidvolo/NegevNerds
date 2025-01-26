@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.Course.enums import Semester, Moed
+from Backend.DataLayer.Exam.ExamModel import ExamModel
 from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 from Backend.DataLayer.Questions.QuestionModel import Base, QuestionModel
 
@@ -177,12 +178,11 @@ class QuestionRepository:
         finally:
             session.close()
 
-    def is_exist(self, year, semester, moed, text):
+    def is_exist(self, course_id , year, semester, moed ,  question_number):
 
         session = self.Session()
         try:
-            curr = session.query(QuestionModel).filter_by(year=year, semester=semester,
-                                                             moed=moed, text=text).first()
+            curr = session.query(QuestionModel, ExamModel).filter(ExamModel.course_id == course_id,QuestionModel.year== year,QuestionModel.semester== semester,QuestionModel.moed== moed,QuestionModel.question_number== question_number).join(ExamModel,QuestionModel.exam_id==ExamModel.exam_id).first()
             return curr is not None
         except Exception as e:
             raise e

@@ -401,7 +401,7 @@ class Course:
         else:
             # Compare normalized values
             if currExam.semester == semester and currExam.moed == moed:
-                return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number, question_text=question_text)
+                return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number)
             else:
                 raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
 

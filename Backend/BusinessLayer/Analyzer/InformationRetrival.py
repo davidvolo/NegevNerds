@@ -86,6 +86,7 @@ class InformationRetrival:
 
         # Step 3: Iterate over words and fetch associated question IDs
         for word in words:
+            word = word.lower()
             search_dtos = self.words_repository.get_search_dto_by_word(word)
             for dto in search_dtos:
                 dto_count[dto] += 1
@@ -120,6 +121,7 @@ class InformationRetrival:
 
         # Step 3: Iterate over words and fetch associated question IDs
         for word in words:
+            word = word.lower()
             question_ids = self.words_repository.get_questions_id_by_word_and_course(word, course_id)
             for question_id in question_ids:
                 question_word_count[question_id] += 1
@@ -252,6 +254,7 @@ class WordIndex1:
         try:
             with pdfplumber.open(pdf_file_path) as pdf:
                 text = ""
+
                 for page in pdf.pages:
                     text += page.extract_text() + " "
 

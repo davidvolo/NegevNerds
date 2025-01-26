@@ -83,7 +83,7 @@ class Exam:
                 raise Exception("error while creating question")
             return question.id
 
-    def check_add_question_possibility(self, year, semester, moed, question_number,question_text ):
+    def check_add_question_possibility(self, year, semester, moed, question_number):
         # Ensure exam details match
         if year != self.year or semester != self.semester or moed != self.moed:
             raise QuestionDoesNotMeetExamFields(question_number)
@@ -91,7 +91,7 @@ class Exam:
         # Ensure the question does not already exist
 
         question_repo = QuestionRepository()
-        if question_repo.is_exist(year, semester.value, moed.value, question_text):
+        if question_repo.is_exist(year=year, course_id=self.course_id, semester=semester.value, moed=moed.value, question_number=question_number):
             raise QuestionAlreadyInExam(f"Question {question_number} already exists in this exam.")
 
         return True
