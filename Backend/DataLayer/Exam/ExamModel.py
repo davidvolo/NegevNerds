@@ -15,7 +15,7 @@ class ExamModel(Base):
     moed = Column(String, primary_key=True)
 
     exam_id = Column(String, unique=True)
-    course_id = Column(String, ForeignKey('courses.course_id'),  nullable=False)
+    course_id = Column(String, ForeignKey('courses.course_id'),  nullable=False,primary_key=True)
     link = Column(String, nullable=True)
 
     course = relationship('CourseModel', back_populates='exams')

@@ -169,7 +169,7 @@ class ExamRepository:
 
         session = self.Session()
         try:
-            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            exam_model = session.query(ExamModel).filter_by(year=year, semester=semester ,moed=moed, course_id = course_id).all()
             return [exam.to_business_model() for exam in exam_model]
         except Exception as e:
             # Log the exception if needed
@@ -178,7 +178,7 @@ class ExamRepository:
         finally:
             session.close()
 
-    def get_all_exams_by_year(self, year):
+    def get_all_exams_by_year(self,course_id ,  year):
         """
         Retrieve a exam by their email
 
@@ -191,7 +191,7 @@ class ExamRepository:
 
         session = self.Session()
         try:
-            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            exam_model = session.query(ExamModel).filter_by(course_id=course_id, year=year).all()
             return [exam.to_business_model() for exam in exam_model]
         except Exception as e:
             # Log the exception if needed
@@ -200,7 +200,7 @@ class ExamRepository:
         finally:
             session.close()
 
-    def get_all_exams_by_year(self, year):
+    def get_all_exams_by_year(self,course_id ,  year):
         """
         Retrieve a exam by their email
 
@@ -213,7 +213,7 @@ class ExamRepository:
 
         session = self.Session()
         try:
-            exam_model = session.query(ExamModel).filter_by(year=year).all()
+            exam_model = session.query(ExamModel).filter_by(course_id = course_id , year=year).all()
             return [exam.to_business_model() for exam in exam_model]
         except Exception as e:
             # Log the exception if needed
@@ -280,7 +280,7 @@ class ExamRepository:
 
 
 
-    def delete_exam(self, year, semester, moed):
+    def delete_exam(self, course_id,  year, semester, moed):
         """
         Delete a exam from the database
 
@@ -292,7 +292,7 @@ class ExamRepository:
 
         session = self.Session()
         try:
-            exam_model = session.query(ExamModel).filter_by(year=year, semester=semester, moed=moed).first()
+            exam_model = session.query(ExamModel).filter_by(course_id = course_id ,year=year, semester=semester, moed=moed).first()
 
             if not exam_model:
                 raise ValueError(f"No exam found with Date {year, moed, semester}")
