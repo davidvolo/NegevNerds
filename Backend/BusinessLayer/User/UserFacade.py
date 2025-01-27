@@ -148,18 +148,18 @@ class UserFacade:
 
     def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
-        with self.email_lock:
+        try:
+            id = self.generateUserId()
+            user = User.create(id, email, password, first_name, last_name)
+            user.login()
+            with self.email_lock:
+                self.users_byEmail[email] = user
             with self.id_lock:
-                try:
-                        id = self.generateUserId()
-                        user = User.create(id, email, password, first_name, last_name)
-                        user.login()
-                        self.users_byEmail[email] = user
-                        self.users_byId[id] = user
-                        logging.info(f"User {first_name} {last_name} registered successfully.")
-                        return id, {"message": f"User {first_name} {last_name} registered successfully."}
-                except Exception as e:
-                        raise Exception("האישור נכשל. הרשמה בוטלה.")
+                self.users_byId[id] = user
+            logging.info(f"User {first_name} {last_name} registered successfully.")
+            return id, {"message": f"User {first_name} {last_name} registered successfully."}
+        except Exception as e:
+                raise Exception("האישור נכשל. הרשמה בוטלה.")
 
 
     def get_user_name(self, user_id):
@@ -353,24 +353,35 @@ class UserFacade:
             raise UserDoesnotExistsError()
 
     def getUser_by_id(self, user_id):
-        with self.id_lock:
-            user = self.users_byId.get(user_id)
-            if user is not None:
-                return user
-            user_repo = UserRepository()
-            user = user_repo.get_user_by_id(user_id=user_id)
-            if user:
-                self.users_byId[user_id] = user
+        user = self.users_byId.get(user_id)
+        if user is not None:
             return user
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_id(user_id=user_id)
+        if user:
+            with self.email_lock:
+                if user.email in self.users_byEmail:
+                    user = self.users_byEmail.get(user.email)
+                else:
+                    self.users_byEmail[user.email] = user
+            with self.id_lock:
+                self.users_byId[user_id] = user
+        return user
 
     def getUser_by_email(self, email):
-        with self.email_lock:
-            user = self.users_byEmail.get(email)
-            if user is not None:
-                return user
-            user_repo = UserRepository()
-            user = user_repo.get_user_by_email(email=email)
-            if user:
+
+        user = self.users_byEmail.get(email)
+        if user is not None:
+            return user
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_email(email=email)
+        if user:
+            with self.id_lock:
+                if user.email in self.users_byId:
+                    user = self.users_byId.get(user.user_id)
+                else:
+                    self.users_byId[user.user_id] = user
+            with self.email_lock:
                 self.users_byEmail[email] = user
             return user
 
@@ -401,8 +412,10 @@ class UserFacade:
         user_id = self.generateUserId()
         user = User.create(user_id, email, encrypted_password, first_name, last_name)
         #user.login()
-        self.users_byEmail[email] = user
-        self.users_byId[user_id] = user
+        with self.email_lock:
+            self.users_byEmail[email] = user
+        with self.id_lock:
+            self.users_byId[user_id] = user
         logging.info(f"User {first_name} {last_name} registered successfully.")
         return user_id, {"message": f"User {first_name} {last_name} registered successfully."}
 

@@ -395,8 +395,8 @@ class NegevNerds:
                                                            moed=moed, question_number=question_number,
                                                           writer_name=writer_name, 
                                                           writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
-            for commenter in comment_writers:
-                self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
+            # for commenter in comment_writers:
+            #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
             return "Comment added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
             raise e
@@ -412,7 +412,7 @@ class NegevNerds:
                                           moed=moed, question_number=question_number,
                                           comment_id=comment_id, user_id=user_id, emoji=emoji)
 
-            self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
+            #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
             return "Reaction added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
@@ -678,25 +678,27 @@ class NegevNerds:
             print(f"Error occurred: {str(e)}")
             raise Exception(f"Failed to search questions: {e}")
 
-    def get_user_notifications(self, user_id):
-        """Search for questions based on the provided specifics for the course."""
-        # try:
-
-            # Fetch questions based on the specifics from the course
-        notifications = self._notification_facade.get_user_notifications(user_id)
-        return notifications
-
-        # except Exception as e:
-        #     print(f"Error occurred: {str(e)}")
-        #     raise Exception(f"Failed to search questions: {e}")
+    # def get_user_notifications(self, user_id):
+    #     """Search for questions based on the provided specifics for the course."""
+    #     # try:
+    #
+    #         # Fetch questions based on the specifics from the course
+    #     notifications = self._notification_facade.get_user_notifications(user_id)
+    #     return notifications
+    #
+    #     # except Exception as e:
+    #     #     print(f"Error occurred: {str(e)}")
+    #     #     raise Exception(f"Failed to search questions: {e}")
 
     def get_user_last_notifications(self, user_id, number_of_notifications):
         """Search for questions based on the provided specifics for the course."""
         # try:
+        pass
+        #TODO
 
             # Fetch questions based on the specifics from the course
-        notifications = self._notification_facade.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
-        return notifications
+        #notifications = self._notification_facade.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
+        #return notifications
         # except Exception as e:
         #     print(f"Error occurred: {str(e)}")
         #     raise Exception(f"Failed to search questions: {e}")
