@@ -111,6 +111,41 @@ class ExamRepository:
             return None
         finally:
             session.close()
+    
+    def get_allExams_Link_and_name(self, course_id):
+        """
+        Retrieves all exams related to this course ID and returns a list of tuples (exam_link, file_name).
+        """
+        session = self.Session()
+        try:
+            # Fetch all exams for the course
+            exam_models = session.query(ExamModel).filter_by(course_id=course_id).order_by(ExamModel.year.desc()).all()
+            
+            # Create a list of tuples (link, filename)
+            exam_list = []
+            for exam_model in exam_models:
+                year = exam_model.year
+                semester = exam_model.semester
+                moed = exam_model.moed
+                link = exam_model.link  # Assuming this is stored in the database
+                if link != "":
+                    
+                    # Construct filename
+                    filename = f"{year}_{semester}_{moed}.pdf"
+
+                    # Append tuple (link, filename) to the list
+                    exam_list.append((link, filename))
+
+            return exam_list
+
+        except Exception as e:
+            print(f"Error fetching exams: {e}")
+            return []
+        
+        finally:
+            session.close()
+
+
 
     def get_exam_by_course(self, course_id):
         """
