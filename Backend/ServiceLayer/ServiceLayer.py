@@ -1005,6 +1005,18 @@ class ServiceLayer:
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             })
+        
+    def handleDownloadAllExamsZip(self, course_id):
+        try:
+            folderName, exams = self.negev_nerds.handleDownloadAllExamsZip(course_id)
+            return folderName, exams
+        except Exception as e:
+            print(f"Error in get_exam_pdf_link: {str(e)}")
+            return json.dumps({
+                "success": False,
+                "message": "An unexpected error occurred.",
+                "error": str(e)
+            })
 
     def initialize_system(self, file_path="init.json"):
         """

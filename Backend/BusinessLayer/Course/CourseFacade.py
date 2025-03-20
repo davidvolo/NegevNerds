@@ -63,6 +63,14 @@ class CourseFacade:
         for question in questions:
             dtos_list.append(question.to_dto(course_id=course_id))
         return dtos_list
+    
+    def handleDownloadAllExamsZip(self,course_id):
+        course = self.get_course(course_id)
+        if course is not None:
+           folder_name, exams = course.handleDownloadAllExamsZip()
+           return folder_name, exams
+        else:
+            raise CourseIsNotExist(course_id)
 
 
     def remove_student_from_course(self, course_id, user_id):

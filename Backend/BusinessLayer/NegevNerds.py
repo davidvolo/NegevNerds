@@ -328,6 +328,16 @@ class NegevNerds:
             return exams
         except Exception as e:
             raise Exception(f"Failed to search exams: {e}")
+        
+    def search_by_topic(self, course_id, topic):
+        """Search for questions by topic in a specific course."""
+        try:
+            # Fetch all questions for the given course from the course facade
+            questions = self.courseFacade.search_questions_by_topic(course_id, topic)
+
+            return questions
+        except Exception as e:
+            raise Exception(f"Error while searching by topic: {str(e)}")
 
     def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
         """Editing exam's course name """
@@ -704,3 +714,13 @@ class NegevNerds:
         #     raise Exception(f"Failed to search questions: {e}")
 
 
+    def handleDownloadAllExamsZip(self, course_id):
+            """Download a zip file of the examsof the specific course."""
+            try:
+                # Fetch questions based on the specifics from the course
+                folderName , exams = self._course_facade.handleDownloadAllExamsZip(course_id)
+
+                return folderName, exams
+            except Exception as e:
+                print(f"Error occurred: {str(e)}")
+                raise Exception(f"Failed to search questions: {e}")

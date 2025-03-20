@@ -2,15 +2,18 @@ import ast
 import json
 import mimetypes
 import os
-
-from flask import Blueprint, request, jsonify, send_file
+import shutil
+import zipfile
+import requests  # Add this line at the top of your file
+from flask import Blueprint,request, jsonify, send_file
 from flask_cors import cross_origin, CORS
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from urllib.parse import quote
 from Backend.DataLayer.DTOs.NotificationDTO import NotificationDTO
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
+from urllib.parse import quote
 
 course_controller = Blueprint('course_controller', __name__)
 
@@ -1431,6 +1434,8 @@ def uploadSolution():
             }), 400
 
         solution_file = request.files['solution_file']
+        answer_file = request.files.get('pdf_answer')  # Optional
+
 
         # Validate file
         if solution_file.filename == '':
@@ -1653,6 +1658,79 @@ def edit_comment_text():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
+    
+
+@course_controller.route('/api/course/handleDownloadAllExamsZip', methods=['GET'])
+@jwt_required()
+def handleDownloadAllExamsZip():
+    temp_dir = None  # Define temp_dir early to prevent UnboundLocalError
+    try:
+        course_id = request.args.get('course_id')
+        if not course_id:
+            return jsonify({"status": "error", "message": "Course ID is required"}), 400
+
+        # Get the folder name and exam list (link, filename tuples)
+        folder_name, exams = serviceLayer.handleDownloadAllExamsZip(course_id)
+
+        if not exams or len(exams) == 0:
+            return jsonify({"status": "success", "message": "אין מבחנים מלאים לקורס זה באתר כרגע", "no_exams": True}), 200  # ✅ Return success instead of creating an empty ZIP
+
+        # Sanitize the folder name
+        sanitized_folder_name = ''.join(c if c.isalnum() or c in ['_', '-'] else '_' for c in folder_name)
+        sanitized_folder_name = sanitized_folder_name.replace(' ', '_')  # Replace spaces with underscores
+
+        # Create a temporary directory
+        temp_dir = os.path.join("temp_exams", sanitized_folder_name)
+        os.makedirs(temp_dir, exist_ok=True)
+
+        exam_files = []  # Store the actual paths of the files
+
+        # Download or copy files to the temporary folder
+        for exam_link, filename in exams:
+            file_path = os.path.join(temp_dir, filename)
+
+            if exam_link.startswith("http"):  # If it's a URL, download it
+                try:
+                    response = requests.get(exam_link, stream=True)
+                    if response.status_code == 200:
+                        with open(file_path, "wb") as f:
+                            for chunk in response.iter_content(1024):
+                                f.write(chunk)
+                        exam_files.append(file_path)
+                except Exception as e:
+                    print(f"Failed to download {exam_link}: {e}")
+
+            elif os.path.exists(exam_link):  # If it's a local file path, copy it
+                shutil.copy(exam_link, file_path)
+                exam_files.append(file_path)
+
+        # ✅ Prevent sending an empty ZIP
+        if not exam_files:
+            return jsonify({"status": "success", "message": "אין מבחנים מלאים לקורס זה באתר כרגע", "no_exams": True}), 200
+
+        # Create a ZIP file named after `sanitized_folder_name`
+        zip_filename = f"{sanitized_folder_name}.zip"
+        zip_path = os.path.join(temp_dir, zip_filename)
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in exam_files:
+                zipf.write(file_path, os.path.basename(file_path))
+
+        # Encode filename properly for HTTP headers
+        encoded_filename = quote(zip_filename)
+
+        # Send the ZIP file as response with proper encoding
+        response = send_file(zip_path, as_attachment=True)
+        response.headers["Content-Disposition"] = f"attachment; filename*=UTF-8''{encoded_filename}"
+        return response
+
+    except Exception as e:
+        print(f"Error downloading exams: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    finally:
+        # Cleanup: Remove temp folder after sending the file
+        if temp_dir and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])

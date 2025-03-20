@@ -100,6 +100,11 @@ class Course:
         for exam in self.get_all_exams():
             questions = questions + exam.get_questions_by_keywords(keywords)
         return questions
+    
+    def get_allExams_Link_and_name(self):
+        exam_repo = ExamRepository()
+        exams = exam_repo.get_allExams_Link_and_name(self.course_id)
+        return exams
 
     def get_exam(self, year, semester, moed, raise_exception=True):
         """
@@ -478,6 +483,11 @@ class Course:
         if question is None:
             raise QuestionNotFound
         question.remove_reaction(comment_id, reaction_id)
+    
+    def handleDownloadAllExamsZip(self):
+        exams = self.get_allExams_Link_and_name()
+        folder_name = f"{self.course_id}_{self.name}_NegevNerds_מבחנים"
+        return folder_name, exams
 
     def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
         exam = self.get_exam(year, semester, moed)
