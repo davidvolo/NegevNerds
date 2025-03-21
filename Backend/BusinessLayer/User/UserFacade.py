@@ -132,6 +132,7 @@ class UserFacade:
     def register_authentication_part(self, email, auth_code: str):
         # Interactively verify the code # Allow up to 3 attempts
         try:
+            email = email.lower()
             stored_code, expiry_time = self.pending_auth_codes[email]
             if auth_code == stored_code:
                 if datetime.datetime.now() <= expiry_time:
@@ -170,6 +171,7 @@ class UserFacade:
     def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
         try:
+            email = email.lower()
             id = self.generateUserId()
             user = User.create(id, email, password, first_name, last_name)
             user.login()
@@ -449,6 +451,7 @@ class UserFacade:
         - Verifies the code interactively.
         - Completes the registration.
         """
+        email = email.lower()
         if self.getUser_by_email(email) is not None:
             raise Exception("המשתמש כבר קיים במערכת.")
 
