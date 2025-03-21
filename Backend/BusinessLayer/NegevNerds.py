@@ -14,7 +14,9 @@ from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTo
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
-
+import json
+import datetime
+from flask_jwt_extended import create_access_token
 
 
 
@@ -239,8 +241,6 @@ class NegevNerds:
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
             result = self.courseFacade.get_exam_full_pdf(course_id, year, semester, moed)
-            print("result negev nerds")
-            print(result)
             return result
         except Exception as e:
             print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
@@ -724,3 +724,101 @@ class NegevNerds:
             except Exception as e:
                 print(f"Error occurred: {str(e)}")
                 raise Exception(f"Failed to search questions: {e}")
+            
+    def forgot_password(self, email):
+        valid_bgu_mail = self._user_facade.is_valid_email(email)
+        if not valid_bgu_mail:
+            return json.dumps({
+                "status": "error",
+                "message": "האימייל חייב להיות של אוניברסיטת בן גוריון (@bgu.ac.il / @post.bgu.ac.il )"
+            })
+
+        user = self._user_facade.getUser_by_email(email)
+        if user is None:
+            return json.dumps({
+                "status": "error",
+                "message": "כתובת אימייל לא נמצאה במערכת."
+            })
+
+        try:
+            self._user_facade.send_reset_password_code(email)
+            return json.dumps({
+                "status": "success",
+                "message": "מייל אימות נשלח לאימייל שסיפקת."
+            })
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": "שליחת הקוד נכשלה. נסה שוב מאוחר יותר.",
+                "error": str(e)
+            })
+
+    def verify_reset_code(self, email, code):
+        try:
+            # Check if code exists for the email
+            stored = self._user_facade.pending_reset_codes.get(email)
+
+            if not stored:
+                return json.dumps({
+                    "status": "error",
+                    "message": "לא נמצא קוד אימות עבור אימייל זה. בקש קוד חדש."
+                })
+
+            stored_code, expiry_time = stored
+
+            if datetime.datetime.now() > expiry_time:
+                return json.dumps({
+                    "status": "error",
+                    "message": "הקוד פג תוקף. בקש קוד חדש."
+                })
+
+            if code != stored_code:
+                return json.dumps({
+                    "status": "error",
+                    "message": "קוד אימות שגוי."
+                })
+
+            # Optional: delete code after success
+            del self._user_facade.pending_reset_codes[email]
+
+            # Generate temporary access token for reset-password flow
+            access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(minutes=3))
+
+            return json.dumps({
+                "status": "success",
+                "token": access_token
+            })
+
+        except Exception as e:
+            print(f"Error verifying reset code: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "שגיאה פנימית באימות הקוד.",
+                "error": str(e)
+            })
+    
+    def reset_new_password(self, email, password):
+        # Check if the password meets security requirements
+        valid_password = self._user_facade.is_valid_password(password)
+        if not valid_password:
+            return json.dumps({
+                "status": "error",
+                "message": "הסיסמה אינה עומדת בדרישות האבטחה"
+            })
+
+        # Try to update the password in the database
+        updated_successfully = self._user_facade.reset_new_password(email, password)
+        
+        if updated_successfully:
+            return json.dumps({
+                "status": "success",
+                "message": "הסיסמה עודכנה בהצלחה"
+            })
+        else:
+            return json.dumps({
+                "status": "error",
+                "message": "אירעה שגיאה בעדכון הסיסמה. ייתכן שהמשתמש לא קיים"
+        })
+ 
+
+
