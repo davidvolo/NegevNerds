@@ -60,6 +60,7 @@ def register():
 
         # Extract data
         email = data.get('email')
+        email = email.lower()
         password = data.get('password')
         first_name = data.get('first_name')
         last_name = data.get('last_name')
