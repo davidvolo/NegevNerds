@@ -344,7 +344,7 @@ class UserFacade:
         try:
             # Check if the email exists in the system
             #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
-
+            email = email.lower()
             user = self.getUser_by_email(email)
             if user is None:
                 raise UserOrPasswordIncorrectError()
