@@ -93,6 +93,37 @@ class UserRepository:
             raise e
         finally:
             session.close()
+    
+    def update_user_password_by_email(self, email, new_password):
+        """
+        Update the password for a user identified by their email.
+
+        Args:
+            email (str): The email of the user
+            new_password (str): The encrypted new password 
+
+        Returns:
+            bool: True if updated successfully, False if user not found
+        """
+        session = self.Session()
+        try:
+            user_model = session.query(UserModel).filter_by(email=email).first()
+            if not user_model:
+                return False  # user not found
+
+            # Hash the new password
+
+            # Update password
+            user_model.password = new_password
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            raise e
+
+        finally:
+            session.close()
 
     def get_user_by_email(self, email):
         """

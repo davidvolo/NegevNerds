@@ -548,3 +548,133 @@ def get_user_name():
             "success": False,
             "message": "Invalid JSON response from service"
         }), 500
+    
+@user_controller.route('/api/auth/forgot-password', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def forgot_password():
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract data from the request
+        data = request.get_json()
+        email = data.get('email')
+
+        if not email:
+            return jsonify({
+                "success": False,
+                "message": "כתובת אימייל נדרשת"
+            }), 400
+
+        # Call the service layer method to handle logic
+        result = serviceLayer.forgot_password(email)
+
+        # Parse response from service
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message")
+            }), 404
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "success": False,
+            "message": "שגיאה פנימית: פורמט JSON לא תקין"
+        }), 500
+
+    except Exception as e:
+        print(f"Error in forgot_password: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "שגיאה לא צפויה התרחשה",
+            "error": str(e)
+        }), 500
+
+@user_controller.route('/api/auth/verify-reset-code', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def verify_reset_code():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        code = data.get('code')
+
+        if not email or not code:
+            return jsonify({
+                "success": False,
+                "message": "יש למלא גם אימייל וגם קוד אימות."
+            }), 400
+
+        result = serviceLayer.verify_reset_code(email, code)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "token": parsed_result["token"]
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in verify_reset_code: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "שגיאה באימות הקוד.",
+            "error": str(e)
+        }), 500
+
+@user_controller.route('/api/auth/reset-new-password', methods=['POST'])
+@jwt_required()
+def reset_new_password():
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        email = data.get('email')
+
+        if not password or not confirm_password or not email:
+            return jsonify({
+                "success": False,
+                "message": "חסרים שדות"
+            }), 400
+
+        if password != confirm_password:
+            return jsonify({
+                "success": False,
+                "message": "הסיסמאות אינן תואמות"
+            }), 400
+
+
+        return serviceLayer.reset_new_password(email, password)
+
+       
+
+    except Exception as e:
+        print("Reset password error:", e)
+        return jsonify({
+            "success": False,
+            "message": "שגיאה בשרת",
+            "error": str(e)
+        }), 500

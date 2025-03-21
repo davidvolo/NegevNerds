@@ -28,7 +28,7 @@ class UserFacade:
             self.users_byId = {}
             self.pending_auth_codes = {}  # Stores pending auth codes and their expiry times
             self.auth_lock = threading.Lock()  # Lock for thread-safe access
-
+            self.pending_reset_codes = {}
             self.email_lock = threading.Lock()
             self.id_lock = threading.Lock()
 
@@ -145,6 +145,27 @@ class UserFacade:
         except Exception as e:
             logging.error(f"Attempt  failed: {e}")
             raise Exception("האימות נכשל. הרשמה בוטלה.")
+    
+    # def reset_new_password(self, email, password):
+    #     user =  self.getUser_by_email(email)
+    #     encrypt_passwrod = self.hash_password(password)
+    #     return user.reset_new_password(email,encrypt_passwrod)
+    
+    def reset_new_password(self, email, password):
+        user = self.getUser_by_email(email)
+        encrypt_password = self.hash_password(password)
+        updated = user.reset_new_password(email,encrypt_password)
+
+        if updated:
+            # ✅ Invalidate cache to ensure fresh password is loaded next time
+            self.users_byEmail.pop(email, None)
+            if user.user_id in self.users_byId:
+                self.users_byId.pop(user.user_id, None)
+
+            return True
+        else:
+            return False
+
 
     def register_termOfUse_part(self, email, password, first_name, last_name):
         # Interactively verify the code
@@ -253,6 +274,42 @@ class UserFacade:
         except Exception as e:
             logging.error(f"Failed to send authentication code: {e}")
             raise Exception("Failed to send authentication code.")
+        
+    def send_reset_password_code(self, email):
+        """Generate and send a reset password code via email."""
+        reset_code = str(random.randint(100000, 999999))
+        reset_code_expiry = datetime.datetime.now() + datetime.timedelta(minutes=3)
+        self.pending_reset_codes[email] = (reset_code, reset_code_expiry)  # reuse same dict for simplicity
+
+        # Load environment variables
+        load_dotenv()
+
+        sender_email = os.getenv("EMAIL_ADDRESS")
+        sender_password = os.getenv("EMAIL_PASSWORD")
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+
+        subject = "איפוס סיסמה - NegevNerds"
+        message = (
+            f"קוד איפוס הסיסמה שלך עבור NegevNerds הוא: {reset_code}\n"
+            f"הקוד תקף ל-3 דקות.\n\n"
+            f"אם לא ביקשת איפוס סיסמה, התעלם מהודעה זו."
+        )
+
+        msg = MIMEText(message)
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = email
+
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            logging.info(f"Reset password code sent to {email}")
+        except Exception as e:
+            logging.error(f"Failed to send reset password code: {e}")
+            raise Exception("Failed to send reset password code.")
 
     # def login(self, email, password):
     #     """Authenticate the user by checking the email and password."""

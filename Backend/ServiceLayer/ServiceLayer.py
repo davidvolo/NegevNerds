@@ -1017,6 +1017,44 @@ class ServiceLayer:
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             })
+    
+    def forgot_password(self, email):
+        try:
+            result = self.negev_nerds.forgot_password(email)
+            return result  # This is expected to be a JSON string (already parsed in the controller)
+        except Exception as e:
+            print(f"Error in forgot_password: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "שגיאה בשליחת הבקשה.",
+                "error": str(e)
+            })
+
+    def verify_reset_code(self, email, code):
+        try:
+            result = self.negev_nerds.verify_reset_code(email, code)
+            return result  # JSON string
+        except Exception as e:
+            print(f"Error in verify_reset_code: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "שגיאה באימות הקוד.",
+                "error": str(e)
+            })
+        
+    
+    def reset_new_password(self, email, password):
+        try:
+            result = self.negev_nerds.reset_new_password(email, password)
+            return result  # JSON string
+        except Exception as e:
+            print(f"Error in verify_reset_code: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "שגיאה בעדכון הסיסמה.",
+                "error": str(e)
+            })
+
 
     def initialize_system(self, file_path="init.json"):
         """
