@@ -493,4 +493,30 @@ class Course:
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
+    
+    def edit_question_topic(self, year, semester, moed, question_number, topics):
+        exam = self.get_exam(year, semester, moed)
+        if exam is not None:
+            return exam.edit_question_topic(question_number, topics)
+    
+    def checkQuestionAvailability(self,new_year, new_semester, new_moed, new_question_number):
+        exam = self.get_exam(new_year, new_semester, new_moed)
+        if exam is None:
+            exam_id = self.generate_exam_id(year=new_year,semester=new_semester,moed=new_moed)
+            exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link="", year=new_year, semester=new_semester, moed=new_moed)
+            print("got here3")
+            if exam is not None:
+                if new_year not in self.exams:
+                    self.exams[new_year] = []
+                self.exams[new_year].append(exam)
+            return True , exam.id
+        else:
+            return exam.checkQuestionAvailability(new_question_number), exam.id
+        
+    def edit_question_details(self,old_year, old_semester, old_moed, old_question_number,
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id):
+        exam = self.get_exam(old_year, old_semester, old_moed)
+        return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id)
+
+
 

@@ -209,6 +209,34 @@ class QuestionRepository:
             raise e
         finally:
             session.close()
+    
+    def edit_question_details(self, question_id, new_year, new_semester, new_moed, new_question_number, exam_id):
+        session = self.Session()
+        try:
+            # Find the existing question
+            question = session.query(QuestionModel).filter_by(question_id=question_id).first()
+
+            if not question:
+                print(f"Question with ID {question_id} not found.")
+                return False
+
+            # Update the fields
+            question.year = new_year
+            question.semester = new_semester
+            question.moed = new_moed
+            question.question_number = new_question_number
+            question.exam_id = exam_id
+
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error in edit_question_details: {e}")
+            return False
+        finally:
+            session.close()
+
 
 
 

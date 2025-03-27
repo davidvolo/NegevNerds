@@ -819,6 +819,57 @@ class NegevNerds:
                 "status": "error",
                 "message": "אירעה שגיאה בעדכון הסיסמה. ייתכן שהמשתמש לא קיים"
         })
+    
+
+    def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
+        res = self._course_facade.edit_question_topic(course_id, year, semester, moed, question_number, topics)
+              
+        if res:
+            return json.dumps({
+                "status": "success",
+                "message": "נושאי השאלה עודכנו בהצלחה"
+            })
+        else:
+            return json.dumps({
+                "status": "error",
+                "message": "אירעה שגיאה בעדכון נושאי השאלה"
+        })
+    
+    def isCourseExists(self, new_course_id):
+       course = self._course_facade.get_course(new_course_id)
+       if course is not None:
+           return True
+       else:
+           return False
+    
+    def edit_question_details(self,old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number):
+        if self.courseFacade.valid_question_parameters(new_course_id,new_year, new_semester, new_moed, new_question_number):
+            res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id,new_year, new_semester, new_moed, new_question_number)
+            parsed_result = json.loads(res)
+            if parsed_result.get("status") == "success":
+                res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
+                                                        new_year, new_semester, new_moed, new_question_number, exam_id)
+                if res:
+                    return json.dumps({
+                    "status": "success",
+                    "message": "אירעה שגיאה בעדכון נושאי השאלה"
+                    })
+                else:
+                    return json.dumps({
+                        "status": "error",
+                        "message": "אירעה שגיאה בעדכון נושאי השאלה"
+                        })
+            else:
+                return res
+        else:
+            return json.dumps({
+                        "status": "error",
+                        "message": "אחד מן הפרמטרים לא חוקי"
+                        })
+
+    
+
  
 
 

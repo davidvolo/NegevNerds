@@ -195,6 +195,16 @@ class Question:
                 comment.remove_reaction(reaction_id)
                 return
         raise CommentNotFound
+    
+    def edit_question_topic(self, topics):
+        question_topics_repo = QuestionTopicsRepository()
+        return question_topics_repo.edit_question_topic(self.id, topics)
+    
+    def edit_question_details(self,new_year, new_semester, new_moed, new_question_number, exam_id):
+        question_repo = QuestionRepository()
+        return question_repo.edit_question_details(self.id, new_year, new_semester, new_moed, new_question_number, exam_id)
+
+
 
     def __str__(self):
         """
@@ -203,3 +213,5 @@ class Question:
         return (f"Question(ID: {self.id}, Year: {self.year}, Semester: {self.semester}, Moed: {self.moed}, "
                 f"Number: {self.question_number}, IsAmerican: {self.is_american}, "
                 f"Comments: {len(self.comments)})")
+    
+

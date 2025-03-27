@@ -1732,6 +1732,117 @@ def handleDownloadAllExamsZip():
         if temp_dir and os.path.exists(temp_dir):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
+@course_controller.route('/api/question/edit_question_topic', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def edit_question_topic():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year', type=int)
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = request.form.get('question_number', type=int)
+        topics = request.form.getlist('topics')  # List of strings
+
+        # Validate required fields
+        required_fields = [course_id, year, semester, moed, question_number]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "Missing required fields."
+            }), 400
+
+        if not topics or len(topics)==0:
+            return jsonify({
+                "success": False,
+                "message": "חובה לבחור נושא אחד לפחות"
+            }), 400
+
+        # Call the service layer function
+        result = serviceLayer.edit_question_topic(
+            course_id, year, semester, moed, question_number, topics
+        )
+
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in edit_question_topic: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+@course_controller.route('/api/question/edit_question_details', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def edit_question_details():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # 🧾 OLD details
+        old_course_id = request.form.get('old_course_id')
+        old_year = request.form.get('old_year', type=int)
+        old_semester = request.form.get('old_semester')
+        old_moed = request.form.get('old_moed')
+        old_question_number = request.form.get('old_question_number', type=int)
+
+        # 🆕 NEW details
+        new_course_id = request.form.get('new_course_id')
+        new_year = request.form.get('new_year', type=int)
+        new_semester = request.form.get('new_semester')
+        new_moed = request.form.get('new_moed')
+        new_question_number = request.form.get('new_question_number', type=int)
+
+        # ✅ Validate fields
+        required_fields = [
+            old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number
+        ]
+        if any(field is None for field in required_fields):
+            return jsonify({
+                "success": False,
+                "message": "חסרים פרטים לעדכון השאלה"
+            }), 400
+
+        # ✅ Call service layer
+        result = serviceLayer.edit_question_details(
+            old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number
+        )
+
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in edit_question_details: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "שגיאה לא צפויה בעדכון פרטי השאלה",
+            "error": str(e)
+        }), 500
+
+
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
 # @cross_origin()

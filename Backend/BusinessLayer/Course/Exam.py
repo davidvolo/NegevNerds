@@ -221,6 +221,26 @@ class Exam:
             if question is not None:
                 questions.append(question.to_dto(course_id=self.course_id))
         return questions  # Will return an empty list if no question was found
+    
+    def edit_question_topic(self, question_number, topics):
+        question = self.get_question(question_number)
+        if question is not None:
+            return question.edit_question_topic(topics)
+    
+    def checkQuestionAvailability(self,new_question_number):
+        question= self.get_question(question_number=new_question_number)
+        if question is None:
+            return True
+        else:
+            return False
+    
+    def edit_question_details(self,old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id):
+        question = self.get_question(old_question_number)
+        return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id)
+
+
+
+
 
     def __str__(self):
         """
