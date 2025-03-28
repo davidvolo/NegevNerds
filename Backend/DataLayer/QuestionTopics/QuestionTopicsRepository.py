@@ -127,6 +127,27 @@ class QuestionTopicsRepository:
         finally:
             session.close()
 
+    def edit_question_topic(self, question_id, topics):
+        session = self.Session()
+        try:
+            # Step 1: Delete existing topics
+            session.query(QuestionTopicsModel).filter_by(question_id=question_id).delete()
+
+            # Step 2: Add new topics
+            for topic in topics:
+                new_topic = QuestionTopicsModel(question_id=question_id, topic=topic)
+                session.add(new_topic)
+
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"Error in edit_question_topic: {e}")
+            return False
+        finally:
+            session.close()
+
+    
 
 
 

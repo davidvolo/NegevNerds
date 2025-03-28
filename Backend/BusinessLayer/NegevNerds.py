@@ -14,6 +14,8 @@ from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTo
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
+from Backend.DataLayer.Exam.ExamRepository import ExamRepository
+
 import json
 import datetime
 from flask_jwt_extended import create_access_token
@@ -819,6 +821,88 @@ class NegevNerds:
                 "status": "error",
                 "message": "אירעה שגיאה בעדכון הסיסמה. ייתכן שהמשתמש לא קיים"
         })
+    
+
+    def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
+        res = self._course_facade.edit_question_topic(course_id, year, semester, moed, question_number, topics)
+              
+        if res:
+            return json.dumps({
+                "status": "success",
+                "message": "נושאי השאלה עודכנו בהצלחה"
+            })
+        else:
+            return json.dumps({
+                "status": "error",
+                "message": "אירעה שגיאה בעדכון נושאי השאלה"
+        })
+    
+    def isCourseExists(self, new_course_id):
+       course = self._course_facade.get_course(new_course_id)
+       if course is not None:
+           return True
+       else:
+           return False
+    
+    def checkSameExams(self, old_course_id, old_year, old_semester, old_moed,
+                        new_course_id, new_year, new_semester, new_moed):
+        if old_course_id == new_course_id:
+            if old_year == new_year:
+                if old_semester == new_semester:
+                    if old_moed == new_moed:
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+            else:
+                return False
+        else:
+            return False
+    
+    def delete_exam(self, exam_id, old_course_id, old_year, old_semester, old_moed):
+        exam_link = self._course_facade.get_exam_full_pdf(old_course_id, old_year, old_semester, old_moed)
+        if exam_link != "":
+            self.fileManager.delete_file(exam_link)
+        exam_repo = ExamRepository()
+        exam_repo.delete_exam_by_id(exam_id)
+        
+    
+    def edit_question_details(self,old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number):
+        if self.courseFacade.valid_question_parameters(new_course_id,new_year, new_semester, new_moed, new_question_number):
+            res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id,new_year, new_semester, new_moed, new_question_number)
+            parsed_result = json.loads(res)
+            if parsed_result.get("status") == "success":
+                res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
+                                                        new_year, new_semester, new_moed, new_question_number, exam_id)
+                if res:
+                    same_exams = self.checkSameExams(old_course_id, old_year, old_semester, old_moed,
+                        new_course_id, new_year, new_semester, new_moed)
+                    if not same_exams:
+                        questions_left, exam_id = self._course_facade.checkQuestionLeft(old_course_id, old_year, old_semester, old_moed)
+                        if not questions_left:
+                            self.delete_exam(exam_id, old_course_id, old_year, old_semester, old_moed)
+
+                    return json.dumps({
+                    "status": "success",
+                    "message": "אירעה שגיאה בעדכון נושאי השאלה"
+                    })
+                else:
+                    return json.dumps({
+                        "status": "error",
+                        "message": "אירעה שגיאה בעדכון נושאי השאלה"
+                        })
+            else:
+                return res
+        else:
+            return json.dumps({
+                        "status": "error",
+                        "message": "אחד מן הפרמטרים לא חוקי"
+                        })
+
+    
+
  
 
 

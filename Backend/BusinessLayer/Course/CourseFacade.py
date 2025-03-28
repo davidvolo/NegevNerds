@@ -1,6 +1,6 @@
 import threading
 from typing import List
-
+import json
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -164,6 +164,35 @@ class CourseFacade:
                 course = course_repo.get_course_by_id(course_id=course_id)
                 return course
             return None
+    
+    def checkQuestionAvailability(self,new_course_id,new_year, new_semester, new_moed, new_question_number):
+        course = self.get_course(new_course_id)
+        if course is None:
+            return json.dumps({
+                    "status": "error",
+                    "course_exists": False,
+                    "message": "הקורס לא קיים במערכת"
+                }), None
+        else:
+            res, exam_id = course.checkQuestionAvailability(new_year, new_semester, new_moed, new_question_number)
+            if res:
+                return json.dumps({
+                "status": "success",
+                "course_exists": True,
+                "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
+        }), exam_id
+            else:
+                return json.dumps({
+                "status": "error",
+                "course_exists": True,
+                "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
+            }), exam_id
+
+    def edit_question_details(self, old_course_id, old_year, old_semester, old_moed, old_question_number,
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id):
+        course = self.get_course(old_course_id)
+        return course.edit_question_details(old_year, old_semester, old_moed, old_question_number,
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id)
 
     def set_syllabus_of_course(self, course_id, syllabus):
         """Set syllabus of an existing course"""
@@ -320,8 +349,14 @@ class CourseFacade:
 
     """--------------question functionality--------------"""
 
-    def valid_question_parameters(self, year, semester, moed, question_number):
+    def is_valid_course_id(self,course_id):
+        return bool(re.match(r'^\d{3}\.\d\.\d{4}$', course_id))
+    
+    def valid_question_parameters(self, course_id, year, semester, moed, question_number):
         """Validates question parameters to ensure they are correct and relevant."""
+        if not self.is_valid_course_id(course_id):
+            logging.error(f"{course_id} is not a valid course_id.")
+            raise ValueError(f"Invalid course_id: {course_id}")
         moeds = ['א','ב','ג','ד']
         semesters =['סתיו','אביב','קיץ']
         if moed not in moeds:
@@ -336,17 +371,16 @@ class CourseFacade:
             logging.error(f"{year} is not a valid year. Must be between 1960 and {current_year}.")
             raise ValueError(f"Invalid year: {year}. Year must be between 1960 and {current_year}.")            
 
-
         # Validate question number
-        if question_number < 0:
-            logging.error(f"{question_number} is not a question number. Must be non-negative.")
+        if question_number <= 0:
+            logging.error(f"{question_number} is not a question number. Must be Positive.")
             raise ValueError(f"Invalid question number: {question_number}")
 
         return True
 
     def check_valid_question(self, course_id, year, semester, moed, question_number, question_text):
         # Step 1: Validate parameters
-        self.valid_question_parameters(year=year, semester=semester, moed=moed, question_number=question_number)
+        self.valid_question_parameters(course_id,year=year, semester=semester, moed=moed, question_number=question_number)
         semester = Semester(semester)
         moed = Moed(moed)
 
@@ -520,6 +554,18 @@ class CourseFacade:
     def get_questions_by_keywords(self, course_id, keywords):
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
+    
+    def checkQuestionLeft(self,old_course_id, old_year, old_semester, old_moed):
+        exam_id = None
+        course = self.get_course(old_course_id)
+        if course is not None:
+            exam = course.get_exam(old_year, old_semester, old_moed)
+            if exam is not None:
+                exam_id = exam.id
+        
+        question_repo = QuestionRepository()
+        return question_repo.checkQuestionLeft(exam_id), exam_id
+
 
     """--------------Comment functionality--------------"""
 
@@ -537,3 +583,9 @@ class CourseFacade:
     def get_link_to_answer(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
         return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_answer()
+    
+    def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
+        course = self.get_course(course_id)
+        if course is not None:
+            return course.edit_question_topic( year, semester, moed, question_number, topics)
+

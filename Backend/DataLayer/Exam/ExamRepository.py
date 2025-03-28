@@ -360,3 +360,25 @@ class ExamRepository:
             raise e
         finally:
             session.close()
+    
+    def delete_exam_by_id(self, exam_id):
+        """
+        Delete an exam by its exam_id.
+        """
+        session = self.Session()
+        try:
+            # Find the exam to delete
+            exam_model = session.query(ExamModel).filter_by(exam_id=exam_id).first()
+
+            if not exam_model:
+                raise ValueError(f"No exam found with ID {exam_id}")
+
+            # Delete the exam
+            session.delete(exam_model)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+

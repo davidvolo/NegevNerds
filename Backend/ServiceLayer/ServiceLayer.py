@@ -1054,6 +1054,31 @@ class ServiceLayer:
                 "message": "שגיאה בעדכון הסיסמה.",
                 "error": str(e)
             })
+    
+    def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
+        try:
+            result = self.negev_nerds.edit_question_topic(course_id, year, semester, moed, question_number, topics)
+            return result  # JSON string
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": "שגיאה בעדכון הסיסמה.",
+                "error": str(e)
+            })
+
+    def edit_question_details(
+            self, old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number):
+        try:
+            return self.negev_nerds.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
+            new_course_id, new_year, new_semester, new_moed, new_question_number)
+            
+        except Exception as e:
+                    return json.dumps({
+            "status": "error",
+            "message": str(e)
+        })
+
 
 
     def initialize_system(self, file_path="init.json"):
