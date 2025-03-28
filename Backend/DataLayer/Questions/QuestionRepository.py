@@ -236,6 +236,18 @@ class QuestionRepository:
             return False
         finally:
             session.close()
+    
+    def checkQuestionLeft(self, exam_id):
+        session = self.Session()
+        try:
+            # Check if there's at least one question with this exam_id
+            exists = session.query(QuestionModel).filter_by(exam_id=exam_id).first()
+            return exists is not None
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
+
 
 
 

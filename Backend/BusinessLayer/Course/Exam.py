@@ -240,8 +240,6 @@ class Exam:
 
 
 
-
-
     def __str__(self):
         """
         String representation of the Exam instance.

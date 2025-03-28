@@ -554,6 +554,18 @@ class CourseFacade:
     def get_questions_by_keywords(self, course_id, keywords):
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
+    
+    def checkQuestionLeft(self,old_course_id, old_year, old_semester, old_moed):
+        exam_id = None
+        course = self.get_course(old_course_id)
+        if course is not None:
+            exam = course.get_exam(old_year, old_semester, old_moed)
+            if exam is not None:
+                exam_id = exam.id
+        
+        question_repo = QuestionRepository()
+        return question_repo.checkQuestionLeft(exam_id), exam_id
+
 
     """--------------Comment functionality--------------"""
 

@@ -504,7 +504,6 @@ class Course:
         if exam is None:
             exam_id = self.generate_exam_id(year=new_year,semester=new_semester,moed=new_moed)
             exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link="", year=new_year, semester=new_semester, moed=new_moed)
-            print("got here3")
             if exam is not None:
                 if new_year not in self.exams:
                     self.exams[new_year] = []
@@ -512,6 +511,8 @@ class Course:
             return True , exam.id
         else:
             return exam.checkQuestionAvailability(new_question_number), exam.id
+    
+
         
     def edit_question_details(self,old_year, old_semester, old_moed, old_question_number,
                                                      new_year, new_semester, new_moed, new_question_number, exam_id):
