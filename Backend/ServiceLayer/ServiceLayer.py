@@ -1079,6 +1079,8 @@ class ServiceLayer:
             "message": str(e)
         })
 
+    def delete_question_solution(self, course_id,year, semester, moed, question_number):
+        return self.negev_nerds.delete_question_solution(course_id,year, semester, moed, question_number)
 
 
     def initialize_system(self, file_path="init.json"):

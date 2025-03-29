@@ -326,8 +326,6 @@ class FileManager:
         return photo_file_path
 
 
-    import os
-
     def delete_file(self, file_path):
         """
         Deletes a file (PDF or photo) from the specified path.
@@ -347,3 +345,32 @@ class FileManager:
         except Exception as e:
             print(f"Error deleting file: {str(e)}")
             return False
+
+
+
+    def rename_answer_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
+        """
+        Renames an existing answer file by moving it to a new path based on updated metadata.
+        Returns the new file path if successful, None otherwise.
+        """
+
+        if not os.path.exists(old_path):
+            print(f"File not found: {old_path}")
+            return None
+
+        # Construct new path
+        course_folder = os.path.join(self._base_dir, f"course_{new_course_id}")
+        year_folder = os.path.join(course_folder, str(new_year))
+        exam_folder = os.path.join(year_folder, f"exam_{new_year}_{new_semester}_{new_moed}")
+        answer_folder = os.path.join(exam_folder, "answers")
+
+        # Create target directories if needed
+        os.makedirs(answer_folder, exist_ok=True)
+
+        # Build new file path
+        new_file_path = os.path.join(answer_folder, f"answer_{new_question_number}.pdf")
+
+        # Move the file
+        shutil.move(old_path, new_file_path)
+
+        return new_file_path

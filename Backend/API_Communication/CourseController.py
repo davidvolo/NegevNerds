@@ -1843,6 +1843,31 @@ def edit_question_details():
         }), 500
 
 
+@course_controller.route('/api/course/deleteQuestionSolution', methods=['DELETE'])
+@jwt_required()
+def deleteQuestionSolution():
+    data = request.get_json()
+    course_id = data.get('course_id')
+    year = data.get('year')
+    semester = data.get('semester')
+    moed = data.get('moed')
+    question_number = data.get('question_number')
+
+    if not all([course_id, year, semester, moed, question_number]):
+        return jsonify(success=False, message="Missing required fields."), 400
+
+    try:
+        res = serviceLayer.delete_question_solution(course_id, year, semester, moed, question_number)
+
+        if res:
+            return jsonify(success=True), 200
+        else:
+            return jsonify(success=False, message="No solution file found."), 404
+
+    except Exception as e:
+        print(f"Error deleting solution: {e}")
+        return jsonify(success=False, message="Server error while deleting solution."), 500
+
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
 # @cross_origin()
