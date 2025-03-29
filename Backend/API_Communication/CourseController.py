@@ -1497,6 +1497,24 @@ def is_course_manager():
     except Exception as e:
         print(f"Error in is_course_manager: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+@course_controller.route('/api/course/is_system_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def is_system_manager():
+    try:
+        user_ids_managers = [
+            "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"]
+
+        user_id = get_jwt_identity()
+        if user_id in user_ids_managers:
+            return jsonify({"success": True, "is_system_manager": True}), 200
+        else:
+            return jsonify({"success": False, "is_system_manager": False}), 200
+    except Exception as e:
+        print(f"Error in is_course_manager: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
     
 
 @course_controller.route('/api/course/delete_question', methods=['DELETE'])
