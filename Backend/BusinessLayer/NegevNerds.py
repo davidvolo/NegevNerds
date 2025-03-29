@@ -867,13 +867,23 @@ class NegevNerds:
         exam_repo = ExamRepository()
         exam_repo.delete_exam_by_id(exam_id)
         
-    
+    def delete_question_solution(self, course_id,year, semester, moed, question_number):
+        solution_path = self.courseFacade.get_answer_path(course_id,year, semester, moed, question_number)
+        if solution_path is not None:
+            self.fileManager.delete_file(solution_path)
+            return True
+        return False
+        
+
+
+
     def edit_question_details(self,old_course_id, old_year, old_semester, old_moed, old_question_number,
             new_course_id, new_year, new_semester, new_moed, new_question_number):
         if self.courseFacade.valid_question_parameters(new_course_id,new_year, new_semester, new_moed, new_question_number):
             res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id,new_year, new_semester, new_moed, new_question_number)
             parsed_result = json.loads(res)
             if parsed_result.get("status") == "success":
+                # question_new_path = 
                 res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
                                                         new_year, new_semester, new_moed, new_question_number, exam_id)
                 if res:
