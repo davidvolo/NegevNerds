@@ -823,6 +823,24 @@ class ServiceLayer:
                 "message": str(e)
             })
 
+    def get_courses_by_name(self, name_part):
+        """Fetches all courses and returns them in JSON format."""
+        try:
+            # Call the business layer to get the courses
+            courses = self.negev_nerds.get_courses_by_name(name_part)
+            result_dict = [dto.to_dict() for dto in courses]
+            # Return the result as a dictionary, serialized to JSON
+            return json.dumps({
+                "status": "success",
+                "data": result_dict
+            })
+        except Exception as e:
+            # Return an error response as a JSON string
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def get_user_notifications(self, user_id):
         """Fetches all courses and returns them in JSON format."""
         try:

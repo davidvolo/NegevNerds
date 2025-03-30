@@ -663,6 +663,9 @@ class NegevNerds:
     def get_course(self, course_id):
         return self._course_facade.get_course_DTO(course_id)
 
+    def get_courses_by_name(self, name_part):
+        return self._course_facade.get_courses_by_name(name_part)
+
     # def add_question(self, course_id, year, semester, moed, questionDTO):
     #     """Adds a question to an exam in the specified course.
     #     If the exam does not exist, it creates a new one."""
