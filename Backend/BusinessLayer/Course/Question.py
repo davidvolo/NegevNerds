@@ -200,9 +200,9 @@ class Question:
         question_topics_repo = QuestionTopicsRepository()
         return question_topics_repo.edit_question_topic(self.id, topics)
     
-    def edit_question_details(self,new_year, new_semester, new_moed, new_question_number, exam_id):
+    def edit_question_details(self,new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         question_repo = QuestionRepository()
-        return question_repo.edit_question_details(self.id, new_year, new_semester, new_moed, new_question_number, exam_id)
+        return question_repo.edit_question_details(self.id, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
 
 
 

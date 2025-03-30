@@ -1082,6 +1082,16 @@ class ServiceLayer:
     def delete_question_solution(self, course_id,year, semester, moed, question_number):
         return self.negev_nerds.delete_question_solution(course_id,year, semester, moed, question_number)
 
+    def swap_question_file(self, course_id, year, semester, moed,question_number, new_file):
+        try:
+            return self.negev_nerds.swap_question_file(course_id, year, semester, moed,question_number, new_file)
+            
+        except Exception as e:
+                    return json.dumps({
+            "status": "error",
+            "message": str(e)
+        })
+
 
     def initialize_system(self, file_path="init.json"):
         """

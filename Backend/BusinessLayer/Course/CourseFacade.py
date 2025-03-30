@@ -150,6 +150,21 @@ class CourseFacade:
             return course.get_answer_path(year, semester, moed, question_number)
         else:
             raise CourseIsNotExist(course_id)
+    
+    def get_question_id(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id=course_id)
+        if course is not None:
+            return course.get_question_id(year, semester, moed, question_number)
+        else:
+            raise CourseIsNotExist(course_id)
+        
+    
+    def get_question_id_and_path(self, course_id, year, semester, moed, question_number):
+        course = self.get_course(course_id=course_id)
+        if course is not None:
+            return course.get_question_id_and_path(year, semester, moed, question_number)
+        else:
+            raise CourseIsNotExist(course_id)
 
     def get_course(self, course_id):
         """
@@ -189,10 +204,10 @@ class CourseFacade:
             }), exam_id
 
     def edit_question_details(self, old_course_id, old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id):
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         course = self.get_course(old_course_id)
         return course.edit_question_details(old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id)
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
 
     def set_syllabus_of_course(self, course_id, syllabus):
         """Set syllabus of an existing course"""

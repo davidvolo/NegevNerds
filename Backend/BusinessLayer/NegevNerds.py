@@ -868,14 +868,45 @@ class NegevNerds:
         exam_repo.delete_exam_by_id(exam_id)
         
     def delete_question_solution(self, course_id,year, semester, moed, question_number):
-        solution_path = self.courseFacade.get_answer_path(course_id,year, semester, moed, question_number)
+        solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
         if solution_path is not None:
             self.fileManager.delete_file(solution_path)
+            question_repo = QuestionRepository()
+            question_repo.uploadSolution(question_id, "")
             return True
         return False
+    
+    def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
+        try:
+            question_link = self._course_facade.get_link_to_question(course_id, year, semester, moed, question_number)
+
+            if question_link is not None:
+                self.fileManager.delete_file(question_link)
+
+                if self.is_photo(new_file):
+                    new_path = self.fileManager.save_photo_question_file(course_id, year, semester, moed, question_number, new_file)
+                else:
+                    new_path = self.fileManager.save_question_file_pdf(course_id, year, semester, moed, question_number, new_file)
+
+                return json.dumps({
+                    "status": "success",
+                    "message": "Question file successfully swapped",
+                    "has_link": True,
+                    "link": new_path
+                })
+
+            return json.dumps({
+                "status": "error",
+                "message": "No existing question file to replace"
+            })
+
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
         
-
-
 
     def edit_question_details(self,old_course_id, old_year, old_semester, old_moed, old_question_number,
             new_course_id, new_year, new_semester, new_moed, new_question_number):
@@ -883,9 +914,16 @@ class NegevNerds:
             res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id,new_year, new_semester, new_moed, new_question_number)
             parsed_result = json.loads(res)
             if parsed_result.get("status") == "success":
-                # question_new_path = 
+                question_old_path = self._course_facade.get_question_path(old_course_id, old_year, old_semester, old_moed, old_question_number)
+                question_new_path = self.fileManager.move_question_file(question_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
+                solution_old_path = self._course_facade.get_answer_path(old_course_id, old_year, old_semester, old_moed, old_question_number)
+                solution_new_path = ""
+                print(solution_old_path)
+                if solution_old_path != "":
+                    solution_new_path = self.fileManager.move_solution_file(solution_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
+                print(solution_new_path)
                 res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
-                                                        new_year, new_semester, new_moed, new_question_number, exam_id)
+                                                        new_year, new_semester, new_moed, new_question_number, exam_id,question_new_path, solution_new_path)
                 if res:
                     same_exams = self.checkSameExams(old_course_id, old_year, old_semester, old_moed,
                         new_course_id, new_year, new_semester, new_moed)
