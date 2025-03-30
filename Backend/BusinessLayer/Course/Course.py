@@ -436,6 +436,22 @@ class Course:
             return exam.get_answer_path(question_number)
         else:
             raise ExamIsNotExist
+    
+    def get_question_id(self, year, semester, moed, question_number):
+        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        if exam is not None:
+            return exam.get_question_id(question_number)
+        else:
+            raise ExamIsNotExist
+        
+    
+    def get_question_id_and_path(self, year, semester, moed, question_number):
+        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        if exam is not None:
+            return exam.get_question_id_and_path(question_number)
+        else:
+            raise ExamIsNotExist
+        
     def add_reaction(self, year, semester, moed, question_number, comment_id, user_id, emoji):
         """
         Add a reaction to specific question.
@@ -515,9 +531,9 @@ class Course:
 
         
     def edit_question_details(self,old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id):
+                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         exam = self.get_exam(old_year, old_semester, old_moed)
-        return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id)
+        return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
 
 
 

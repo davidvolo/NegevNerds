@@ -210,7 +210,7 @@ class QuestionRepository:
         finally:
             session.close()
     
-    def edit_question_details(self, question_id, new_year, new_semester, new_moed, new_question_number, exam_id):
+    def edit_question_details(self, question_id, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         session = self.Session()
         try:
             # Find the existing question
@@ -226,6 +226,8 @@ class QuestionRepository:
             question.moed = new_moed
             question.question_number = new_question_number
             question.exam_id = exam_id
+            question.link_to_question = question_new_path
+            question.link_to_answer = solution_new_path
 
             session.commit()
             return True

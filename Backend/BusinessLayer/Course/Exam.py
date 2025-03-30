@@ -106,7 +106,21 @@ class Exam:
         question = self.get_question(question_number)
         if (question is None):
             raise QuestionNotFound
+        print(question.link_to_answer)
         return question.link_to_answer
+    
+    def get_question_id(self , question_number):
+        question = self.get_question(question_number)
+        if (question is None):
+            raise QuestionNotFound
+        return question.id
+    
+
+    def get_question_id_and_path(self , question_number):
+        question = self.get_question(question_number)
+        if (question is None):
+            raise QuestionNotFound
+        return question.link_to_answer, question.id
 
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
@@ -234,9 +248,9 @@ class Exam:
         else:
             return False
     
-    def edit_question_details(self,old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id):
+    def edit_question_details(self,old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         question = self.get_question(old_question_number)
-        return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id)
+        return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
 
 
 

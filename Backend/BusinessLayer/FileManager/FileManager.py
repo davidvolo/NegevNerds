@@ -374,3 +374,64 @@ class FileManager:
         shutil.move(old_path, new_file_path)
 
         return new_file_path
+
+
+
+    def move_question_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
+        """
+        Moves a question file (PDF or image) from its old location to the new structured path,
+        based on updated course, year, semester, moed, and question number.
+        """
+
+        if not os.path.exists(old_path):
+            print(f"File does not exist: {old_path}")
+            return None
+
+        # Get the original file extension (e.g., .pdf, .jpg, .png)
+        _, ext = os.path.splitext(old_path)
+
+        # Construct the new destination path
+        course_folder = os.path.join(self._base_dir, f"course_{new_course_id}")
+        year_folder = os.path.join(course_folder, str(new_year))
+        exam_folder = os.path.join(year_folder, f"exam_{new_year}_{new_semester}_{new_moed}")
+        question_folder = os.path.join(exam_folder, "questions")
+
+        os.makedirs(question_folder, exist_ok=True)
+
+        # New file path
+        new_file_path = os.path.join(question_folder, f"question_{new_question_number}{ext}")
+
+        # Move the file
+        shutil.move(old_path, new_file_path)
+
+        return new_file_path
+    
+
+    def move_solution_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
+        """
+        Moves a question file (PDF or image) from its old location to the new structured path,
+        based on updated course, year, semester, moed, and question number.
+        """
+
+        if not os.path.exists(old_path):
+            print(f"File does not exist: {old_path}")
+            return None
+        # Get the original file extension (e.g., .pdf, .jpg, .png)
+        _, ext = os.path.splitext(old_path)
+
+        # Construct the new destination path
+        course_folder = os.path.join(self._base_dir, f"course_{new_course_id}")
+        year_folder = os.path.join(course_folder, str(new_year))
+        exam_folder = os.path.join(year_folder, f"exam_{new_year}_{new_semester}_{new_moed}")
+        question_folder = os.path.join(exam_folder, "answers")
+
+        os.makedirs(question_folder, exist_ok=True)
+
+        # New file path
+        new_file_path = os.path.join(question_folder, f"answer_{new_question_number}{ext}")
+
+        # Move the file
+        shutil.move(old_path, new_file_path)
+
+        return new_file_path
+

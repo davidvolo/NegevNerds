@@ -1887,6 +1887,69 @@ def deleteQuestionSolution():
         return jsonify(success=False, message="Server error while deleting solution."), 500
 
 
+@course_controller.route('/api/course/swap_question_file', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def swap_question_file():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Validate that a file is included in the request
+        if 'new_file' not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "No file part in the request"
+            }), 400
+
+        new_file = request.files['new_file']
+
+
+        # Validate file
+        if new_file.filename == '':
+            return jsonify({
+                "success": False,
+                "message": "No file selected for upload"
+            }), 400
+
+        # Extract additional fields from the form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year')
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        question_number = request.form.get('question_number')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call service layer to handle logic
+        result = serviceLayer.swap_question_file(course_id, int(year), semester, moed,question_number, new_file)
+        parsed_result = json.loads(result)
+
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link", False),
+            "link": parsed_result.get("link", None)
+        }), 200 if parsed_result.get("status") == "success" else 400
+
+    except Exception as e:
+        print(f"Error in upload_full_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
 # @cross_origin()
 # @jwt_required()
