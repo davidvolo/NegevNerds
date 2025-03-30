@@ -2,8 +2,8 @@ import os
 
 from flask_sqlalchemy.session import Session
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
+from sqlalchemy.orm import sessionmaker
 from Backend.DataLayer.Course.CourseModel import Base, CourseModel
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
@@ -67,6 +67,14 @@ class CourseRepository:
         try:
             course_model = session.query(CourseModel).filter_by(course_id=course_id).first()
             return course_model.to_business_model() if course_model else None
+        finally:
+            session.close()
+
+    def get_courses_by_name(self, name_part):
+        session = self.Session()
+        try:
+            courses = session.query(CourseModel).filter(CourseModel.name.ilike(f"%{name_part}%")).all()
+            return [course.to_business_model() for course in courses]
         finally:
             session.close()
 

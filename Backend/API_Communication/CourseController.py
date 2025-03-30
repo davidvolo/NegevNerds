@@ -644,6 +644,60 @@ def get_course(course_id):
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/get_courses_by_name/<name_part>', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_courses_by_name(name_part):
+    # Handle OPTIONS preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+
+    try:
+        # Extract course_id from query parameters
+        # course_id = request.args.get('course_id')
+
+        print(f"Received name_part from URL: {name_part}")
+
+        if not name_part:
+            return jsonify({
+                "status": "error",
+                "message": "name_part is required"
+            }), 400
+
+        # Get course details from the service layer
+        result = serviceLayer.get_courses_by_name(name_part)
+
+        # Parse the JSON string
+        parsed_result = json.loads(result)
+
+        print(f"Received courses details: {parsed_result}")
+
+        # Check if the result has a success status
+        if parsed_result.get('status') == 'success':
+            return jsonify({
+                "status": "success",
+                "data": parsed_result.get('data', {})
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": parsed_result.get('message', 'Unknown error')
+            }), 400
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid JSON response"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 # @course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
 # @cross_origin()

@@ -164,7 +164,20 @@ class CourseFacade:
                 course = course_repo.get_course_by_id(course_id=course_id)
                 return course
             return None
-    
+
+    def get_courses_by_name(self, name_part):
+        """
+        Retrieves courses by name.
+        """
+        with self.courses_lock:
+            course_repo = CourseRepository()
+            courses = course_repo.get_courses_by_name(name_part=name_part)
+            dtos = []
+            for course in courses:
+                course_dto = CourseDTO(course.get_id(), course.get_name())
+                dtos.append(course_dto)
+            return dtos
+
     def checkQuestionAvailability(self,new_course_id,new_year, new_semester, new_moed, new_question_number):
         course = self.get_course(new_course_id)
         if course is None:
