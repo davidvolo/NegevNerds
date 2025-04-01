@@ -1,5 +1,57 @@
 # NegevNerds
-NegevNerds is a platform for collaborative studying for exam preparation for BGU students
+
+NegevNerds is a web platform designed to improve Ben-Gurion-University exam preparation by facilitating collaborative learning. The platform allows students to share and discuss exam-related questions, fostering a community-driven approach to studying.
+
+## Features
+- **User Authentication:** Secure login system for registered users.
+- **Exam Question Forum:** Users can post, search, and discuss exam questions.
+- **Keyword-Based Search:** Find relevant questions using keywords.
+- **Interactive Discussions:** Engage in discussions to clarify concepts.
+- **Pilot Phase Success:** Currently tested with ~100 active software engineering students, receiving positive feedback.
+
+## Tech Stack
+### Backend:
+- **Language:** Python
+- **Framework:** Flask
+- **Database:** SQLite 
+- **API Hosting:** Running with `app.run()`, plans to migrate to Gunicorn or WSGIServer.
+
+### Frontend:
+- **Language:** JavaScript
+- **Framework:** React
+- **State Management:** React Context API (or Redux, if applicable)
+
+## Installation
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+
+### Backend Setup
+```sh
+# Clone the repository
+git clone https://github.com/yourusername/negevnerds.git
+cd negevnerds/backend
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python app.py
+```
+
+### Frontend Setup
+```sh
+cd ../frontend
+
+# Install dependencies
+npm install
+
+# Start the React app
+npm start
+```
+
+
+
 
 ## useful links:
 
