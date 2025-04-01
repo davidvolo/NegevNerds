@@ -1,4 +1,10 @@
 import datetime
+import ssl
+from socket import socket
+from werkzeug.serving import run_simple
+from gevent.pywsgi import WSGIServer
+import sys
+sys.path.append('/home/david/backend/NegevNerds')
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -6,7 +12,7 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 
-from waitress import serve
+#from waitress import serve
 from multiprocessing import cpu_count
 
 from Backend.API_Communication.UserController import user_controller
@@ -26,7 +32,13 @@ migrate = Migrate(app, db)
 
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "http://132.72.116.86:3000"],
+        "origins": [
+            "http://localhost:3000",
+            "http://132.72.116.86:3000",
+            "https://132.72.116.86:3000",
+            "https://negevnerds.cs.bgu.ac.il",  # Add your production domain
+            "https://api.negevnerds.cs.bgu.ac.il"  # Add your API subdomain
+        ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
@@ -56,11 +68,6 @@ def custom_401(error):
 
 
 def main():
-    #
-    # db.init_app(app)
-    #
-    # with app.app_context():
-    #     db.create_all()
 
     print("Starting the Exam Preparation System API...")
 
@@ -68,11 +75,18 @@ def main():
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
 
-    threads = (cpu_count() * 2) + 1
-    serve(app, host='0.0.0.0', port=5001, threads=threads)
+    # Run with werkzeug (development server)
+#    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+#     context.load_cert_chain(
+#         certfile="/etc/letsencrypt/live/negevnerds.cs.bgu.ac.il/fullchain.pem",
+#         keyfile="/etc/letsencrypt/live/negevnerds.cs.bgu.ac.il/privkey.pem"
+#     )
 
-    #app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False , threaded=True)
+    # Start the server with HTTPS
+#     http_server = WSGIServer(('0.0.0.0', 5001), app)
+#     http_server.serve_forever()
 
+    app.run(host='0.0.0.0', port=5001)
 
 if __name__ == "__main__":
     main()
