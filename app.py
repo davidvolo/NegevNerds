@@ -6,6 +6,7 @@ from gevent.pywsgi import WSGIServer
 import sys
 sys.path.append('/home/david/backend/NegevNerds')
 
+from waitress import serve
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -86,7 +87,10 @@ def main():
 #     http_server = WSGIServer(('0.0.0.0', 5001), app)
 #     http_server.serve_forever()
 
-    app.run(host='0.0.0.0', port=5001)
+    threads = (cpu_count() * 2) + 1
+    serve(app, host='0.0.0.0', port=5001, threads=threads)
+
+#     app.run(host='0.0.0.0', port=5001)
 
 if __name__ == "__main__":
     main()
