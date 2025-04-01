@@ -3,11 +3,11 @@
 NegevNerds is a web platform designed to improve Ben-Gurion-University exam preparation by facilitating collaborative learning. The platform allows students to share and discuss exam-related questions, fostering a community-driven approach to studying.
 
 ## Features
-- **User Authentication:** Secure login system for registered users.
+- **User Authentication:** Secure register and login system for users.
 - **Exam Question Forum:** Users can post, search, and discuss exam questions.
-- **Keyword-Based Search:** Find relevant questions using keywords.
+- **Exam Questions Search by:Date, keywords, subject:** Find relevant questions using multiple ways.
 - **Interactive Discussions:** Engage in discussions to clarify concepts.
-- **Pilot Phase Success:** Currently tested with ~100 active software engineering students, receiving positive feedback.
+- **Archive of Past Exam Information:**:  Exam details from previous years are retained in the system for future reference.
 
 ## Tech Stack
 ### Backend:
@@ -49,6 +49,8 @@ npm install
 # Start the React app
 npm start
 ```
+
+![image](https://github.com/user-attachments/assets/cc27806c-16dd-453b-bd0b-3d42a05c3177)
 
 
 
