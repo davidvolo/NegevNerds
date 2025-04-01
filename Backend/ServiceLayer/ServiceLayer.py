@@ -1111,7 +1111,7 @@ class ServiceLayer:
         })
 
 
-    def initialize_system(self, file_path="init.json"):
+    def initialize_system(self, file_path="systemInitialization/init.json"):
         """
         Initialize the system with predefined data from a JSON file.
         """
