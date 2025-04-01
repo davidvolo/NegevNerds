@@ -54,17 +54,17 @@ npm start
 ```
 
 
-## system UI
-# home page 
+## System UI
+# Home page 
 ![image](https://github.com/user-attachments/assets/cc27806c-16dd-453b-bd0b-3d42a05c3177)
 
-# course page
+# Course page
 ![image](https://github.com/user-attachments/assets/79b79def-4c22-49fa-a949-a9dd1094c4e4)
 
-# exam page 
+# Exam page 
 ![image](https://github.com/user-attachments/assets/a2d722c0-92e9-4791-84d5-3965951f967c)
 
-# question page 
+# Question page 
 ![image](https://github.com/user-attachments/assets/554a7c67-fdb1-401c-874b-67d028fac071)
 
 
