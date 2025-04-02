@@ -1908,7 +1908,7 @@ def deleteQuestionSolution():
 #
 #         # Call the service layer to delete the question
 #         serviceLayer.delete_comment(comment_id)
-#         return jsonify({"success": True, "message": "Comment deleted successfully."}), 200
+#         return jsonify({"success": True, "message": "CommentData deleted successfully."}), 200
 #     except Exception as e:
 #         print(f"Error in delete_comment: {str(e)}")
 #         return jsonify({"success": False, "message": str(e)}), 500

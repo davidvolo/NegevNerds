@@ -125,7 +125,7 @@ class Question:
 
     def add_comment(self, writer_name, writer_id,prev_id, comment_text, deleted, edited):
         """
-        Add a Comment to the comments list.
+        Add a CommentData to the comments list.
         """
         with self.comments_lock:
             comment = Comment.create(comment_id=self.generate_comment_id(),
@@ -145,8 +145,8 @@ class Question:
 
     # def remove_comment(self, comment_id):
     #     """
-    #     Remove a Comment from the comments list if it exists.
-    #     Raise an exception if the Comment is not found.
+    #     Remove a CommentData from the comments list if it exists.
+    #     Raise an exception if the CommentData is not found.
     #     """
     #     with self.comments_lock:
     #         for comment in self.comments:

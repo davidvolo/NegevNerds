@@ -4,7 +4,7 @@ from datetime import datetime
 class CommentDTO:
     def __init__(self, comment_id, writer_name, date, prev_id, comment_text, deleted, edited, reactions):
         """
-        Data Transfer Object for the Comment class.
+        Data Transfer Object for the CommentData class.
         """
         self.comment_id = comment_id
         self.writer_name = writer_name

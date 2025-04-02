@@ -185,15 +185,15 @@ class TopicNotFound(BaseError):
 
 
 class CommentNotFound(BaseError):
-    """Exception raised when a Comment is not found in the list."""
+    """Exception raised when a CommentData is not found in the list."""
 
     def __init__(self, comment_id):
-        message = f"Comment with ID '{comment_id}' not found in the list."
+        message = f"CommentData with ID '{comment_id}' not found in the list."
         super().__init__(message, code=404)
 
 
 class UserIsNotCourseManager(BaseError):
-    """Exception raised when a Comment is not found in the list."""
+    """Exception raised when a CommentData is not found in the list."""
 
     def __init__(self, course_id):
         message = f"User is not manager of course{course_id}"

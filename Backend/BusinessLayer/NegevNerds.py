@@ -9,7 +9,7 @@ from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Analyzer.AnalyzerFacade import AnalyzerFacade
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
-from Backend.DataLayer.Comment.CommentRepository import CommentRepository
+from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
@@ -409,7 +409,7 @@ class NegevNerds:
                                                           writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
             # for commenter in comment_writers:
             #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
-            return "Comment added successfully."
+            return "CommentData added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
             raise e
         except Exception as e:
@@ -604,7 +604,7 @@ class NegevNerds:
             self.courseFacade.delete_comment(course_id=course_id, year=year, semester=semester,
                                            moed=moed, question_number=question_number,
                                            comment_id=comment_id)
-            return "Comment deleted successfully."
+            return "CommentData deleted successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
         except Exception as e:
@@ -618,7 +618,7 @@ class NegevNerds:
             self.courseFacade.edit_comment_text(course_id=course_id, year=year, semester=semester,
                                            moed=moed, question_number=question_number,
                                            comment_id=comment_id, new_text=new_text)
-            return "Comment edited successfully."
+            return "CommentData edited successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
         except Exception as e:

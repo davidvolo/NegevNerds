@@ -412,7 +412,7 @@ class Course:
 
     def add_comment(self, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
         """
-        Add a Comment to specific question.
+        Add a CommentData to specific question.
         """
         exam = self.get_exam(year, semester, moed)
         if exam is None:

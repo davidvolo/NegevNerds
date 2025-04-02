@@ -60,46 +60,46 @@ class TestQuestion(unittest.TestCase):
 
     def test_add_comment(self):
         """
-        Test adding a Comment to the question.
+        Test adding a CommentData to the question.
         """
         self.question.add_comment(
             comment_id=1,
             writer_name="User1",
             prev_id=None,
-            comment_text="This is a test Comment."
+            comment_text="This is a test CommentData."
         )
         self.assertEqual(len(self.question.comments), 1)
         self.assertIsInstance(self.question.comments[0], Comment)
 
     def test_remove_comment(self):
         """
-        Test removing a Comment from the question.
+        Test removing a CommentData from the question.
         """
         self.question.add_comment(
             comment_id=1,
             writer_name="User1",
             prev_id=None,
-            comment_text="This is a test Comment."
+            comment_text="This is a test CommentData."
         )
-        # Remove the Comment and ensure it is removed
+        # Remove the CommentData and ensure it is removed
         self.question.remove_comment(1)
         self.assertEqual(len(self.question.comments), 0)
 
     def test_remove_comment_not_found(self):
         """
-        Test removing a non-existent Comment raises CommentNotFound exception.
+        Test removing a non-existent CommentData raises CommentNotFound exception.
         """
         with self.assertRaises(CommentNotFound) as context:
             self.question.remove_comment(999)  # ID that does not exist
-        self.assertIn("Comment with ID '999' not found", str(context.exception))
+        self.assertIn("CommentData with ID '999' not found", str(context.exception))
 
     def test_remove_nonexistent_comment(self):
         """
-        Test removing a nonexistent Comment raises CommentNotFound exception.
+        Test removing a nonexistent CommentData raises CommentNotFound exception.
         """
         with self.assertRaises(CommentNotFound) as context:
-            self.question.remove_comment(999)  # Nonexistent Comment ID
-        self.assertIn("Comment with ID '999' not found", str(context.exception))
+            self.question.remove_comment(999)  # Nonexistent CommentData ID
+        self.assertIn("CommentData with ID '999' not found", str(context.exception))
 
     def test_str_representation(self):
         """

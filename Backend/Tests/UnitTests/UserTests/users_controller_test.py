@@ -7,7 +7,7 @@ import os
 from Backend.BusinessLayer.Util.Exceptions import UserOrPasswordIncorrectError, UserIsNotLoggedInError
 
 # Add Backend directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
 
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.User.User import *
