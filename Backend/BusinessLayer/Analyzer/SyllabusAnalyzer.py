@@ -17,7 +17,7 @@ class SyllabusAnalyzer:
     ]
         topic_patterns1 = [
         r'נושאים[:\n](.*?)\n',  # Hebrew pattern for "Topics"
-        r'Course Topics[:\n](.*?)\n',
+        r'CourseData Topics[:\n](.*?)\n',
         r'Outline[:\n](.*?)\n',
     ]
         
@@ -49,8 +49,6 @@ class SyllabusAnalyzer:
 
         return cleaned_topics
 
-
-    
     def has_valid_table_with_pdfplumber(self, pdf_path, min_rows=2, min_columns=2):
         """
         Checks if a PDF contains at least one valid table using pdfplumber.
@@ -73,9 +71,6 @@ class SyllabusAnalyzer:
         except Exception as e:
 
             return False
-
-
-  
 
     def extract_syllabus_topics_with_pdfplumber(self, file_path, topic_patterns):
         """
@@ -122,9 +117,6 @@ class SyllabusAnalyzer:
 
         return syllabus_topics
 
-
-    
-    
     def extract_table_with_topics_final(self,pdf_path, topics, pages="all"):
         """
         Extracts tables from a PDF, matches column titles to a list of topics,
@@ -166,8 +158,6 @@ class SyllabusAnalyzer:
             print(f"Error during table extraction: {e}")
 
         return matching_data
-    
-
 
     def crop_pdf_top_margin(self, pdf_path, margin_cm=4.0):
         """

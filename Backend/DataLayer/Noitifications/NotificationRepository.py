@@ -92,7 +92,7 @@ class NotificationRepository:
         Retrieve the last 5 notifications for a user by their ID, sorted by time_stamp.
 
         Args:
-            user_id (int): User's unique identifier.
+            user_id (int): UserData's unique identifier.
 
         Returns:
             list: A list of the last 5 notifications as business layer objects.

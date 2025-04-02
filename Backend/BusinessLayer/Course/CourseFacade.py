@@ -4,7 +4,7 @@ import json
 from Backend.BusinessLayer.Course.Course import Course
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.DataLayer.Course.CourseRepository import CourseRepository
+from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
@@ -30,7 +30,7 @@ class CourseFacade:
 
     def __init__(self):
         if not hasattr(self, 'courses'):
-            self.courses = {}  # courseId, Course
+            self.courses = {}  # courseId, CourseData
             #self.course_repository = CourseRepository()
             #self.user_courses_repository = UserCoursesRepository()
 
@@ -321,7 +321,7 @@ class CourseFacade:
         :return: List of exams matching the criteria.
         """
         course = self.get_course(course_id)
-        exams = course.get_exams(year, semester, moed)  # Assuming Course class has this method
+        exams = course.get_exams(year, semester, moed)  # Assuming CourseData class has this method
 
         sorted_exams = self.sort_exams(exams)
 
@@ -349,7 +349,7 @@ class CourseFacade:
         :return: List of exams matching the criteria.
         """
         course = self.get_course(course_id)
-        exams = course.get_all_exams()  # Assuming Course class has this method
+        exams = course.get_all_exams()  # Assuming CourseData class has this method
         sorted_exams = self.sort_exams(exams)
 
         return sorted_exams
@@ -362,17 +362,17 @@ class CourseFacade:
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).edit_link(new_link)
 
-    def edit_exam_year(self, course_id, year, semester, moed, new_year):
-        course = self.get_course(course_id)
-        course.edit_exam_year(year, semester, moed, new_year)
-
-    def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).edit_semester(new_semester)
-
-    def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).edit_moed(new_moed)
+    # def edit_exam_year(self, course_id, year, semester, moed, new_year):
+    #     course = self.get_course(course_id)
+    #     course.edit_exam_year(year, semester, moed, new_year)
+    #
+    # def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
+    #     course = self.get_course(course_id)
+    #     course.get_exam(year, semester, moed).edit_semester(new_semester)
+    #
+    # def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
+    #     course = self.get_course(course_id)
+    #     course.get_exam(year, semester, moed).edit_moed(new_moed)
 
     """--------------question functionality--------------"""
 
@@ -414,7 +414,7 @@ class CourseFacade:
         # Step 2: Get the course
         course = self.get_course(course_id=course_id)
         #if not course:
-        #    raise ValueError(f"Course with ID {course_id} does not exist.")
+        #    raise ValueError(f"CourseData with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
         return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number, question_text=question_text)
@@ -422,7 +422,7 @@ class CourseFacade:
     def add_question(self, course_id, year, semester, moed, question_number, is_american,
                      question_topics, pdf_question_path, pdf_answer_path, question_text):
         """
-        Delegates question addition to the specified Exam.
+        Delegates question addition to the specified ExamData.
         """
         try:
             course = self.get_course(course_id)
@@ -548,7 +548,7 @@ class CourseFacade:
 
     def remove_question(self, course_id, year, semester, moed, question_number):
         """
-        Delegates question removal to the specified Exam.
+        Delegates question removal to the specified ExamData.
         """
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).remove_question(question_number)
@@ -582,7 +582,7 @@ class CourseFacade:
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
     
-    def checkQuestionLeft(self,old_course_id, old_year, old_semester, old_moed):
+    def checkQuestionLeft(self, old_course_id, old_year, old_semester, old_moed):
         exam_id = None
         course = self.get_course(old_course_id)
         if course is not None:
@@ -598,7 +598,7 @@ class CourseFacade:
 
     # def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
     #     """
-    #     Delegates CommentData removal to the specified Exam and Question.
+    #     Delegates CommentData removal to the specified ExamData and Question.
     #     """
     #     course = self.get_course(course_id)
     #     course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)

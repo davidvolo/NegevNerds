@@ -39,7 +39,7 @@ class Question:
         """
         Class method to create a new user and save to database
         Returns:
-            User: Newly created user instance
+            UserData: Newly created user instance
         """
 
         question = cls(

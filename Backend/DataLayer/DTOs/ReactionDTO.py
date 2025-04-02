@@ -1,7 +1,7 @@
 class ReactionDTO:
     def __init__(self, reaction_id, user_id, emoji):
         """
-        Data Transfer Object for the Reaction class.
+        Data Transfer Object for the ReactionData class.
         """
         self.reaction_id = reaction_id
         self.user_id = user_id

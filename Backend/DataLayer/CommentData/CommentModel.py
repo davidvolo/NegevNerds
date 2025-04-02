@@ -1,7 +1,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, PickleType, ForeignKey
 from sqlalchemy.orm import relationship
-from Backend.DataLayer.Reaction.ReactionModel import ReactionModel
+from Backend.DataLayer.ReactionData.ReactionModel import ReactionModel
 from ..Base import Base
 
 

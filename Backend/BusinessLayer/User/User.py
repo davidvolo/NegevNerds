@@ -1,7 +1,7 @@
 import threading
 
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.DataLayer.User.UserRepository import UserRepository  # Import the repository
+from Backend.DataLayer.UserData.UserRepository import UserRepository  # Import the repository
 from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
 
@@ -50,10 +50,10 @@ class User:
         Retrieve a user by their ID
 
         Args:
-            user_id (int): User's unique identifier
+            user_id (int): UserData's unique identifier
 
         Returns:
-            User: User instance or None if not found
+            User: UserData instance or None if not found
         """
         repo = UserRepository()
         return repo.get_user_by_id(user_id)

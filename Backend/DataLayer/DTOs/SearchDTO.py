@@ -1,7 +1,7 @@
 class SearchDTO:
     def __init__(self, question_id, course_id):
         """
-        Data Transfer Object for the Reaction class.
+        Data Transfer Object for the ReactionData class.
         """
         self.course_id = course_id
         self.question_id = question_id

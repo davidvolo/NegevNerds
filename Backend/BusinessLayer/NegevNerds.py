@@ -13,8 +13,8 @@ from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
-from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
-from Backend.DataLayer.Exam.ExamRepository import ExamRepository
+from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
+from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 
 import json
 import datetime
@@ -174,8 +174,8 @@ class NegevNerds:
             self.courseFacade.register_to_course(course_id, user_id)
             # Register the course to the user using Userfacade
             self.userFacade.registerToCourse(course_id, user_id)
-            print("User successfully registered to the course", user_id, course_id)
-            return "User successfully registered to the course."
+            print("UserData successfully registered to the course", user_id, course_id)
+            return "UserData successfully registered to the course."
         except Exception as e:
             return f"Error: {e}"
 
@@ -190,7 +190,7 @@ class NegevNerds:
                 user.removeCourse(course_id)
             else:
                 raise UserDoesnotExistsError(user_id)
-            return "User successfully removed from the course."
+            return "UserData successfully removed from the course."
         except Exception as e:
             return f"Error: {e}"
 
@@ -357,29 +357,29 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
-    def edit_exam_year(self, course_id, year, semester, moed, new_year):
-        """Editing exam's year """
-        try:
-            self.courseFacade.edit_exam_year(course_id, year, semester, moed, new_year)
-            return "The exams' year was updated successfully."
-        except Exception as e:
-            raise Exception(f"Failed to edit exam's link {e}")
-
-    def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
-        """Editing exam's semester """
-        try:
-            self.courseFacade.edit_exam_semester(course_id, year, semester, moed, new_semester)
-            return "The exams' semester was updated successfully."
-        except Exception as e:
-            raise Exception(f"Failed to edit exam's link {e}")
-
-    def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
-        """Editing exam's moed """
-        try:
-            self.courseFacade.edit_exam_moed(course_id, year, semester, moed, new_moed)
-            return "The exams' moed was updated successfully."
-        except Exception as e:
-            raise Exception(f"Failed to edit exam's link {e}")
+    # def edit_exam_year(self, course_id, year, semester, moed, new_year):
+    #     """Editing exam's year """
+    #     try:
+    #         self.courseFacade.edit_exam_year(course_id, year, semester, moed, new_year)
+    #         return "The exams' year was updated successfully."
+    #     except Exception as e:
+    #         raise Exception(f"Failed to edit exam's link {e}")
+    #
+    # def edit_exam_semester(self, course_id, year, semester, moed, new_semester):
+    #     """Editing exam's semester """
+    #     try:
+    #         self.courseFacade.edit_exam_semester(course_id, year, semester, moed, new_semester)
+    #         return "The exams' semester was updated successfully."
+    #     except Exception as e:
+    #         raise Exception(f"Failed to edit exam's link {e}")
+    #
+    # def edit_exam_moed(self, course_id, year, semester, moed, new_moed):
+    #     """Editing exam's moed """
+    #     try:
+    #         self.courseFacade.edit_exam_moed(course_id, year, semester, moed, new_moed)
+    #         return "The exams' moed was updated successfully."
+    #     except Exception as e:
+    #         raise Exception(f"Failed to edit exam's link {e}")
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
@@ -425,7 +425,7 @@ class NegevNerds:
                                           comment_id=comment_id, user_id=user_id, emoji=emoji)
 
             #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
-            return "Reaction added successfully."
+            return "ReactionData added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
         except Exception as e:
@@ -439,7 +439,7 @@ class NegevNerds:
             self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
                                           moed=moed, question_number=question_number,
                                           comment_id=comment_id, reaction_id=reaction_id)
-            return "Reaction removed successfully."
+            return "ReactionData removed successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
             raise e
         except Exception as e:

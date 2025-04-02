@@ -1,10 +1,10 @@
-from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
+from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.DTOs.ReactionDTO import ReactionDTO
 
 class Reaction:
     def __init__(self, reaction_id, user_id, emoji):
         """
-        Initialize a Reaction instance.
+        Initialize a ReactionData instance.
         """
         self.reaction_id = reaction_id
         self.user_id = user_id
@@ -30,7 +30,7 @@ class Reaction:
 
     def to_dto(self):
         """
-        Converts the Reaction instance to a ReactionDTO.
+        Converts the ReactionData instance to a ReactionDTO.
         :return: ReactionDTO instance.
         """
         return ReactionDTO(

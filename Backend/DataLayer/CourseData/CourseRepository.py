@@ -4,7 +4,7 @@ from flask_sqlalchemy.session import Session
 from sqlalchemy import create_engine
 
 from sqlalchemy.orm import sessionmaker
-from Backend.DataLayer.Course.CourseModel import Base, CourseModel
+from Backend.DataLayer.CourseData.CourseModel import Base, CourseModel
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
