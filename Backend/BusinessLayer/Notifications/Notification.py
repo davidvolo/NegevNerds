@@ -17,7 +17,7 @@ class Notification:
         Class method to create a new user and save to database
 
         Returns:
-            User: Newly created user instance
+            UserData: Newly created user instance
         """
         notification = cls(
             receiver_user_id=receiver_user_id,
@@ -43,4 +43,4 @@ class Notification:
         )
         return notification_dto
     def __str__(self):
-        return f"Notification for User {self.receiver_user_id}: from user{self.sender_user_id}- {self.message} (Sent at {self.timestamp})"
+        return f"Notification for UserData {self.receiver_user_id}: from user{self.sender_user_id}- {self.message} (Sent at {self.timestamp})"

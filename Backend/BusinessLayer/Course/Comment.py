@@ -6,7 +6,7 @@ from Backend.BusinessLayer.Course.Reaction import Reaction
 from Backend.BusinessLayer.Util.Exceptions import ReactionNotFound
 from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 from Backend.DataLayer.DTOs.CommentDTO import CommentDTO
-from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
+from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 
 
 class Comment:

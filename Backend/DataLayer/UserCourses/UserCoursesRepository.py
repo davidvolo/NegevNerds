@@ -7,7 +7,7 @@ from Backend.DataLayer.UserCourses.UserCoursesModel import Base, UserCoursesMode
 
 
 class UserCoursesRepository:
-    """Repository for handling User database operations"""
+    """Repository for handling UserData database operations"""
     def __init__(self, db_path=None):
         """
         Initialize the database engine.
@@ -78,7 +78,7 @@ class UserCoursesRepository:
             user_id (str): ID of the user
 
         Returns:
-            List[Course]: List of business layer Course objects
+            List[CourseData]: List of business layer CourseData objects
         """
 
         try:
@@ -96,7 +96,7 @@ class UserCoursesRepository:
             course_id (str): ID of the course
 
         Returns:
-            List[User]: List of business layer User objects
+            List[UserData]: List of business layer UserData objects
         """
         try:
             # Use the session context manager for automatic session handling

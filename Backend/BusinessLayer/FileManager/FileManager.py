@@ -233,7 +233,7 @@ class FileManager:
         """
         Saves the question photo file (e.g., JPEG, PNG) to the appropriate directory.
 
-        :param course_id: Course identifier
+        :param course_id: CourseData identifier
         :param year: Year of the exam
         :param semester: Semester of the exam
         :param moed: Moed of the exam
@@ -294,7 +294,7 @@ class FileManager:
         """
         Saves the question photo file (e.g., JPEG, PNG) to the appropriate directory.
 
-        :param course_id: Course identifier
+        :param course_id: CourseData identifier
         :param year: Year of the exam
         :param semester: Semester of the exam
         :param moed: Moed of the exam

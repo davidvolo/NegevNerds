@@ -4,10 +4,10 @@ from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
-from Backend.DataLayer.Course.CourseRepository import CourseRepository
+from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
-from Backend.DataLayer.Exam.ExamRepository import ExamRepository
+from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 
 
 class Course:
@@ -29,7 +29,7 @@ class Course:
         """
         Class method to create a new user and save to database
         Returns:
-            User: Newly created user instance
+            UserData: Newly created user instance
         """
         course = cls(
             course_id=course_id,
@@ -230,7 +230,7 @@ class Course:
                         self.exams[year] = []
                     self.exams[year].append(exam)
             else:
-                raise ExamAlreadyExists(f"Exam with year={year}, semester={semester}, moed={moed} already exists.")
+                raise ExamAlreadyExists(f"ExamData with year={year}, semester={semester}, moed={moed} already exists.")
 
     def remove_exam(self, year, semester, moed):
         """Removes an exam from the course."""
@@ -248,7 +248,7 @@ class Course:
         Args:
             year (int): Year of the exam.
             semester (str): Semester of the exam.
-            moed (str): Exam session.
+            moed (str): ExamData session.
 
         Returns:
             dict: Result indicating if the PDF link exists or not.
@@ -258,7 +258,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise ExamIsNotExist(year,semester,moed)
         return exam.link  # Check for the exam link
         #
         # return exam_pdf_link
@@ -273,7 +273,7 @@ class Course:
         Args:
             year (int): Year of the exam.
             semester (str): Semester of the exam.
-            moed (str): Exam session.
+            moed (str): ExamData session.
         
         Returns:
             dict: Result indicating if the PDF link exists or not.
@@ -283,7 +283,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
             return True
@@ -293,7 +293,7 @@ class Course:
     def checkExistSolution(self, year, semester, moed,question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         question = exam.get_question(question_number)
         question_answer_pdf_link = question.link_to_answer  # Check for the exam link
         if question_answer_pdf_link != "":
@@ -301,30 +301,26 @@ class Course:
         else:
             return False
 
-    
-    
     def checkExistQuestion(self, year, semester, moed,question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         question = exam.get_question(question_number)
         question_details = question.generate_question_details_name()
         if not question:
             return False
         return question.id, question_details, question.link_to_question, question.link_to_answer
-        
-        
+
     def upload_full_exam_pdf(self, year, semester, moed, exam_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:
-            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise Exception(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         return exam.upload_full_exam_pdf(exam_path)
 
-    
     def uploadSolution(self, year, semester, moed, question_number, answer_path_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:
-            raise Exception(f"Exam for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise Exception(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         question = exam.get_question(question_number)
         return question.uploadSolution(answer_path_path)
     
@@ -394,7 +390,7 @@ class Course:
     #         if normalized_semester == semester and normalized_moed == moed:
     #             return currExam.check_add_question_possibility(year, semester, moed, question_number, pdf_question)
     #         else:
-    #             raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
+    #             raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
     def check_valid_question(self, year, semester, moed, question_number, question_text):
         # Get or create the exam
@@ -408,7 +404,7 @@ class Course:
             if currExam.semester == semester and currExam.moed == moed:
                 return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number)
             else:
-                raise ValueError(f"Exam found, but mismatched semester {semester} or moed {moed}.")
+                raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
     def add_comment(self, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
         """
@@ -443,8 +439,7 @@ class Course:
             return exam.get_question_id(question_number)
         else:
             raise ExamIsNotExist
-        
-    
+
     def get_question_id_and_path(self, year, semester, moed, question_number):
         exam = self.get_exam(year=year,semester=semester,moed=moed)
         if exam is not None:
@@ -524,12 +519,10 @@ class Course:
                 if new_year not in self.exams:
                     self.exams[new_year] = []
                 self.exams[new_year].append(exam)
-            return True , exam.id
+            return True, exam.id
         else:
             return exam.checkQuestionAvailability(new_question_number), exam.id
-    
 
-        
     def edit_question_details(self,old_year, old_semester, old_moed, old_question_number,
                                                      new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         exam = self.get_exam(old_year, old_semester, old_moed)

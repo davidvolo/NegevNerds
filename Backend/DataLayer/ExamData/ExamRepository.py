@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.Course.enums import Semester, Moed
-from Backend.DataLayer.Exam.ExamModel import Base, ExamModel
+from Backend.DataLayer.ExamData.ExamModel import Base, ExamModel
 
 
 class ExamRepository:

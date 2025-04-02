@@ -6,7 +6,7 @@ from ..Base import Base
 
 class UserModel(Base):
     """
-    SQLAlchemy ORM model for User
+    SQLAlchemy ORM model for UserData
     Represents the database schema for storing user information
     """
     __tablename__ = 'users'
@@ -14,7 +14,7 @@ class UserModel(Base):
     # Primary key
     user_id = Column(String, primary_key=True)
 
-    # User attributes matching the Business Layer User class
+    # UserData attributes matching the Business Layer UserData class
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     first_name = Column(String, nullable=False)
@@ -30,10 +30,10 @@ class UserModel(Base):
     def to_business_model(self):
         from Backend.BusinessLayer.User.User import User
         """
-        Convert SQLAlchemy model to Business Layer User object
+        Convert SQLAlchemy model to Business Layer UserData object
 
         Returns:
-            User: Business layer User instance
+            UserData: Business layer UserData instance
         """
         user = User(
             user_id=self.user_id,
@@ -50,10 +50,10 @@ class UserModel(Base):
     @classmethod
     def from_business_model(cls, user):
         """
-        Create a UserModel instance from a Business Layer User object
+        Create a UserModel instance from a Business Layer UserData object
 
         Args:
-            user (User): Business layer User instance
+            user (UserData): Business layer UserData instance
 
         Returns:
             UserModel: SQLAlchemy UserModel instance

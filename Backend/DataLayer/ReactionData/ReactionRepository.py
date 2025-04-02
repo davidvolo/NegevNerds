@@ -3,7 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from Backend.DataLayer.Reaction.ReactionModel import Base, ReactionModel
+from Backend.DataLayer.ReactionData.ReactionModel import Base, ReactionModel
 
 
 class ReactionRepository:

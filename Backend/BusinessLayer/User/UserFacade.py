@@ -11,7 +11,7 @@ import bcrypt
 import logging
 from Backend.BusinessLayer.User.User import User  # Adjusted import
 from Backend.BusinessLayer.Util.Exceptions import *
-from Backend.DataLayer.User.UserRepository import UserRepository  # Import the SQLAlchemy repository
+from Backend.DataLayer.UserData.UserRepository import UserRepository  # Import the SQLAlchemy repository
 
 
 class UserFacade:
@@ -147,11 +147,6 @@ class UserFacade:
             logging.error(f"Attempt  failed: {e}")
             raise Exception("האימות נכשל. הרשמה בוטלה.")
     
-    # def reset_new_password(self, email, password):
-    #     user =  self.getUser_by_email(email)
-    #     encrypt_passwrod = self.hash_password(password)
-    #     return user.reset_new_password(email,encrypt_passwrod)
-    
     def reset_new_password(self, email, password):
         user = self.getUser_by_email(email)
         encrypt_password = self.hash_password(password)
@@ -179,8 +174,8 @@ class UserFacade:
                 self.users_byEmail[email] = user
             with self.id_lock:
                 self.users_byId[id] = user
-            logging.info(f"User {first_name} {last_name} registered successfully.")
-            return id, {"message": f"User {first_name} {last_name} registered successfully."}
+            logging.info(f"UserData {first_name} {last_name} registered successfully.")
+            return id, {"message": f"UserData {first_name} {last_name} registered successfully."}
         except Exception as e:
                 raise Exception("האישור נכשל. הרשמה בוטלה.")
 
@@ -384,7 +379,7 @@ class UserFacade:
         #     raise UserIsNotLoggedInError(user_id)
         user.logout()
         
-        logging.info(f"User {user_id} logged out successfully.")
+        logging.info(f"UserData {user_id} logged out successfully.")
         message = "התנתקות בוצעה בהצלחה"
         return message
 
@@ -395,7 +390,7 @@ class UserFacade:
         return curr_user.get_courses()
 
     def registerToCourse(self, courseId, userId):
-        """Add user to course (through User object)."""
+        """Add user to course (through UserData object)."""
         user = self.getUser_by_id(userId)
         if user:
             user.registerToCourse(courseId)
@@ -476,8 +471,8 @@ class UserFacade:
             self.users_byEmail[email] = user
         with self.id_lock:
             self.users_byId[user_id] = user
-        logging.info(f"User {first_name} {last_name} registered successfully.")
-        return user_id, {"message": f"User {first_name} {last_name} registered successfully."}
+        logging.info(f"UserData {first_name} {last_name} registered successfully.")
+        return user_id, {"message": f"UserData {first_name} {last_name} registered successfully."}
 
 
 

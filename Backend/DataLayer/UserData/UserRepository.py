@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.Course.Course import Course
-from Backend.DataLayer.User.UserModel import Base, UserModel
+from Backend.DataLayer.UserData.UserModel import Base, UserModel
 from Backend.DataLayer.UserCourses.UserCoursesModel import UserCoursesModel
 
 
@@ -16,7 +16,7 @@ class UserRepository:
         if cls._instance is None:
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
-    """Repository for handling User database operations"""
+    """Repository for handling UserData database operations"""
     def __init__(self, db_path=None):
         """
         Initialize the database engine.
@@ -46,7 +46,7 @@ class UserRepository:
         Add a new user to the database
 
         Args:
-            user (User): Business layer User object
+            user (UserData): Business layer UserData object
 
         Returns:
             int: ID of the newly created user
@@ -80,10 +80,10 @@ class UserRepository:
         Retrieve a user by their ID
 
         Args:
-            user_id (int): User's unique identifier
+            user_id (int): UserData's unique identifier
 
         Returns:
-            User: Business layer User object
+            UserData: Business layer UserData object
         """
         session = self.Session()
         try:
@@ -130,10 +130,10 @@ class UserRepository:
         Retrieve a user by their email
 
         Args:
-            email (str): User's email address
+            email (str): UserData's email address
 
         Returns:
-            User: Business layer User object or None if not found
+            UserData: Business layer UserData object or None if not found
         """
         session = self.Session()
         try:
@@ -151,7 +151,7 @@ class UserRepository:
         Update an existing user's information
 
         Args:
-            user (User): Business layer User object with updated information
+            user (UserData): Business layer UserData object with updated information
         """
         session = self.Session()
         try:

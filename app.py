@@ -70,7 +70,7 @@ def custom_401(error):
 
 def main():
 
-    print("Starting the Exam Preparation System API...")
+    print("Starting the ExamData Preparation System API...")
 
 
     service_layer = ServiceLayer(NegevNerds("../"))

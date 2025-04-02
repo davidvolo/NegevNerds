@@ -5,14 +5,14 @@ from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Course.enums import Moed, Semester
 from Backend.BusinessLayer.Util.Exceptions import QuestionAlreadyInExam, QuestionDoesNotMeetExamFields, QuestionNotFound
 from Backend.DataLayer.DTOs.ExamDTO import ExamDTO
-from Backend.DataLayer.Exam.ExamRepository import ExamRepository
+from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 
 class Exam:
     def __init__(self, exam_id, course_id, link, year, semester, moed):
         """
-        Initialize an Exam instance.
+        Initialize an ExamData instance.
         """
         self.id = exam_id
         self.course_id = course_id
@@ -29,7 +29,7 @@ class Exam:
         """
         Class method to create a new user and save to database
         Returns:
-            User: Newly created user instance
+            UserData: Newly created user instance
         """
         exam = cls(
             exam_id=exam_id,
@@ -45,7 +45,7 @@ class Exam:
 
     def to_dto(self):
         """
-        Converts the Exam instance to an ExamDTO.
+        Converts the ExamData instance to an ExamDTO.
         :return: ExamDTO instance.
         """
         # Change this line to use 'to_dict' instead of 'to_dto' for questions
@@ -96,36 +96,33 @@ class Exam:
 
         return True
 
-    def get_question_path(self , question_number):
+    def get_question_path(self, question_number):
         question = self.get_question(question_number)
-        if (question is None):
-            raise QuestionNotFound
+        if question is None:
+            raise QuestionNotFound(question_number)
         return question.link_to_question
 
-    def get_answer_path(self , question_number):
+    def get_answer_path(self, question_number):
         question = self.get_question(question_number)
-        if (question is None):
-            raise QuestionNotFound
-        print(question.link_to_answer)
+        if question is None:
+            raise QuestionNotFound(question_number)
         return question.link_to_answer
     
     def get_question_id(self , question_number):
         question = self.get_question(question_number)
         if (question is None):
-            raise QuestionNotFound
+            raise QuestionNotFound(question_number)
         return question.id
-    
 
-    def get_question_id_and_path(self , question_number):
+    def get_question_id_and_path(self, question_number):
         question = self.get_question(question_number)
-        if (question is None):
-            raise QuestionNotFound
+        if question is None:
+            raise QuestionNotFound(question_number)
         return question.link_to_answer, question.id
 
     def get_all_exam_question(self):
         question_repo = QuestionRepository()
         return question_repo.get_question_by_exam_id(exam_id=self.id)
-
 
     def upload_full_exam_pdf(self, exam_path):
         try:
@@ -138,9 +135,8 @@ class Exam:
 
             return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
         except Exception as e:
-            print(f"Error in Exam.upload_full_exam_pdf: {str(e)}")
+            print(f"Error in ExamData.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
-
 
     def remove_question(self, question_number):
         """
@@ -203,25 +199,6 @@ class Exam:
         else:
             raise ValueError("Year must be an integer.")
 
-    def edit_semester(self, new_semester):
-        """Edit the semester of the exam."""
-        try:
-            if isinstance(new_semester, Semester):
-                self.semester = new_semester
-            else:
-                self.semester = Semester(new_semester)
-        except ValueError:
-            # Raise a more descriptive error if the value is not valid
-            raise ValueError(f"Invalid value for semester. Must be one of {[s.value for s in Semester]}.")
-
-    def edit_moed(self, new_moed):
-        """Edit the moed of the exam."""
-        valid_moeds = {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}
-        if new_moed in valid_moeds:
-            self.moed = Moed(new_moed)
-        else:
-            raise ValueError("Invalid value for moed. Must be one of {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}.")
-
     def get_questions_by_specific(self, question_number=None):
         """
         Return list of questions dtos.
@@ -241,23 +218,21 @@ class Exam:
         if question is not None:
             return question.edit_question_topic(topics)
     
-    def checkQuestionAvailability(self,new_question_number):
+    def checkQuestionAvailability(self, new_question_number):
         question= self.get_question(question_number=new_question_number)
         if question is None:
             return True
         else:
             return False
     
-    def edit_question_details(self,old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
+    def edit_question_details(self, old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         question = self.get_question(old_question_number)
         return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
 
-
-
     def __str__(self):
         """
-        String representation of the Exam instance.
+        String representation of the ExamData instance.
         """
-        return (f"Exam(ID: {self.id}, Course: {self.course_id}, Year: {self.year}, "
+        return (f"ExamData(ID: {self.id}, Course: {self.course_id}, Year: {self.year}, "
                 f"Semester: {self.semester}, Moed: {self.moed}, "
                 f"Questions: {len(self.questions_list)})")

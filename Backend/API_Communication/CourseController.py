@@ -439,7 +439,7 @@ def get_course_topics():
         if not course_id:
             return jsonify({
                 "status": "error",
-                "message": "Course ID is required"
+                "message": "CourseData ID is required"
             }), 400
 
         # Get course topics
@@ -610,7 +610,7 @@ def get_course(course_id):
         if not course_id:
             return jsonify({
                 "status": "error",
-                "message": "Course ID is required"
+                "message": "CourseData ID is required"
             }), 400
 
         # Get course details from the service layer
@@ -1739,7 +1739,7 @@ def handleDownloadAllExamsZip():
     try:
         course_id = request.args.get('course_id')
         if not course_id:
-            return jsonify({"status": "error", "message": "Course ID is required"}), 400
+            return jsonify({"status": "error", "message": "CourseData ID is required"}), 400
 
         # Get the folder name and exam list (link, filename tuples)
         folder_name, exams = serviceLayer.handleDownloadAllExamsZip(course_id)

@@ -1,7 +1,7 @@
 class ExamDTO:
     def __init__(self, exam_id, course_id, link, year, semester, moed, questions_list):
         """
-        Data Transfer Object for the Exam class."""
+        Data Transfer Object for the ExamData class."""
 
         self.exam_id = exam_id
         self.course_id = course_id
