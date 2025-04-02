@@ -706,7 +706,7 @@ class ServiceLayer:
             self.negev_nerds.delete_comment(course_id, year, semester, moed, question_number, comment_id)
             return json.dumps({
                 "status": "success",
-                "message": "Comment deleted successfully."
+                "message": "CommentData deleted successfully."
             })
         except Exception as e:
             # Handle errors and return an error response
@@ -724,7 +724,7 @@ class ServiceLayer:
             self.negev_nerds.edit_comment_text(course_id, year, semester, moed, question_number, comment_id, new_text)
             return json.dumps({
                 "status": "success",
-                "message": "Comment text edited successfully."
+                "message": "CommentData text edited successfully."
             })
         except Exception as e:
             # Handle errors and return an error response

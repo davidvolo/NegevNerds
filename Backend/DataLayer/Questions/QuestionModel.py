@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 
 from ..Base import Base
 from ...BusinessLayer.Course.enums import Semester, Moed
-from Backend.DataLayer.Comment.CommentModel import CommentModel
+from Backend.DataLayer.CommentData.CommentModel import CommentModel
 
 
 class QuestionModel(Base):

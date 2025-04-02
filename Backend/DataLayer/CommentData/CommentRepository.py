@@ -4,7 +4,7 @@ from requests import delete
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from Backend.DataLayer.Comment.CommentModel import Base, CommentModel
+from Backend.DataLayer.CommentData.CommentModel import Base, CommentModel
 
 
 class CommentRepository:

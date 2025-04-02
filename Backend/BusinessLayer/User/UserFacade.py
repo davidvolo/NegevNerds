@@ -103,6 +103,9 @@ class UserFacade:
         - Completes the registration.
         """
         try:
+            if not self.is_valid_email(email):
+                raise Exception("האימייל אינו תקין.")
+
             if self.getUser_by_email(email) is not None:
                 raise Exception("המשתמש כבר קיים במערכת.")
 
@@ -111,9 +114,6 @@ class UserFacade:
 
             if not self.is_valid_name(last_name):
                 raise Exception("שם המשפחה אינו תקין.")
-
-            if not self.is_valid_email(email):
-                raise Exception("האימייל אינו תקין.")
 
             if not self.is_valid_password(password):
                 raise Exception("הסיסמה אינה תקינה.")

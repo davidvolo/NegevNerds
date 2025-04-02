@@ -4,7 +4,7 @@ from datetime import datetime
 
 from Backend.BusinessLayer.Course.Reaction import Reaction
 from Backend.BusinessLayer.Util.Exceptions import ReactionNotFound
-from Backend.DataLayer.Comment.CommentRepository import CommentRepository
+from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 from Backend.DataLayer.DTOs.CommentDTO import CommentDTO
 from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 
@@ -12,7 +12,7 @@ from Backend.DataLayer.Reaction.ReactionRepository import ReactionRepository
 class Comment:
     def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", deleted=None, edited=None, reactions=None):
         """
-        Initialize a Comment instance.
+        Initialize a CommentData instance.
         """
         self.comment_id = comment_id
         self.writer_name = writer_name
@@ -50,7 +50,7 @@ class Comment:
 
     def to_dto(self):
         """
-        Converts the Comment instance to a CommentDTO.
+        Converts the CommentData instance to a CommentDTO.
         :return: CommentDTO instance.
         """
         reaction_dtos = [reaction.to_dto() for reaction in self.reactions]
@@ -84,7 +84,7 @@ class Comment:
 
     def add_reaction(self, user_id, emoji):
         """
-        Add a reaction to the Comment.
+        Add a reaction to the CommentData.
         """
         # Check if the user already reacted
         for reaction in self.reactions:
@@ -104,7 +104,7 @@ class Comment:
 
     def remove_reaction(self, reaction_id):
         """
-        Remove a reaction from the Comment for a specific user.
+        Remove a reaction from the CommentData for a specific user.
         """
         with self.reactions_lock:
             for reaction in self.reactions:
@@ -119,7 +119,7 @@ class Comment:
 
     # def get_score(self):
     #     """
-    #     Calculate and return the score of the Comment.
+    #     Calculate and return the score of the CommentData.
     #     The score is the count of 'like' emojis minus the count of 'dislike' emojis.
     #     """
     #     return len(self.emoji_counter_map["like"]) - len(self.emoji_counter_map["dislike"])

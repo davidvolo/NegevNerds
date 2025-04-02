@@ -72,7 +72,6 @@ class CourseFacade:
         else:
             raise CourseIsNotExist(course_id)
 
-
     def remove_student_from_course(self, course_id, user_id):
         """Removes a student from the course."""
         course = self.get_course(course_id)
@@ -86,6 +85,7 @@ class CourseFacade:
 
         # course = self.get_course(course_id)
         # if (course==None):
+        course_topics = set(course_topics)
         course_topics.add("אחר")
         course = Course.create(course_id=course_id, name=name, course_topics=course_topics)
         if course is not None:
@@ -128,14 +128,13 @@ class CourseFacade:
 
     def remove_course(self, course_id):
         """Remove an existing course along with its folder."""
-        with self.courses_lock:
-            course = self.get_course(course_id)
-            if course is not None:
-                del self.courses[course_id]
-                course_repo = CourseRepository()
-                course_repo.delete_course(course_id=course_id)
-            else:
-                raise CourseIsNotExist(course_id)
+        course = self.get_course(course_id)
+        if course is not None:
+            del self.courses[course_id]
+            course_repo = CourseRepository()
+            course_repo.delete_course(course_id=course_id)
+        else:
+            raise CourseIsNotExist(course_id)
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id=course_id)
@@ -595,11 +594,11 @@ class CourseFacade:
         return question_repo.checkQuestionLeft(exam_id), exam_id
 
 
-    """--------------Comment functionality--------------"""
+    """--------------CommentData functionality--------------"""
 
     # def remove_comment(self, course_id, year, semester, moed, question_number, comment_id):
     #     """
-    #     Delegates Comment removal to the specified Exam and Question.
+    #     Delegates CommentData removal to the specified Exam and Question.
     #     """
     #     course = self.get_course(course_id)
     #     course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)

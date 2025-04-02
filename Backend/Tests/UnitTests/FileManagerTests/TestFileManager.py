@@ -1,6 +1,11 @@
 import unittest
+from datetime import time
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 import os
 from Backend.BusinessLayer.FileManager.FileManager import FileManager  # Importing the FileManager class
+from unittest.mock import MagicMock
 
 
 class TestFileManager(unittest.TestCase):
@@ -16,9 +21,18 @@ class TestFileManager(unittest.TestCase):
         # Walk through the test directory and remove files and subdirectories
         for root, dirs, files in os.walk(self.base_dir, topdown=False):
             for file in files:
-                os.remove(os.path.join(root, file))  # Remove the files
+                file_path = os.path.join(root, file)
+                try:
+                    os.remove(file_path)  # Attempt to remove the file
+                except PermissionError:
+                    print(f"Permission error on file: {file_path}, retrying...")
+                    time.sleep(1)  # Wait a bit before retrying
+                    os.remove(file_path)  # Try to remove it again after waiting
+
+        # Now remove directories
+        for root, dirs, files in os.walk(self.base_dir, topdown=False):
             for dir in dirs:
-                os.rmdir(os.path.join(root, dir))  # Remove the directories
+                os.rmdir(os.path.join(root, dir))  # Remove directories after files
         os.rmdir(self.base_dir)  # Remove the test directory itself
 
     def test_create_course_folder(self):
@@ -69,10 +83,27 @@ class TestFileManager(unittest.TestCase):
         year = 2023
         semester = "Summer"
         moed = "A"
-        question_content = b"Sample question content"  # Sample question content as bytes
         question_number = 1
-        question_file_path = self.file_manager.save_question_file_pdf(course_id, year, semester, moed, question_content,
-                                                                  question_number)
+
+        # Create a real PDF file as an example
+        course_folder = os.path.join(self.file_manager._base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        question_folder = os.path.join(exam_folder, "questions")
+
+        # Create the directories if they do not exist
+        os.makedirs(question_folder, exist_ok=True)
+
+        # Path for the real test file
+        real_pdf_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+
+        # Create a real file (this simulates having a real PDF)
+        with open(real_pdf_path, 'wb') as f:
+            f.write(b"Sample PDF content")  # You can replace this with actual PDF bytes if needed
+
+        # Now, use the method to test it
+        question_file_path = self.file_manager.save_question_file_pdf(course_id, year, semester, moed, question_number,
+                                                                      open(real_pdf_path, 'rb'))
 
         # Assert that the question file exists in the correct folder
         self.assertTrue(os.path.exists(question_file_path))
@@ -89,8 +120,38 @@ class TestFileManager(unittest.TestCase):
         """Test saving a file with invalid content (empty file)."""
         course_id = "CS101"
         invalid_content = b""  # Invalid (empty) content
-        with self.assertRaises(Exception):  # Expecting an error when trying to save an empty file
+        with self.assertRaises(ValueError):  # Expecting an error when trying to save an empty file
             self.file_manager.save_syllabus_file(course_id, invalid_content)
+        syllabus_file_path = os.path.join(self.base_dir, f"course_{course_id}", f"syllabus_{course_id}.pdf")
+        self.assertFalse(os.path.exists(syllabus_file_path))  # Ensure the file wasn't created
+
+    def test_save_syllabus_file(self):
+        """Test saving a syllabus file in the course folder and replacing an existing one."""
+        course_id = "CS101"
+        syllabus_content = b"Sample syllabus content"  # Sample syllabus content as bytes
+
+        # Save the syllabus file for the first time
+        syllabus_file_path = self.file_manager.save_syllabus_file(course_id, syllabus_content)
+
+        # Assert that the syllabus file exists
+        self.assertTrue(os.path.exists(syllabus_file_path))
+        with open(syllabus_file_path, 'rb') as file:
+            content = file.read()
+        self.assertEqual(content, syllabus_content)  # Check if the file content is as expected
+
+    def test_save_photo_question_file_invalid_format(self):
+        """Test saving a photo question file with an invalid format (not jpg, jpeg, or png)."""
+        course_id = "CS101"
+        year = 2023
+        semester = "Summer"
+        moed = "A"
+        question_number = 1
+        invalid_photo_file = MagicMock()  # Assume this is an unsupported file type
+        invalid_photo_file.filename = "question_1.txt"  # Not an image file
+
+        with self.assertRaises(ValueError):  # Expecting an error for unsupported file type
+            self.file_manager.save_photo_question_file(course_id, year, semester, moed, question_number,
+                                                       invalid_photo_file)
 
 
 if __name__ == "__main__":
