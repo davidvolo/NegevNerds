@@ -25,10 +25,10 @@ jwt = JWTManager(app)
 
 db = SQLAlchemy()
 
-if os.getenv("FLASK_ENV") == "testing":
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_NegevNerds.db'  # Separate test DB
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # Main DB
+# if os.getenv("FLASK_ENV") == "testing":
+#     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_NegevNerds.db'  # Separate test DB
+# else:
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # Main DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 migrate = Migrate(app, db)
 
