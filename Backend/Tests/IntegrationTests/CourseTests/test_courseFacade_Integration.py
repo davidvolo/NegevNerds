@@ -143,7 +143,7 @@ class TestCourseFacade(TestCase):
     def test_open_course_already_exist(self):
 
         with self.assertRaises(CourseAlreadyExists) as context:
-            self.facade.open_course_possibility("123.4.5678", "not a valid Course")
+            self.facade.open_course_possibility("123.4.5678", "קורס לא תקין")
 
         # Check the message of the raised exception
         self.assertEqual(str(context.exception), "Course 123.4.5678 is already exist.")
@@ -151,7 +151,7 @@ class TestCourseFacade(TestCase):
     def test_open_course_possibility(self):
 
         # Call the open_course_possibility method
-        result = self.facade.open_course_possibility("133.4.5678", "Valid Course")
+        result = self.facade.open_course_possibility("133.4.5678", "קורס תקין")
 
         # Assert that the result is True
         self.assertTrue(result)
