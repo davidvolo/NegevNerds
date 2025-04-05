@@ -15,10 +15,10 @@ class CourseModel(Base):
     name = Column(String,nullable=False)
 
     users = relationship('UserCoursesModel', back_populates='course', cascade='all, delete-orphan')
-    topics = relationship('CourseTopicsModel', back_populates='course')
-    managers = relationship('CourseManagersModel', back_populates='course')
+    topics = relationship('CourseTopicsModel', back_populates='course',cascade='all, delete')
+    managers = relationship('CourseManagersModel', back_populates='course',cascade='all, delete')
 
-    exams = relationship('ExamModel', back_populates='course')
+    exams = relationship('ExamModel', back_populates='course',cascade='all, delete')
 
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Course import Course

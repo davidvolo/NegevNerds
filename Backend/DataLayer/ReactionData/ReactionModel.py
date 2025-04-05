@@ -36,6 +36,6 @@ class ReactionModel(Base):
 
         return cls(
             reaction_id=reaction.reaction_id,
-            user_id=comment.user_id,
-            emoji=comment.emoji,
+            user_id=reaction.user_id,
+            emoji=reaction.emoji,
         )

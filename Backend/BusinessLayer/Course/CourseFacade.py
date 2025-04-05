@@ -555,7 +555,7 @@ class CourseFacade:
 
     def add_topic_to_question(self, course_id, year, semester, moed, question_number, question_topic):
         course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).add_topic_to_question(question_topic)
+        course.get_exam(year, semester, moed).get_question(question_number).add_question_topic(question_topic)
 
     def remove_topic_from_question(self, course_id, year, semester, moed, question_number, question_topic):
         course = self.get_course(course_id)
@@ -615,4 +615,5 @@ class CourseFacade:
         course = self.get_course(course_id)
         if course is not None:
             return course.edit_question_topic( year, semester, moed, question_number, topics)
-
+        else :
+            raise CourseIsNotExist(course_id)

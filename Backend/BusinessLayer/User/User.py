@@ -73,6 +73,7 @@ class User:
         self._repo.update_user(self)
     
     def reset_new_password(self, email, new_password):
+        self.password = new_password
         return self._repo.update_user_password_by_email(email,new_password)
 
     def registerToCourse(self, course_id):
