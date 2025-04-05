@@ -1,8 +1,7 @@
 import unittest
 from datetime import time
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+
 import os
 from Backend.BusinessLayer.FileManager.FileManager import FileManager  # Importing the FileManager class
 from unittest.mock import MagicMock

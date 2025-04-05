@@ -104,7 +104,7 @@ class Question:
         Add a topic for the question from it's course_topics.
         """
         with self.question_topics_lock:
-            self.question_topics.append(question_topic)
+            self.question_topics.add(question_topic)
             question_topics_repo = QuestionTopicsRepository()
             question_topics_repo.add_Topic_to_Question(self.id, question_topic)
 
@@ -198,6 +198,9 @@ class Question:
     
     def edit_question_topic(self, topics):
         question_topics_repo = QuestionTopicsRepository()
+        self.question_topics = set()
+        for topic in topics:
+            self.question_topics.add(topic)
         return question_topics_repo.edit_question_topic(self.id, topics)
     
     def edit_question_details(self,new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):

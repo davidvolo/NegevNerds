@@ -109,3 +109,6 @@ waitress==2.1.2
 bidi==0.4.2
 arabic-reshaper==3.0.0
 
+
+myapp~=0.1.dev0
+fitz~=0.0.1.dev2

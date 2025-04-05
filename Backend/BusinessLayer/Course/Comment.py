@@ -115,7 +115,7 @@ class Comment:
                     return
 
     def edit_text(self, new_text):
-        self.text = new_text
+        self.comment_text = new_text
 
     # def get_score(self):
     #     """

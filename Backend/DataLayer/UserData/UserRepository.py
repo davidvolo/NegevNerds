@@ -24,8 +24,14 @@ class UserRepository:
         :param db_path: Path to the SQLite database. If None, uses the default path.
         """
         if db_path is None:
-            # Default to a local SQLite database file in the parent directory
-            db_path = os.path.join(os.path.dirname(__file__), '../../..', 'NegevNerds.db')
+            # Check for environment variable or default to the application's db path
+            db_env = os.getenv("APP_ENV", "production")  # Set the environment variable for app environment (prod/test)
+
+            if db_env == "test":
+                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'test_negevnerds.db')
+            else:
+                # Default to production database
+                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'negevnerds.db')
 
         # Ensure the directory exists
         db_dir = os.path.dirname(db_path)

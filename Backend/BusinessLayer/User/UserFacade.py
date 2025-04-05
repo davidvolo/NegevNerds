@@ -19,8 +19,11 @@ class UserFacade:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._instance = super().__new__(cls)
         return cls._instance
+
+
+
 
     def __init__(self):
         if not hasattr(self, 'users_byEmail'):  # Initialize only once
@@ -31,6 +34,9 @@ class UserFacade:
             self.pending_reset_codes = {}
             self.email_lock = threading.Lock()
             self.id_lock = threading.Lock()
+
+    def newForTests(self):
+        self._instance = super().__new__()
 
     def generateUserId(self):
         return "user" + str(uuid.uuid4())
@@ -447,7 +453,8 @@ class UserFacade:
         - Completes the registration.
         """
         email = email.lower()
-        if self.getUser_by_email(email) is not None:
+        user = self.getUser_by_email(email)
+        if user is not None:
             raise Exception("המשתמש כבר קיים במערכת.")
 
         if not self.is_valid_name(first_name):

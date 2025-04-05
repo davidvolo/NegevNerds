@@ -217,6 +217,8 @@ class Exam:
         question = self.get_question(question_number)
         if question is not None:
             return question.edit_question_topic(topics)
+        else:
+            raise QuestionNotFound(question_number, )
     
     def checkQuestionAvailability(self, new_question_number):
         question= self.get_question(question_number=new_question_number)

@@ -238,8 +238,11 @@ class Course:
             exam = self.get_exam(year, semester, moed)
             if exam is not None:
                 self.exams[year].remove(exam)
+                exam_repo = ExamRepository()
+                exam_repo.delete_exam(self.course_id, year,semester,moed)
             else:
                 raise ExamIsNotExist(year, semester, moed)
+
 
     def get_exam_full_pdf(self, year, semester, moed):
         """
@@ -283,7 +286,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
+            raise ExamIsNotExist(year,semester ,moed)
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
             return True
@@ -360,6 +363,10 @@ class Course:
                 if new_year not in self.exams:
                     self.exams[new_year] = []
                 self.exams[new_year].append(exam)
+                exam_repo = ExamRepository()
+                exam_repo.update_exam(
+                    exam
+                )
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
@@ -509,6 +516,8 @@ class Course:
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)
+        else :
+            raise ExamIsNotExist(year,semester,moed)
     
     def checkQuestionAvailability(self,new_year, new_semester, new_moed, new_question_number):
         exam = self.get_exam(new_year, new_semester, new_moed)

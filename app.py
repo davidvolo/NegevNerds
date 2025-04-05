@@ -1,10 +1,3 @@
-import datetime
-import ssl
-from socket import socket
-from werkzeug.serving import run_simple
-from gevent.pywsgi import WSGIServer
-import sys
-sys.path.append('/home/david/backend/NegevNerds')
 
 from waitress import serve
 from flask import Flask, jsonify
@@ -12,14 +5,18 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
-
-#from waitress import serve
 from multiprocessing import cpu_count
 
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
+import os
+import sys
+
+sys.path.append('/home/david/backend/NegevNerds')
+
+
 
 app = Flask(__name__)
 
@@ -27,7 +24,11 @@ app.config['JWT_SECRET_KEY'] = 'negev_nerds'  # סוד ה-JWT שלך
 jwt = JWTManager(app)
 
 db = SQLAlchemy()
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # For SQLite
+
+# if os.getenv("FLASK_ENV") == "testing":
+#     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_NegevNerds.db'  # Separate test DB
+# else:
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # Main DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 migrate = Migrate(app, db)
 
