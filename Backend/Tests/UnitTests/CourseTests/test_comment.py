@@ -141,7 +141,7 @@ class TestComment(unittest.TestCase):
         # בדיקה פשוטה למתודת edit_text
         new_text = "New text content"
         self.comment.edit_text(new_text)
-        self.assertEqual(self.comment.text, new_text)
+        self.assertEqual(self.comment.comment_text, new_text)
 
 if __name__ == "__main__":
     unittest.main()

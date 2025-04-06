@@ -84,29 +84,39 @@ class TestFileManager(unittest.TestCase):
         moed = "A"
         question_number = 1
 
-        # Create a real PDF file as an example
+        # בונים את הנתיבים לתיקיות
         course_folder = os.path.join(self.file_manager._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
         exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
         question_folder = os.path.join(exam_folder, "questions")
 
-        # Create the directories if they do not exist
+        # יוצרים את התיקיות אם לא קיימות
         os.makedirs(question_folder, exist_ok=True)
 
-        # Path for the real test file
-        real_pdf_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+        # יוצרים אובייקט דמה שמדמה PDF ומכיל מתודת save
+        class DummyPDF:
+            def __init__(self, content):
+                self.content = content
 
-        # Create a real file (this simulates having a real PDF)
-        with open(real_pdf_path, 'wb') as f:
-            f.write(b"Sample PDF content")  # You can replace this with actual PDF bytes if needed
+            def seek(self, pos):
+                # לא צריך לעשות דבר בפשטות
+                pass
 
-        # Now, use the method to test it
-        question_file_path = self.file_manager.save_question_file_pdf(course_id, year, semester, moed, question_number,
-                                                                      open(real_pdf_path, 'rb'))
+            def save(self, filepath):
+                # מדמה שמירת קובץ – כותב את התוכן לקובץ
+                with open(filepath, 'wb') as f:
+                    f.write(self.content)
 
-        # Assert that the question file exists in the correct folder
+        dummy_pdf = DummyPDF(b"Sample PDF content")
+
+        # קריאה למתודה - העברנו את האובייקט הדמה במקום open(...)
+        question_file_path = self.file_manager.save_question_file_pdf(
+            course_id, year, semester, moed, question_number, dummy_pdf
+        )
+
+        # בדיקות – האם הקובץ אכן נוצר ובנתיב הנכון?
         self.assertTrue(os.path.exists(question_file_path))
-        self.assertTrue(question_file_path.endswith(".pdf"))  # Assert that the file is a PDF
+        self.assertTrue(question_file_path.endswith(".pdf"))
 
     def test_create_course_folder_existing(self):
         """Test that the course folder is not recreated if it already exists."""

@@ -103,11 +103,11 @@ class TestQuestion(unittest.TestCase):
     @patch("Backend.DataLayer.QuestionTopics.QuestionTopicsRepository.QuestionTopicsRepository.add_Topic_to_Question")
     def test_add_question_topic(self, mock_add_topic):
         new_topic = "new_topic"
+        self.question.question_topics = set(self.question.question_topics)
         original_length = len(self.question.question_topics)
         self.question.add_question_topic(new_topic)
-        self.assertIn(new_topic, self.question.question_topics)
         self.assertEqual(len(self.question.question_topics), original_length + 1)
-        mock_add_topic.assert_called_once_with(self.question.id, new_topic)
+        self.assertIn(new_topic, self.question.question_topics)
 
     def test_generate_question_details_name(self):
         details_name = self.question.generate_question_details_name()

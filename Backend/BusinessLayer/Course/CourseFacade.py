@@ -555,11 +555,15 @@ class CourseFacade:
 
     def add_topic_to_question(self, course_id, year, semester, moed, question_number, question_topic):
         course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).add_question_topic(question_topic)
+        exam = course.get_exam(year, semester, moed)
+        question = exam.get_question(question_number)
+        question.add_question_topic(question_topic)
 
-    def remove_topic_from_question(self, course_id, year, semester, moed, question_number, question_topic):
+    def remove_topic_from_question(self, course_id, year, semester, moed, question_number, topic):
         course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).get_question(question_number).remove_question_topic(question_topic)
+        exam = course.get_exam(year, semester, moed)
+        question = exam.get_question(question_number)
+        question.remove_topic_from_question(topic)
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         course = self.get_course(course_id)
