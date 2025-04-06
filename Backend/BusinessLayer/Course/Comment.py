@@ -101,7 +101,6 @@ class Comment:
             else:
                 raise Exception("error while creating reaction")
 
-
     def remove_reaction(self, reaction_id):
         """
         Remove a reaction from the CommentData for a specific user.

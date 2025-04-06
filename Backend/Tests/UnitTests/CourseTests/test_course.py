@@ -193,12 +193,21 @@ class TestCourse(unittest.TestCase):
         with self.assertRaises(ExamAlreadyExists):
             self.course.add_exam(2025, Semester.SPRING, Moed.A, link="exam_link")
 
-    def test_remove_exam_success(self):
+    @patch("Backend.DataLayer.ExamData.ExamRepository.ExamRepository.delete_exam", return_value=None)
+    def test_remove_exam_success(self, mock_delete_exam):
         dummy_exam = MagicMock()
+        # נניח שהקורס שלנו כבר כולל מזהה קורס תקין, למשל "course1"
+        self.course.course_id = "course1"
         self.course.exams = {2025: [dummy_exam]}
         # Patch get_exam to return the dummy exam
         self.course.get_exam = MagicMock(return_value=dummy_exam)
+
+        # קריאה למחיקת המבחן. המתודה delete_exam הפטושה לא תגרום ל־ValueError.
         self.course.remove_exam(2025, "אביב", "א")
+
+        # נוודא ש־delete_exam נקראה עם הפרמטרים הנכונים.
+        mock_delete_exam.assert_called_once_with("course1", 2025, "אביב", "א")
+        # נוודא שהמבחן הוסר מהמפה של exams
         self.assertNotIn(dummy_exam, self.course.exams[2025])
 
     def test_remove_exam_not_found(self):
@@ -303,12 +312,18 @@ class TestCourse(unittest.TestCase):
         self.assertNotIn("manager1", self.course.managers)
         mock_remove_manager.assert_called_once_with(user_id="manager1", course_id=self.course_id)
 
-    def test_edit_exam_year(self):
+    @patch("Backend.DataLayer.ExamData.ExamRepository.ExamRepository.update_exam", return_value=None)
+    @patch("Backend.DataLayer.UserData.UserModel.UserModel")
+    def test_edit_exam_year(self, MockUserModel, mock_update_exam):
         dummy_exam = MagicMock()
+        dummy_exam.id = 1  # הגדרת מזהה תקין
         dummy_exam.edit_year = MagicMock()
         self.course.exams = {2025: [dummy_exam]}
         self.course.get_exam = MagicMock(return_value=dummy_exam)
+
+        # כעת, כשהמתודה update_exam פטשה ומחזירה None, לא תתרחש השאילתה למסד נתונים.
         self.course.edit_exam_year(2025, "אביב", "א", 2030)
+
         dummy_exam.edit_year.assert_called_once_with(2030)
         self.assertNotIn(dummy_exam, self.course.exams.get(2025, []))
         self.assertIn(dummy_exam, self.course.exams.get(2030, []))

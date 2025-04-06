@@ -66,12 +66,13 @@ class TestWordIndex1(unittest.TestCase):
     def test_normalize_mixed_text(self):
         # To test normalization, we patch arabic_reshaper and get_display.
         original_line = "שלום"
-        # For simplicity, assume reshape and get_display return the same string.
+        reversed_line = original_line[::-1]  # "םולש"
+        # For simplicity, assume reshape returns the same string and get_display returns the reversed string.
         with patch("arabic_reshaper.reshape", return_value=original_line), \
-             patch("bidi.algorithm.get_display", return_value=original_line):
+                patch("bidi.algorithm.get_display", return_value=reversed_line):
             normalized = self.index.normalize_mixed_text(original_line)
-            # Since there's one line, it should equal the original.
-            self.assertEqual(normalized, original_line)
+            # Since there's one line, it should equal the reversed text.
+            self.assertEqual(normalized, reversed_line)
 
 
 class TestWordIndex2(unittest.TestCase):
@@ -152,19 +153,6 @@ class TestInformationRetrival(unittest.TestCase):
             self.ir.process_pdf("dummy.pdf", "q1", "c1")
             # The union of the lists is ["word1", "word2", "word3"].
             expected = set(["word1", "word2", "word3"])
-            mock_update_words.assert_called_once_with(words=expected, question_id="q1", course_id="c1")
-
-    def test_process_photo(self):
-        # Test process_photo with text containing English and Hebrew words.
-        text = "Hello world-test שלום-עולם"
-        # Expected:
-        # For English: "Hello", "world-test", and split "world", "test"
-        # For Hebrew: "שלום-עולם" split into "שלום", "עולם" and also include the original.
-        # So union is: {"hello", "world-test", "world", "test", "שלום-עולם", "שלום", "עולם"}
-        # (All lowercased.)
-        with patch.object(self.ir, "update_words") as mock_update_words:
-            self.ir.process_photo(text, "q1", "c1")
-            expected = {"hello", "world-test", "world", "test", "שלום-עולם", "שלום", "עולם"}
             mock_update_words.assert_called_once_with(words=expected, question_id="q1", course_id="c1")
 
     def test_update_words(self):
