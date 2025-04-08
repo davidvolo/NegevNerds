@@ -17,7 +17,6 @@
 - **Language:** Python
 - **Framework:** Flask
 - **Database:** SQLite 
-- **API Hosting:** Running with `app.run()`, plans to migrate to Gunicorn or WSGIServer.
 
 ### Frontend:
 - **Language:** JavaScript
