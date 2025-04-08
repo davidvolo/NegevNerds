@@ -89,7 +89,7 @@ def main():
 #     http_server.serve_forever()
 
     threads = (cpu_count() * 2) + 1
-    serve(app, host='0.0.0.0', port=5001)
+    serve(app, host='0.0.0.0', port=5001, threads=threads)
 
 #     app.run(host='0.0.0.0', port=5001)
 

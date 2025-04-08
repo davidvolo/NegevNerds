@@ -30,9 +30,12 @@ def parse_jsonify(parsed_result):
             "message": parsed_result['message']
         }), 200
     else:
+        print("here")
+        print(parsed_result)
         return jsonify({
             "success": False,
             "message": parsed_result['message']
+
         }), 400
 
 
@@ -368,6 +371,7 @@ def login_user():
 
         # Validate input
         if not all(key in data for key in ['email', 'password']):
+            print("Invalid request")
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
@@ -378,11 +382,14 @@ def login_user():
 
         # Call service layer
         result = serviceLayer.login(email, password)
+        print("Raw result from serviceLayer:", result)
 
         parsed_result = json.loads(result)
+        print("Parsed result:", parsed_result)
 
         # Validate parsed_result structure
         if not parsed_result or parsed_result.get('status') != 'success':
+            print("Invalid request2")
             return jsonify({
                 "success": False,
                 "message": parsed_result.get('message', 'Login failed')

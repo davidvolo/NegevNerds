@@ -25,7 +25,7 @@ class QuestionRepository:
                 db_path = os.path.join(os.path.dirname(__file__), '../../..', 'test_negevnerds.db')
             else:
                 # Default to production database
-                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'negevnerds.db')
+                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'NegevNerds.db')
 
         # Ensure the directory exists
         db_dir = os.path.dirname(db_path)

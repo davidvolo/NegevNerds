@@ -45,7 +45,7 @@ class WordsQuestionsRepository:
                 db_path = os.path.join(os.path.dirname(__file__), '../../..', 'test_negevnerds.db')
             else:
                 # Default to production database
-                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'negevnerds.db')
+                db_path = os.path.join(os.path.dirname(__file__), '../../..', 'NegevNerds.db')
 
         db_dir = os.path.dirname(db_path)
         if not os.path.exists(db_dir):

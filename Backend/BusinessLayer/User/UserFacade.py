@@ -19,7 +19,7 @@ class UserFacade:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
 
@@ -350,9 +350,13 @@ class UserFacade:
             email = email.lower()
             user = self.getUser_by_email(email)
             if user is None:
+                print("no user")
                 raise UserOrPasswordIncorrectError()
 
             match_password = self.verify_password(password, user.password)
+            print("m", match_password)
+            print("p", password)
+            print("u.p", user.password)
             # Check if the password matches
             if not match_password:
                 raise UserOrPasswordIncorrectError()
