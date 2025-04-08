@@ -75,7 +75,7 @@ def main():
 
 
     service_layer = ServiceLayer(NegevNerds("../"))
-    service_layer.initialize_system()
+    #service_layer.initialize_system()
 
     # Run with werkzeug (development server)
 #    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -89,7 +89,7 @@ def main():
 #     http_server.serve_forever()
 
     threads = (cpu_count() * 2) + 1
-    serve(app, host='0.0.0.0', port=5001, threads=threads)
+    serve(app, host='0.0.0.0', port=5001)
 
 #     app.run(host='0.0.0.0', port=5001)
 
