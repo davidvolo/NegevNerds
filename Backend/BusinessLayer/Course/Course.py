@@ -176,7 +176,7 @@ class Course:
         """Add a topic to the course."""
         with self.course_topics_lock:
             if course_topic not in self.course_topics:
-                self.course_topics.append(course_topic)
+                self.course_topics.add(course_topic)
                 course_topics_repo = CourseTopicsRepository()
                 course_topics_repo.add_Topic_to_course(course_id=self.course_id, topic=course_topic)
             else:
