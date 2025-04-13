@@ -1109,6 +1109,16 @@ class ServiceLayer:
             "status": "error",
             "message": str(e)
         })
+    
+    def update_course_topics(self,course_id, added_topics, removed_topics):
+        try:
+            return self.negev_nerds.update_course_topics(course_id, added_topics, removed_topics)
+            
+        except Exception as e:
+                    return json.dumps({
+            "status": "error",
+            "message": str(e)
+        })
 
 
     def initialize_system(self, file_path="systemInitialization/init.json"):

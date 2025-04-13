@@ -251,13 +251,15 @@ class CourseFacade:
         course = self.get_course(course_id)
         course.remove_manager(manager_id)
 
-    def add_course_topic(self, course_id, course_topic):
+    def add_course_topics(self, course_id, course_topics):
         course = self.get_course(course_id)
-        course.add_course_topic(course_topic)
+        for course_topic in course_topics:
+            course.add_course_topic(course_topic)
 
-    def remove_course_topic(self, course_id, course_topic):
+    def remove_course_topics(self, course_id, course_topics):
         course = self.get_course(course_id)
-        course.remove_course_topic(course_topic)
+        for course_topic in course_topics:
+            course.remove_course_topic(course_topic)
 
     def get_all_courses(self):
         course_list = []

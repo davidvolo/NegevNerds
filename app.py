@@ -75,7 +75,7 @@ def main():
 
 
     service_layer = ServiceLayer(NegevNerds("../"))
-    #service_layer.initialize_system()
+    service_layer.initialize_system()
 
     # Run with werkzeug (development server)
 #    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

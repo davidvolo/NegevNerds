@@ -15,7 +15,9 @@ from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuest
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository 
 
+import re
 import json
 import datetime
 from flask_jwt_extended import create_access_token
@@ -879,6 +881,44 @@ class NegevNerds:
             return True
         return False
     
+    def update_course_topics(self,course_id, added_topics, removed_topics):
+        course_topics = CourseTopicsRepository()
+        for added_topic in added_topics:
+            if course_topics.is_exist(added_topic,course_id):
+                return json.dumps({
+                        "status": "error",
+                        "message": f"לא ניתן להוסיף את הנושא: {added_topic} מכיוון שהוא כבר קיים בקורס"
+                    })
+        for remove_topic in removed_topics:
+            if not course_topics.is_exist(remove_topic,course_id):
+                return json.dumps({
+                        "status": "error",
+                        "message": f"לא ניתן למחוק את הנושא: {remove_topic} מכיוון שהוא כבר לא קיים בקורס"
+                    })
+        questions_topics_repo = QuestionTopicsRepository()
+        questions_repo = QuestionRepository()
+        for to_remove in removed_topics:
+            questions_id = questions_topics_repo.get_questions_byTopic(to_remove)
+            for question_id in questions_id:
+                print(f'question id: {questions_id}')
+                exam_id = questions_repo.get_exam_id_by_question_id(question_id)
+                match = re.search(r"EXAM-(\d+\.\d+\.\d+)", exam_id)
+                if match:
+                    courseID = match.group(1)
+                    if courseID == course_id:
+                        return json.dumps({
+                            "status": "error",
+                            "message": f"לא ניתן למחוק את הנושא: {to_remove} מכיוון שהוא משוייך לשאלה בקורס"
+                        })
+        self._course_facade.add_course_topics(course_id,added_topics)
+        self._course_facade.remove_course_topics(course_id,removed_topics)
+        return json.dumps({
+                    "status": "success",
+                    "message": "נושאי הקורס עודכנו בהצלחה"
+                })
+        
+
+
     def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
         try:
             question_link = self._course_facade.get_link_to_question(course_id, year, semester, moed, question_number)
