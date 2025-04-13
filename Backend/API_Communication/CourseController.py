@@ -2003,6 +2003,62 @@ def swap_question_file():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/course/update_topics', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def update_course_topics():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        course_id = request.form.get('course_id')
+        added_topics = request.form.getlist('added_topics[]')
+        removed_topics = request.form.getlist('removed_topics[]')
+
+        # Validate required fields
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing course_id."
+            }), 400
+        
+        if added_topics is None or removed_topics is None:
+            return jsonify({
+                "success": False,
+                "message": "Missing topic lists (added_topics or removed_topics)."
+            }), 400
+        
+        # Check for invalid (empty or whitespace-only) topics
+        for topic in added_topics:
+            if not topic.strip():
+                return jsonify({
+                    "success": False,
+                    "message": "נושא שנוסף אינו יכול להיות ריק או להכיל רק רווחים."
+                }), 400
+
+
+        # Call service layer (you'll implement this logic)
+        result = serviceLayer.update_course_topics(
+            course_id, added_topics, removed_topics
+        )
+
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in update_course_topics: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
 # @cross_origin()

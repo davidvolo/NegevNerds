@@ -8,6 +8,7 @@ from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
 class Course:
@@ -513,6 +514,10 @@ class Course:
                                  pdf__answer_path, question_text)
     
     def edit_question_topic(self, year, semester, moed, question_number, topics):
+        question_topic_repo = CourseTopicsRepository()
+        for topic in topics:
+            if not question_topic_repo.is_exist(topic, self.course_id):
+                return False
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)
