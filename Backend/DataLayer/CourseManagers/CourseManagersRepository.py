@@ -107,5 +107,17 @@ class CourseManagersRepository:
         finally:
             session.close()
     
+    def remove_all_managers_from_course(self, course_id):
+        session = self.Session()
+        try:
+            session.query(CourseManagersModel).filter_by(course_id=course_id).delete()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    
    
 

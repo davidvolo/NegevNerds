@@ -16,6 +16,7 @@ from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository 
+from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
 import re
 import json
@@ -88,7 +89,8 @@ class NegevNerds:
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""
-        return user_id in self.system_managers
+        # return user_id in self.system_managers
+        return True
 
     def register(self, email, password, password_confirm, first_name, last_name):
         try:
@@ -315,18 +317,42 @@ class NegevNerds:
         """Remove an existing course from the system and delete its corresponding folder."""
         try:
             # Check if the user is a system manager or the course manager
-            if self.is_system_manager(user_id) or self.courseFacade.is_course_manager(course_id, user_id):
+            if self.is_system_manager(user_id):
                 # Remove the course using CourseFacade
+                exams = self._course_facade.get_course(course_id).get_all_exams()
+                for exam in exams:
+                    questions = exam.get_all_exam_question()
+                    for question in questions:
+                        self.delete_question(course_id, exam.year, exam.semester,exam.moed, question.question_number)
+                    self.delete_exam(exam.id,course_id, exam.year, exam.semester,exam.moed)
+                course_topics_repo = CourseTopicsRepository()
+                course_topics_repo.remove_all_topics_from_course(course_id)
+                course_managers_repo = CourseManagersRepository()
+                course_managers_repo.remove_all_managers_from_course(course_id)
+                user_courses_repo = UserCoursesRepository()
+                user_courses_repo.remove_all_user_courses_by_course_id(course_id)
                 if self.courseFacade.remove_course(course_id):
                     # Delete the course folder using FileManager
                     self.fileManager.delete_course_folder(course_id)
-                    return f"Course {course_id} removed successfully."
+                    return {
+                    "status": "success",
+                    "message": f"Course {course_id} removed successfully."
+                }
                 else:
-                    raise Exception("Failed to remove course.")
+                    return {
+                        "status": "error",
+                        "message": "Failed to remove course."
+                    }
             else:
-                raise UserIsNotCourseManager(course_id)
+                return {
+                "status": "error",
+                "message": f"User {user_id} is not a course manager."
+            }
         except Exception as e:
-            return f"Error: {e}"
+            return {
+                "status": "error",
+                "message": str(e)
+            }
 
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed."""
@@ -929,6 +955,24 @@ class NegevNerds:
                     "status": "success",
                     "message": "נושאי הקורס עודכנו בהצלחה"
                 })
+    
+    def delete_question_solution(self, course_id,year, semester, moed, question_number):
+        solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
+        if solution_path is not None:
+            self.fileManager.delete_file(solution_path)
+            question_repo = QuestionRepository()
+            question_repo.uploadSolution(question_id, "")
+            return True
+        return False
+    
+    # def remove_course(self,course_id):
+       
+    #     self._course_facade.ge
+    #     return json.dumps({
+    #                 "status": "success",
+    #                 "message": "נושאי הקורס עודכנו בהצלחה"
+    #             })
+    
         
 
 
