@@ -250,7 +250,20 @@ class NegevNerds:
             print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
             return {"status": "error", "message": str(e)}
 
-    
+
+
+    def splitPDF(self, course_id, year, semester, moed, pdf_file, line_data):
+        question_number = 1
+        question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
+        for curr_question in question_files:
+            try:
+                if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
+                    self.add_question(course_id, year, semester, moed, question_number, False, [], curr_question, None)
+            except Exception as e:
+                print(e)
+            question_number = question_number+1
+
+
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
 
@@ -493,7 +506,7 @@ class NegevNerds:
             else:
                 question_text = self._pdfFacade.extract_text_from_pdf_file(question_file)
             with self.add_question_lock:
-                if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
+                if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number):
                     # Save the PDF file with a custom name
                     print(f"Base directory: {self.fileManager._base_dir}")
 

@@ -400,7 +400,7 @@ class Course:
     #         else:
     #             raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
-    def check_valid_question(self, year, semester, moed, question_number, question_text):
+    def check_valid_question(self, year, semester, moed, question_number):
         # Get or create the exam
         currExam = self.get_exam(year, semester, moed)
         if currExam is None:

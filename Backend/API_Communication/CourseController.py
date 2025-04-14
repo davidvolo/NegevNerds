@@ -1313,16 +1313,18 @@ def uploadFullExamPdf():
         year = request.form.get('year')
         semester = request.form.get('semester')
         moed = request.form.get('moed')
+        line_data = request.form.get('line_data')
+        lines = json.loads(line_data)
 
         # Validate required fields
-        if not all([course_id, year, semester, moed]):
+        if not all([course_id, year, semester, moed, line_data]):
             return jsonify({
                 "success": False,
                 "message": "Missing required parameters"
             }), 400
 
         # Call service layer to handle logic
-        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam)
+        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam, lines)
         parsed_result = json.loads(result)
 
         return jsonify({
