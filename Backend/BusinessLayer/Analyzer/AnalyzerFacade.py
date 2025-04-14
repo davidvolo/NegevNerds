@@ -48,6 +48,9 @@ class AnalyzerFacade:
     def search_free_text_from_course(self , text, course_id):
         return self.information_retrival.search_free_text_with_course(text=text, course_id = course_id)
 
+    def splitPDF(self, pdf_file, lines):
+        return self.question_analyser.splitPDF(pdf_file=pdf_file, lines=lines)
+
 
 
 

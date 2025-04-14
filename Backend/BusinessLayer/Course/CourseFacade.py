@@ -405,7 +405,7 @@ class CourseFacade:
 
         return True
 
-    def check_valid_question(self, course_id, year, semester, moed, question_number, question_text):
+    def check_valid_question(self, course_id, year, semester, moed, question_number):
         # Step 1: Validate parameters
         self.valid_question_parameters(course_id,year=year, semester=semester, moed=moed, question_number=question_number)
         semester = Semester(semester)
@@ -417,7 +417,7 @@ class CourseFacade:
         #    raise ValueError(f"CourseData with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
-        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number, question_text=question_text)
+        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number)
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american,
                      question_topics, pdf_question_path, pdf_answer_path, question_text):

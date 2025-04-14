@@ -952,8 +952,9 @@ class ServiceLayer:
                 "error": str(e)
             })
         
-    def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
+    def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file, line_data):
         try:
+            self.negev_nerds.splitPDF(course_id, year, semester, moed, pdf_file, line_data)
             result = self.negev_nerds.upload_full_exam_pdf(course_id, year, semester, moed, pdf_file)
 
             if result.get("status") == "success":
