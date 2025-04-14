@@ -199,11 +199,13 @@ def remove_course():
         # Call the service layer's register method directly
         result = serviceLayer.remove_course(course_id, user_id)
 
-        # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -1559,7 +1561,8 @@ def is_system_manager():
     try:
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
-            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"]
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
+            ]
 
         user_id = get_jwt_identity()
         if user_id in user_ids_managers:
@@ -2059,6 +2062,12 @@ def update_course_topics():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
+
+
+
+
+
+
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
 # @cross_origin()

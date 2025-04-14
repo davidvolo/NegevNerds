@@ -285,24 +285,16 @@ class ServiceLayer:
             })
 
     def remove_course(self, course_id, user_id):
-        """Handle course removal and return JSON response."""
         try:
             result = self.negev_nerds.remove_course(course_id, user_id)
 
-            if "Error" in result:
-                return json.dumps({
-                    "status": "error",
-                    "message": result
-                })
-            return json.dumps({
-                "status": "success",
-                "message": result
-            })
+            return json.dumps(result)  # now it's a dict with status + message
         except Exception as e:
             return json.dumps({
                 "status": "error",
                 "message": str(e)
             })
+
 
     def search_by_topic(self, course_id, topic):
         """Search for questions by a specific topic in a course."""
@@ -1119,6 +1111,18 @@ class ServiceLayer:
             "status": "error",
             "message": str(e)
         })
+    
+    # def remove_course(self,course_id):
+    #     try:
+    #         return self.negev_nerds.remove_course(course_id)
+            
+    #     except Exception as e:
+    #                 return json.dumps({
+    #         "status": "error",
+    #         "message": str(e)
+    #     })
+    
+
 
 
     def initialize_system(self, file_path="systemInitialization/init.json"):

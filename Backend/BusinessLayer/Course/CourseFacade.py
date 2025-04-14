@@ -130,9 +130,11 @@ class CourseFacade:
         """Remove an existing course along with its folder."""
         course = self.get_course(course_id)
         if course is not None:
-            del self.courses[course_id]
+            if course_id in self.courses:
+                del self.courses[course_id]
             course_repo = CourseRepository()
-            course_repo.delete_course(course_id=course_id)
+            return course_repo.delete_course(course_id=course_id)
+
         else:
             raise CourseIsNotExist(course_id)
 
