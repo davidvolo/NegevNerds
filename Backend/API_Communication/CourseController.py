@@ -591,6 +591,52 @@ def get_answer_pdf():
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/check_answer_for_question', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def check_answer_for_question():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        answer_path = serviceLayer.get_answer_path(course_id, year, semester, moed, question_number)
+
+        if answer_path:  # אם הנתיב לא ריק
+            return jsonify({
+                "status": "success",
+                "data": True
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "data": False
+            }), 200
+
+    except Exception as e:
+        print(f"Error in check_answer_for_question: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @course_controller.route('/api/course/get_course/<course_id>', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
