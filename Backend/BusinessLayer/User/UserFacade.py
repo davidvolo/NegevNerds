@@ -13,6 +13,8 @@ from Backend.BusinessLayer.User.User import User  # Adjusted import
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.UserData.UserRepository import UserRepository  # Import the SQLAlchemy repository
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 class UserFacade:
     _instance = None  # Singleton pattern
@@ -21,9 +23,6 @@ class UserFacade:
         if cls._instance is None:
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
-
-
-
 
     def __init__(self):
         if not hasattr(self, 'users_byEmail'):  # Initialize only once
@@ -168,9 +167,7 @@ class UserFacade:
         else:
             return False
 
-
     def register_termOfUse_part(self, email, password, first_name, last_name):
-        # Interactively verify the code
         try:
             email = email.lower()
             id = self.generateUserId()
@@ -180,10 +177,9 @@ class UserFacade:
                 self.users_byEmail[email] = user
             with self.id_lock:
                 self.users_byId[id] = user
-            logging.info(f"UserData {first_name} {last_name} registered successfully.")
-            return id, {"message": f"UserData {first_name} {last_name} registered successfully."}
+            return id, {"message": f"User {first_name} {last_name} registered successfully."}
         except Exception as e:
-                raise Exception("האישור נכשל. הרשמה בוטלה.")
+            raise Exception("האישור נכשל. הרשמה בוטלה.")
 
 
     def get_user_name(self, user_id):
@@ -346,7 +342,6 @@ class UserFacade:
         """Authenticate the user by checking the email and password."""
         try:
             # Check if the email exists in the system
-            #user = self.users_byEmail.get(email)  # Use .get() to avoid KeyError
             email = email.lower()
             user = self.getUser_by_email(email)
             if user is None:

@@ -103,6 +103,7 @@ def register_to_course():
             "error": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/open_course', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -473,6 +474,7 @@ def get_course_topics():
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/get_question_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -532,6 +534,7 @@ def get_question_pdf():
             "status": "error",
             "message": str(e)
         }), 500
+
 
 @course_controller.route('/api/course/get_answer_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
@@ -692,6 +695,7 @@ def get_course(course_id):
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/get_courses_by_name/<name_part>', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -802,6 +806,7 @@ def get_courses_by_name(name_part):
 #             "message": "An unexpected error occurred",
 #             "error": str(e)
 #         }), 500
+
 
 @course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
 @cross_origin()
@@ -1117,6 +1122,7 @@ def search_question_by_specifics():
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/search_questions_by_topic', methods=['OPTIONS', 'POST'])
 @cross_origin()
 @jwt_required()
@@ -1328,6 +1334,7 @@ def check_exam_full_pdf():
             "error": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/uploadFullExamPdf', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -1469,7 +1476,6 @@ def download_exam_pdf():
         }), 500
 
 
-
 @course_controller.route('/api/checkExistSolution', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -1601,6 +1607,7 @@ def is_course_manager():
     except Exception as e:
         print(f"Error in is_course_manager: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
+
 
 @course_controller.route('/api/course/is_system_manager', methods=['POST'])
 @cross_origin()

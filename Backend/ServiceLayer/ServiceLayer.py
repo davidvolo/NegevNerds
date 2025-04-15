@@ -893,27 +893,27 @@ class ServiceLayer:
                 "error": str(e)
             })
 
-    def get_exam_full_pdf(self, course_id, year, semester, moed):
-
-        try:
-            # Call the Negev Nerds business logic to check for the exam
-            result = self.negev_nerds.get_exam_full_pdf(course_id, year, semester, moed)
-
-            return json.dumps({
-                "status": "success",
-                "message": "Operation successful.",
-                "has_link": result!= "",
-                "link": result
-            })
-
-        except Exception as e:
-            # Handle unexpected errors gracefully
-            print(f"Error in check_exam_full_pdf: {str(e)}")
-            return json.dumps({
-                "status": "error",
-                "message": "An unexpected error occurred.",
-                "error": str(e)
-            })
+    # def get_exam_full_pdf(self, course_id, year, semester, moed):
+    #
+    #     try:
+    #         # Call the Negev Nerds business logic to check for the exam
+    #         result = self.negev_nerds.get_exam_full_pdf(course_id, year, semester, moed)
+    #
+    #         return json.dumps({
+    #             "status": "success",
+    #             "message": "Operation successful.",
+    #             "has_link": result!= "",
+    #             "link": result
+    #         })
+    #
+    #     except Exception as e:
+    #         # Handle unexpected errors gracefully
+    #         print(f"Error in check_exam_full_pdf: {str(e)}")
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": "An unexpected error occurred.",
+    #             "error": str(e)
+    #         })
         
     def ExistSolution(self, course_id, year, semester, moed,question_number):
         
