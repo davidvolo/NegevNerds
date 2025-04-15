@@ -129,7 +129,8 @@ class CourseFacade:
         """Remove an existing course along with its folder."""
         course = self.get_course(course_id)
         if course is not None:
-            del self.courses[course_id]
+            if course_id in self.courses:
+                del self.courses[course_id]
             course_repo = CourseRepository()
             course_repo.delete_course(course_id=course_id)
             return True
@@ -252,13 +253,15 @@ class CourseFacade:
         course = self.get_course(course_id)
         course.remove_manager(manager_id)
 
-    def add_course_topic(self, course_id, course_topic):
+    def add_course_topics(self, course_id, course_topics):
         course = self.get_course(course_id)
-        course.add_course_topic(course_topic)
+        for course_topic in course_topics:
+            course.add_course_topic(course_topic)
 
-    def remove_course_topic(self, course_id, course_topic):
+    def remove_course_topics(self, course_id, course_topics):
         course = self.get_course(course_id)
-        course.remove_course_topic(course_topic)
+        for course_topic in course_topics:
+            course.remove_course_topic(course_topic)
 
     def get_all_courses(self):
         course_list = []
@@ -406,7 +409,7 @@ class CourseFacade:
 
         return True
 
-    def check_valid_question(self, course_id, year, semester, moed, question_number, question_text):
+    def check_valid_question(self, course_id, year, semester, moed, question_number):
         # Step 1: Validate parameters
         self.valid_question_parameters(course_id,year=year, semester=semester, moed=moed, question_number=question_number)
         semester = Semester(semester)
@@ -418,7 +421,7 @@ class CourseFacade:
         #    raise ValueError(f"CourseData with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
-        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number, question_text=question_text)
+        return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number)
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american,
                      question_topics, pdf_question_path, pdf_answer_path, question_text):

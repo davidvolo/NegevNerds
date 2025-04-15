@@ -200,11 +200,13 @@ def remove_course():
         # Call the service layer's register method directly
         result = serviceLayer.remove_course(course_id, user_id)
 
-        # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -1321,16 +1323,18 @@ def uploadFullExamPdf():
         year = request.form.get('year')
         semester = request.form.get('semester')
         moed = request.form.get('moed')
+        line_data = request.form.get('line_data')
+        lines = json.loads(line_data)
 
         # Validate required fields
-        if not all([course_id, year, semester, moed]):
+        if not all([course_id, year, semester, moed, line_data]):
             return jsonify({
                 "success": False,
                 "message": "Missing required parameters"
             }), 400
 
         # Call service layer to handle logic
-        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam)
+        result = serviceLayer.upload_full_exam_pdf(course_id, int(year), semester, moed, pdf_exam, lines)
         parsed_result = json.loads(result)
 
         return jsonify({
@@ -1567,7 +1571,8 @@ def is_system_manager():
     try:
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
-            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"]
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
+            ]
 
         user_id = get_jwt_identity()
         if user_id in user_ids_managers:
@@ -2010,6 +2015,68 @@ def swap_question_file():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
+
+@course_controller.route('/api/course/update_topics', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def update_course_topics():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        course_id = request.form.get('course_id')
+        added_topics = request.form.getlist('added_topics[]')
+        removed_topics = request.form.getlist('removed_topics[]')
+
+        # Validate required fields
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing course_id."
+            }), 400
+        
+        if added_topics is None or removed_topics is None:
+            return jsonify({
+                "success": False,
+                "message": "Missing topic lists (added_topics or removed_topics)."
+            }), 400
+        
+        # Check for invalid (empty or whitespace-only) topics
+        for topic in added_topics:
+            if not topic.strip():
+                return jsonify({
+                    "success": False,
+                    "message": "נושא שנוסף אינו יכול להיות ריק או להכיל רק רווחים."
+                }), 400
+
+
+        # Call service layer (you'll implement this logic)
+        result = serviceLayer.update_course_topics(
+            course_id, added_topics, removed_topics
+        )
+
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in update_course_topics: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+
+
+
 
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])

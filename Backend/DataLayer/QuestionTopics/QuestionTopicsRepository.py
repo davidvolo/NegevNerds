@@ -93,6 +93,21 @@ class QuestionTopicsRepository:
             raise e
         finally:
             session.close()
+    
+    def get_questions_byTopic(self, topic):
+
+        session = self.Session()
+        try:
+            questions_id = session.query(QuestionTopicsModel).filter_by(topic=topic).all()
+
+            if not questions_id:
+                return []
+
+            return [question_id.question_id for question_id in questions_id]
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
 
     def is_exist(self, topic, question_id):
 
@@ -104,6 +119,8 @@ class QuestionTopicsRepository:
             raise e
         finally:
             session.close()
+    
+    
     
 
     def delete_topics_by_question_id(self, question_id):

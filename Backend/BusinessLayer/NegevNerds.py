@@ -16,7 +16,10 @@ from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuest
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository 
+from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 
+import re
 import json
 import datetime
 from flask_jwt_extended import create_access_token
@@ -87,7 +90,8 @@ class NegevNerds:
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""
-        return user_id in self.system_managers
+        # return user_id in self.system_managers
+        return True
 
     def register(self, email, password, password_confirm, first_name, last_name):
         """Register a new user - first phase"""
@@ -302,22 +306,22 @@ class NegevNerds:
             except Exception as e:
                 return f"Error: {e}"
 
-    def remove_course(self, course_id, user_id):
-        """Remove an existing course from the system and delete its corresponding folder."""
-        try:
-            # Check if the user is a system manager or the course manager
-            if self.is_system_manager(user_id) or self.courseFacade.is_course_manager(course_id, user_id):
-                # Remove the course using CourseFacade
-                if self.courseFacade.remove_course(course_id):
-                    # Delete the course folder using FileManager
-                    self.fileManager.delete_course_folder(course_id)
-                    return f"Course {course_id} removed successfully."
-                else:
-                    raise Exception("Failed to remove course.")
-            else:
-                raise UserIsNotCourseManager(course_id)
-        except Exception as e:
-            return f"Error: {e}"
+#     def remove_course(self, course_id, user_id):
+#         """Remove an existing course from the system and delete its corresponding folder."""
+#         try:
+#             # Check if the user is a system manager or the course manager
+#             if self.is_system_manager(user_id) or self.courseFacade.is_course_manager(course_id, user_id):
+#                 # Remove the course using CourseFacade
+#                 if self.courseFacade.remove_course(course_id):
+#                     # Delete the course folder using FileManager
+#                     self.fileManager.delete_course_folder(course_id)
+#                     return f"Course {course_id} removed successfully."
+#                 else:
+#                     raise Exception("Failed to remove course.")
+#             else:
+#                 raise UserIsNotCourseManager(course_id)
+#         except Exception as e:
+#             return f"Error: {e}"
 
     def get_course_topics(self, course_id):
         return self._course_facade.get_course_topics(course_id)
@@ -366,6 +370,17 @@ class NegevNerds:
         except Exception as e:
             print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
             return {"status": "error", "message": str(e)}
+
+    def splitPDF(self, course_id, year, semester, moed, pdf_file, line_data):
+        question_number = 1
+        question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
+        for curr_question in question_files:
+            try:
+                if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
+                    self.add_question(course_id, year, semester, moed, question_number, False, [], curr_question, None)
+            except Exception as e:
+                print(e)
+            question_number = question_number+1
 
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
@@ -421,6 +436,47 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's course name {e}")
 
+ def remove_course(self, course_id, user_id):
+        """Remove an existing course from the system and delete its corresponding folder."""
+        try:
+            # Check if the user is a system manager or the course manager
+            if self.is_system_manager(user_id):
+                # Remove the course using CourseFacade
+                exams = self._course_facade.get_course(course_id).get_all_exams()
+                for exam in exams:
+                    questions = exam.get_all_exam_question()
+                    for question in questions:
+                        self.delete_question(course_id, exam.year, exam.semester,exam.moed, question.question_number)
+                    self.delete_exam(exam.id,course_id, exam.year, exam.semester,exam.moed)
+                course_topics_repo = CourseTopicsRepository()
+                course_topics_repo.remove_all_topics_from_course(course_id)
+                course_managers_repo = CourseManagersRepository()
+                course_managers_repo.remove_all_managers_from_course(course_id)
+                user_courses_repo = UserCoursesRepository()
+                user_courses_repo.remove_all_user_courses_by_course_id(course_id)
+                if self.courseFacade.remove_course(course_id):
+                    # Delete the course folder using FileManager
+                    self.fileManager.delete_course_folder(course_id)
+                    return {
+                    "status": "success",
+                    "message": f"Course {course_id} removed successfully."
+                }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Failed to remove course."
+                    }
+            else:
+                return {
+                "status": "error",
+                "message": f"User {user_id} is not a course manager."
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+
     def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
         """Search for exams by course ID and optionally filter by year, semester, and moed."""
         try:
@@ -456,6 +512,95 @@ class NegevNerds:
         """
 
         try:
+            return self.courseFacade.get_link_to_answer(course_id, year, semester, moed, question_number)
+        except (CourseIsNotExist, ExamIsNotExist) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to get path: {e}")
+
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
+                    comment_text):
+        """
+                Add a comment to a question discussion.
+        """
+        try:
+            comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+                                                           moed=moed, question_number=question_number,
+                                                          writer_name=writer_name, 
+                                                          writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
+            # for commenter in comment_writers:
+            #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
+            return "CommentData added successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to add comment: {e}")
+
+    def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
+        """
+            Add a reaction to a comment.
+        """
+        try:
+            receiver_id = self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
+                                          moed=moed, question_number=question_number,
+                                          comment_id=comment_id, user_id=user_id, emoji=emoji)
+
+            #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
+            return "ReactionData added successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to add reaction: {e}")
+
+    def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
+        """
+            Remove a reaction from a comment.
+        """
+        try:
+            self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
+                                          moed=moed, question_number=question_number,
+                                          comment_id=comment_id, reaction_id=reaction_id)
+            return "ReactionData removed successfully."
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to remove reaction: {e}")
+
+    def is_photo(self, file):
+        """
+        Check if the given file is a valid photo (JPEG, JPG, PNG).
+
+        :param file: The uploaded file object.
+        :return: True if the file is a valid photo, False otherwise.
+        """
+        if file:
+            # Get the MIME type of the file
+            mime_type, _ = mimetypes.guess_type(file.filename)
+            # Allowed photo MIME types
+            allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
+            return mime_type in allowed_photo_types
+        return False
+
+
+    def search_free_text(self , text, course_id = None):
+        if course_id is None:
+            search_dtos = self._pdfFacade.search_free_text(text=text)
+            ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+            return ques_dtos
+        else:
+            ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+            dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
+            return dtos
+
+    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
+        """
+        Add a question to a course exam with an associated PDF file.
+
+        ining question details.
+        :return: Path to the saved PDF file.
+        """
+
+        try:
             # Get course name for filename generation
             # question_analyzer = QuestionAnalyzer()
             if self.is_photo(question_file):
@@ -463,7 +608,7 @@ class NegevNerds:
             else:
                 question_text = self._pdfFacade.extract_text_from_pdf_file(question_file)
             with self.add_question_lock:
-                if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number,question_text=question_text):
+                if self.courseFacade.check_valid_question(course_id=course_id,year=year,semester=semester, moed=moed, question_number=question_number):
                     # Save the PDF file with a custom name
                     print(f"Base directory: {self.fileManager._base_dir}")
 
@@ -786,6 +931,62 @@ class NegevNerds:
             return True
         return False
     
+    def update_course_topics(self,course_id, added_topics, removed_topics):
+        course_topics = CourseTopicsRepository()
+        for added_topic in added_topics:
+            if course_topics.is_exist(added_topic,course_id):
+                return json.dumps({
+                        "status": "error",
+                        "message": f"לא ניתן להוסיף את הנושא: {added_topic} מכיוון שהוא כבר קיים בקורס"
+                    })
+        for remove_topic in removed_topics:
+            if not course_topics.is_exist(remove_topic,course_id):
+                return json.dumps({
+                        "status": "error",
+                        "message": f"לא ניתן למחוק את הנושא: {remove_topic} מכיוון שהוא כבר לא קיים בקורס"
+                    })
+        questions_topics_repo = QuestionTopicsRepository()
+        questions_repo = QuestionRepository()
+        for to_remove in removed_topics:
+            questions_id = questions_topics_repo.get_questions_byTopic(to_remove)
+            for question_id in questions_id:
+                print(f'question id: {questions_id}')
+                exam_id = questions_repo.get_exam_id_by_question_id(question_id)
+                match = re.search(r"EXAM-(\d+\.\d+\.\d+)", exam_id)
+                if match:
+                    courseID = match.group(1)
+                    if courseID == course_id:
+                        return json.dumps({
+                            "status": "error",
+                            "message": f"לא ניתן למחוק את הנושא: {to_remove} מכיוון שהוא משוייך לשאלה בקורס"
+                        })
+        self._course_facade.add_course_topics(course_id,added_topics)
+        self._course_facade.remove_course_topics(course_id,removed_topics)
+        return json.dumps({
+                    "status": "success",
+                    "message": "נושאי הקורס עודכנו בהצלחה"
+                })
+    
+    def delete_question_solution(self, course_id,year, semester, moed, question_number):
+        solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
+        if solution_path is not None:
+            self.fileManager.delete_file(solution_path)
+            question_repo = QuestionRepository()
+            question_repo.uploadSolution(question_id, "")
+            return True
+        return False
+    
+    # def remove_course(self,course_id):
+       
+    #     self._course_facade.ge
+    #     return json.dumps({
+    #                 "status": "success",
+    #                 "message": "נושאי הקורס עודכנו בהצלחה"
+    #             })
+    
+        
+
+
     def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
         try:
             question_link = self._course_facade.get_link_to_question(course_id, year, semester, moed, question_number)

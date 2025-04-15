@@ -125,6 +125,7 @@ class CourseRepository:
 
             session.delete(course_model)
             session.commit()
+            return True
         except Exception as e:
             session.rollback()
             raise e

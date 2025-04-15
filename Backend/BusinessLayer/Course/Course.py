@@ -8,6 +8,7 @@ from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
 class Course:
@@ -175,7 +176,7 @@ class Course:
         """Add a topic to the course."""
         with self.course_topics_lock:
             if course_topic not in self.course_topics:
-                self.course_topics.append(course_topic)
+                self.course_topics.add(course_topic)
                 course_topics_repo = CourseTopicsRepository()
                 course_topics_repo.add_Topic_to_course(course_id=self.course_id, topic=course_topic)
             else:
@@ -397,7 +398,7 @@ class Course:
     #         else:
     #             raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
-    def check_valid_question(self, year, semester, moed, question_number, question_text):
+    def check_valid_question(self, year, semester, moed, question_number):
         # Get or create the exam
         currExam = self.get_exam(year, semester, moed)
         if currExam is None:
@@ -511,6 +512,10 @@ class Course:
                                  pdf__answer_path, question_text)
     
     def edit_question_topic(self, year, semester, moed, question_number, topics):
+        question_topic_repo = CourseTopicsRepository()
+        for topic in topics:
+            if not question_topic_repo.is_exist(topic, self.course_id):
+                return False
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)
