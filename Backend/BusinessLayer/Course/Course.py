@@ -244,7 +244,6 @@ class Course:
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
-
     def get_exam_full_pdf(self, year, semester, moed):
         """
         Checks if the full exam PDF exists and returns the result.
@@ -269,7 +268,6 @@ class Course:
         # else:
         #     raise Exception("exam did not uploaded yet")
 
-
     def check_exam_full_pdf(self, year, semester, moed):
         """
         Checks if the full exam PDF exists and returns the result.
@@ -287,7 +285,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(year,semester ,moed)
+            raise ExamIsNotExist(year, semester, moed)
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
             return True
