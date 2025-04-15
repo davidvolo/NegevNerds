@@ -36,16 +36,15 @@ class CourseFacade:
 
             self.courses_lock = threading.Lock()
 
-
     """--------------course functionality--------------"""
-
     def register_to_course(self, course_id, user_id):
         course = self.get_course(course_id)
         if course is not None:
             course.add_student(user_id)
             #user_courses_rep = UserCoursesRepository()
             #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
-
+        else:
+            raise CourseIsNotExist(course_id)
 
     def get_questions_dto_by_search_dtos(self , dtos: List[SearchDTO]):
         questions_repo = QuestionRepository()
@@ -133,8 +132,10 @@ class CourseFacade:
             del self.courses[course_id]
             course_repo = CourseRepository()
             course_repo.delete_course(course_id=course_id)
+            return True
         else:
             raise CourseIsNotExist(course_id)
+            return False
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id=course_id)
@@ -435,9 +436,7 @@ class CourseFacade:
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
     
-    def check_exam_full_pdf(self, course_id, year, semester, moed, ):
-        """
-        """
+    def check_exam_full_pdf(self, course_id, year, semester, moed):
         try:
             course = self.get_course(course_id)
             if not course:
