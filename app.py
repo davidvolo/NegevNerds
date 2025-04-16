@@ -14,7 +14,12 @@ from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 import os
 import sys
 
+import subprocess
+import psutil
+import time
+
 sys.path.append('/home/david/backend/NegevNerds')
+
 
 
 
@@ -69,7 +74,39 @@ def custom_401(error):
     }), 401
 
 
+
+def is_elasticsearch_running():
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        if 'elasticsearch' in ' '.join(proc.info['cmdline']):
+            return True
+    return False
+
+
+# Function to check if Elasticsearch is running
+def is_elasticsearch_running():
+    for process in psutil.process_iter(['pid', 'name']):
+        if 'elasticsearch' in process.info['name'].lower():
+            return True
+    return False
+
+# Function to start Elasticsearch
+def start_elasticsearch():
+    # Update this path to where your Elasticsearch is located
+    elasticsearch_path = r"C:\Users\ktnad\Downloads\elasticsearch-9.0.0-windows-x86_64\elasticsearch-9.0.0\bin\elasticsearch.bat"
+
+    # Run the elasticsearch.bat file using subprocess
+    subprocess.Popen([elasticsearch_path], shell=True)
+    print("Elasticsearch is starting...")
+    time.sleep(10)  # Wait a few seconds for Elasticsearch to start
+
+
 def main():
+
+    if not is_elasticsearch_running():
+        print("Elasticsearch is not running. Starting it now...")
+        start_elasticsearch()
+    else:
+        print("Elasticsearch is already running.")
 
     print("Starting the ExamData Preparation System API...")
 

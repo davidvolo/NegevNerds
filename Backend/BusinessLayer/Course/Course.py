@@ -286,7 +286,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(year,semester ,moed)
+            return False
         exam_pdf_link = exam.link  # Check for the exam link
         if exam_pdf_link != "":
             return True

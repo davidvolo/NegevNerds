@@ -1253,6 +1253,7 @@ def check_exam_full_pdf():
         semester = data.get('semester')
         moed = data.get('moed')
 
+
         # Validate required fields
         if not all([course_id, year, semester, moed]):
             return jsonify({
@@ -1288,10 +1289,19 @@ def uploadFullExamPdf():
         response = jsonify(success=True)
         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Headers', 'multipart/form-data')
+
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         return response
 
     try:
+        # Extract required fields from the form data
+        print("Content-Type:", request.content_type)
+        for entry in request.files:
+            print("Received request to upload full exam PDF file" , entry)
+        for entry in request.form:
+            print("Received request to upload full exam PDF" , entry)
+
         # Validate that a file is included in the request
         if 'pdf_exam' not in request.files:
             return jsonify({
