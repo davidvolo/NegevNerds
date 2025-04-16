@@ -583,14 +583,10 @@ class NegevNerds:
 
 
     def search_free_text(self , text, course_id = None):
-        if course_id is None:
-            search_dtos = self._pdfFacade.search_free_text(text=text)
-            ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-            return ques_dtos
-        else:
-            ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-            dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
-            return dtos
+        search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+        ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+        return ques_dtos
+
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
         """
