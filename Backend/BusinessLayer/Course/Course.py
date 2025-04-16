@@ -8,6 +8,7 @@ from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
+from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 
 
 class Course:
@@ -175,7 +176,7 @@ class Course:
         """Add a topic to the course."""
         with self.course_topics_lock:
             if course_topic not in self.course_topics:
-                self.course_topics.append(course_topic)
+                self.course_topics.add(course_topic)
                 course_topics_repo = CourseTopicsRepository()
                 course_topics_repo.add_Topic_to_course(course_id=self.course_id, topic=course_topic)
             else:
@@ -243,7 +244,6 @@ class Course:
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
-
     def get_exam_full_pdf(self, year, semester, moed):
         """
         Checks if the full exam PDF exists and returns the result.
@@ -267,7 +267,6 @@ class Course:
         # return exam_pdf_link
         # else:
         #     raise Exception("exam did not uploaded yet")
-
 
     def check_exam_full_pdf(self, year, semester, moed):
         """
@@ -513,6 +512,10 @@ class Course:
                                  pdf__answer_path, question_text)
     
     def edit_question_topic(self, year, semester, moed, question_number, topics):
+        question_topic_repo = CourseTopicsRepository()
+        for topic in topics:
+            if not question_topic_repo.is_exist(topic, self.course_id):
+                return False
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)

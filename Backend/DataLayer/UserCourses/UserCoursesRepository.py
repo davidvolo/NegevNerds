@@ -123,4 +123,13 @@ class UserCoursesRepository:
         except Exception as e:
             raise e
 
+    def remove_all_user_courses_by_course_id(self, course_id):
+        try:
+            with self.Session() as session:
+                session.query(UserCoursesModel).filter_by(course_id=course_id).delete()
+                session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
 

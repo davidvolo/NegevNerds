@@ -98,5 +98,16 @@ class CourseTopicsRepository:
         finally:
             session.close()
 
+    def remove_all_topics_from_course(self, course_id):
+        session = self.Session()
+        try:
+            session.query(CourseTopicsModel).filter_by(course_id=course_id).delete()
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
 
 

@@ -88,6 +88,17 @@ class QuestionRepository:
             raise e
         finally:
             session.close()
+    
+    def get_exam_id_by_question_id(self, question_id):
+
+        session = self.Session()
+        try:
+            exam_id = session.query(QuestionModel.exam_id).filter_by(question_id=question_id).scalar()
+            return exam_id
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
 
     def get_question_by_exam_id(self, exam_id):
 

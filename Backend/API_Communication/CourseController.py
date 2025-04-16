@@ -103,6 +103,7 @@ def register_to_course():
             "error": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/open_course', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -199,11 +200,13 @@ def remove_course():
         # Call the service layer's register method directly
         result = serviceLayer.remove_course(course_id, user_id)
 
-        # Parse the JSON string
         parsed_result = json.loads(result)
 
-        # Check the status and return appropriate response
-        return parse_jsonify(parsed_result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
 
     except json.JSONDecodeError:
         # Handle JSON decoding error
@@ -471,6 +474,7 @@ def get_course_topics():
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/get_question_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -531,6 +535,7 @@ def get_question_pdf():
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/get_answer_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -584,6 +589,52 @@ def get_answer_pdf():
         #return send_file(answer_path, mimetype='application/pdf')
     except Exception as e:
         print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@course_controller.route('/api/course/check_answer_for_question', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def check_answer_for_question():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        answer_path = serviceLayer.get_answer_path(course_id, year, semester, moed, question_number)
+
+        if answer_path:  # אם הנתיב לא ריק
+            return jsonify({
+                "status": "success",
+                "data": True
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "data": False
+            }), 200
+
+    except Exception as e:
+        print(f"Error in check_answer_for_question: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -643,6 +694,7 @@ def get_course(course_id):
             "status": "error",
             "message": str(e)
         }), 500
+
 
 @course_controller.route('/api/course/get_courses_by_name/<name_part>', methods=['GET', 'OPTIONS'])
 @cross_origin()
@@ -754,6 +806,7 @@ def get_courses_by_name(name_part):
 #             "message": "An unexpected error occurred",
 #             "error": str(e)
 #         }), 500
+
 
 @course_controller.route('/api/course/add_question', methods=['POST', 'OPTIONS'])
 @cross_origin()
@@ -1069,6 +1122,7 @@ def search_question_by_specifics():
             "message": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/search_questions_by_topic', methods=['OPTIONS', 'POST'])
 @cross_origin()
 @jwt_required()
@@ -1281,6 +1335,7 @@ def check_exam_full_pdf():
             "error": str(e)
         }), 500
 
+
 @course_controller.route('/api/course/uploadFullExamPdf', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -1431,7 +1486,6 @@ def download_exam_pdf():
         }), 500
 
 
-
 @course_controller.route('/api/checkExistSolution', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -1564,6 +1618,7 @@ def is_course_manager():
         print(f"Error in is_course_manager: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
+
 @course_controller.route('/api/course/is_system_manager', methods=['POST'])
 @cross_origin()
 @jwt_required()
@@ -1571,7 +1626,8 @@ def is_system_manager():
     try:
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
-            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"]
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
+            ]
 
         user_id = get_jwt_identity()
         if user_id in user_ids_managers:
@@ -2014,6 +2070,68 @@ def swap_question_file():
             "message": "An unexpected error occurred.",
             "error": str(e)
         }), 500
+
+@course_controller.route('/api/course/update_topics', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def update_course_topics():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        course_id = request.form.get('course_id')
+        added_topics = request.form.getlist('added_topics[]')
+        removed_topics = request.form.getlist('removed_topics[]')
+
+        # Validate required fields
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing course_id."
+            }), 400
+        
+        if added_topics is None or removed_topics is None:
+            return jsonify({
+                "success": False,
+                "message": "Missing topic lists (added_topics or removed_topics)."
+            }), 400
+        
+        # Check for invalid (empty or whitespace-only) topics
+        for topic in added_topics:
+            if not topic.strip():
+                return jsonify({
+                    "success": False,
+                    "message": "נושא שנוסף אינו יכול להיות ריק או להכיל רק רווחים."
+                }), 400
+
+
+        # Call service layer (you'll implement this logic)
+        result = serviceLayer.update_course_topics(
+            course_id, added_topics, removed_topics
+        )
+
+        parsed_result = json.loads(result)
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message")
+        }), 200
+
+    except Exception as e:
+        print(f"Error in update_course_topics: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+
+
+
 
 
 # @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
