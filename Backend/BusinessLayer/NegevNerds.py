@@ -18,10 +18,15 @@ from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository 
 from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
+from Backend.DataLayer.DiscussionFollow.DiscussionFollowRepository import DiscussionFollowRepository
+from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
+from Backend.DataLayer.UserData.UserRepository import UserRepository
 
 import re
 import json
-import datetime
+# import datetime
+from datetime import datetime
+
 from flask_jwt_extended import create_access_token
 
 
@@ -250,7 +255,6 @@ class NegevNerds:
         try:
             self.courseFacade.register_to_course(course_id, user_id)
             self.userFacade.registerToCourse(course_id, user_id)
-            print("UserData successfully registered to the course", user_id, course_id)
             return "UserData successfully registered to the course."
         except Exception as e:
             return f"Error: {e}"
@@ -278,7 +282,6 @@ class NegevNerds:
             result = self.userFacade.get_user_name(user_id)
             return result
         except Exception as e:
-            print(f"Error in NegevNerds.get_user_name: {str(e)}")
             return {"status": "error", "message": str(e)}
 
     def is_user_manager(self, course_id, user_id):
@@ -368,7 +371,6 @@ class NegevNerds:
             result = self.courseFacade.get_exam_full_pdf(course_id, year, semester, moed)
             return result
         except Exception as e:
-            print(f"Error in NegevNerds.get_exam_pdf_link: {str(e)}")
             return {"status": "error", "message": str(e)}
 
     def splitPDF(self, course_id, year, semester, moed, pdf_file, line_data):
@@ -519,17 +521,35 @@ class NegevNerds:
             raise Exception(f"Failed to get path: {e}")
 
     def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
-                    comment_text):
+                    comment_text, question_id):
         """
                 Add a comment to a question discussion.
         """
         try:
-            comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+            father_comment_id = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
                                                            moed=moed, question_number=question_number,
                                                           writer_name=writer_name, 
                                                           writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
             # for commenter in comment_writers:
             #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
+            frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+            question_link = f"{frontend_base_url}/question/{course_id}/{year}/{semester}/{moed}/{question_number}"
+            if father_comment_id != "0" and father_comment_id != writer_id:
+                message = f"{writer_name} הגיב/ה על תגובה שלך בדיון "
+                self._notification_facade.send_notification(receiver_id=father_comment_id, sender_id=writer_id, message = message, isApproved=False,
+                                                                link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                    comment_to_comment=True, react_to_comment=False, remove_course_manager=False)
+
+            discussion_following_repo =  DiscussionFollowRepository()
+            get_user_following_discuussion = discussion_following_repo.get_followers_for_question(question_id)
+
+            for user_id in get_user_following_discuussion:
+                if user_id != writer_id and user_id != father_comment_id:
+                    message = f"{writer_name} הוסיפ/ה תגובה בדיון שאת/ה עוקב/ת אחריו"
+                    self._notification_facade.send_notification(receiver_id=user_id, sender_id=writer_id, message = message, isApproved=False,
+                                                                link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=True,
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+            
             return "CommentData added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
             raise e
@@ -544,6 +564,16 @@ class NegevNerds:
             receiver_id = self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
                                           moed=moed, question_number=question_number,
                                           comment_id=comment_id, user_id=user_id, emoji=emoji)
+            frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+            question_link = f"{frontend_base_url}/question/{course_id}/{year}/{semester}/{moed}/{question_number}"
+            if receiver_id != "0" and receiver_id != user_id:
+                user_repo = UserRepository()
+                writer_name =user_repo.get_user_full_name_by_id(receiver_id)
+                message = f"{writer_name} הוסיפ/ה רגש על תגובה שלך בדיון "
+                self._notification_facade.send_notification(receiver_id=receiver_id, sender_id=user_id, message = message, isApproved=False,
+                                                                link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                    comment_to_comment=False, react_to_comment=True, remove_course_manager=False)
+
 
             #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
             return "ReactionData added successfully."
@@ -551,6 +581,73 @@ class NegevNerds:
             raise e
         except Exception as e:
             raise Exception(f"Failed to add reaction: {e}")
+        
+    def format_relative_time(self, past_time):
+        now = datetime.now()
+        delta = now - past_time
+
+        seconds = int(delta.total_seconds())
+        minutes = seconds // 60
+        hours = minutes // 60
+        days = delta.days
+        weeks = days // 7
+        months = days // 30
+        years = days // 365
+
+        if seconds < 60:
+            return f"לפני {seconds} שניות"
+        elif minutes < 60:
+            return f"לפני {minutes} דקות"
+        elif hours < 24:
+            return f"לפני {hours} שעות"
+        elif days < 7:
+            return f"לפני {days} ימים"
+        elif weeks < 4:
+            return f"לפני {weeks} שבועות"
+        else:
+            return f"לפני {years} שנים"
+        
+    def get_unapproved_notification_list(self, user_id):
+        try:
+            repo = NotificationRepository()
+            notifications = repo.get_unapproved_notifications(user_id)
+
+            # Format response
+            response = []
+            for notif in notifications:
+                # Determine the type based on which boolean is True
+                notif_type = None
+                if notif.AppointSystemManager:
+                    notif_type = "AppointSystemManager"
+                elif notif.AppointCourseManager:
+                    notif_type = "AppointCourseManager"
+                elif notif.CommentToFollowing:
+                    notif_type = "CommentToFollowing"
+                elif notif.CommentToComment:
+                    notif_type = "CommentToComment"
+                elif notif.ReactToComment:
+                    notif_type = "ReactToComment"
+                elif notif.RemoveCourseManager:
+                    notif_type = "RemoveCourseManager"
+                
+                time_str = self.format_relative_time(notif.time) if notif.time else None
+                
+                response.append({ 
+                    "type": notif_type,
+                    "message": notif.message,
+                    "notification_id": notif.notification_id,
+                    "timestamp": time_str ,
+                    "link": notif.link
+                })
+            return json.dumps({
+            "success": True,
+            "notifications": response})
+
+        except Exception as e:
+            return json.dumps({
+                "success": False,
+                "message": "Failed to fetch notifications",
+                "error": str(e) })
 
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
         """
@@ -729,39 +826,25 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
-    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
-                    comment_text):
-        """
-                Add a comment to a question discussion.
-        """
-        try:
-            comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
-                                                           moed=moed, question_number=question_number,
-                                                          writer_name=writer_name, 
-                                                          writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
-            # for commenter in comment_writers:
-            #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
-            return "CommentData added successfully."
-        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
-            raise e
-        except Exception as e:
-            raise Exception(f"Failed to add comment: {e}")
+    # def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
+    #                 comment_text):
+    #     """
+    #             Add a comment to a question discussion.
+    #     """
+    #     try:
+    #         comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+    #                                                        moed=moed, question_number=question_number,
+    #                                                       writer_name=writer_name, 
+    #                                                       writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
+    #         # for commenter in comment_writers:
+    #         #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
+    #         return "CommentData added successfully."
+    #     except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
+    #         raise e
+    #     except Exception as e:
+    #         raise Exception(f"Failed to add comment: {e}")
 
-    def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
-        """
-            Add a reaction to a comment.
-        """
-        try:
-            receiver_id = self.courseFacade.add_reaction(course_id=course_id, year=year, semester=semester,
-                                          moed=moed, question_number=question_number,
-                                          comment_id=comment_id, user_id=user_id, emoji=emoji)
-
-            #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
-            return "ReactionData added successfully."
-        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
-            raise e
-        except Exception as e:
-            raise Exception(f"Failed to add reaction: {e}")
+    
 
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
         """
@@ -844,17 +927,7 @@ class NegevNerds:
             print(f"Error occurred: {str(e)}")
             raise Exception(f"Failed to search questions: {e}")
 
-    # def get_user_notifications(self, user_id):
-    #     """Search for questions based on the provided specifics for the course."""
-    #     # try:
-    #
-    #         # Fetch questions based on the specifics from the course
-    #     notifications = self._notification_facade.get_user_notifications(user_id)
-    #     return notifications
-    #
-    #     # except Exception as e:
-    #     #     print(f"Error occurred: {str(e)}")
-    #     #     raise Exception(f"Failed to search questions: {e}")
+   
 
     def get_user_last_notifications(self, user_id, number_of_notifications):
         """Search for questions based on the provided specifics for the course."""
@@ -946,7 +1019,7 @@ class NegevNerds:
         for to_remove in removed_topics:
             questions_id = questions_topics_repo.get_questions_byTopic(to_remove)
             for question_id in questions_id:
-                print(f'question id: {questions_id}')
+
                 exam_id = questions_repo.get_exam_id_by_question_id(question_id)
                 match = re.search(r"EXAM-(\d+\.\d+\.\d+)", exam_id)
                 if match:
@@ -980,7 +1053,17 @@ class NegevNerds:
     #                 "message": "נושאי הקורס עודכנו בהצלחה"
     #             })
     
-        
+    def is_following(self,user_id, question_id):
+        repo = DiscussionFollowRepository()
+        return repo.is_following(user_id=user_id, question_id=question_id)
+
+    def follow_question(self, user_id, question_id):
+        repo = DiscussionFollowRepository()
+        repo.follow(user_id, question_id)
+
+    def unfollow_question(self, user_id, question_id):
+        repo = DiscussionFollowRepository()
+        repo.unfollow(user_id, question_id)
 
 
     def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
@@ -1023,10 +1106,8 @@ class NegevNerds:
                 question_new_path = self.fileManager.move_question_file(question_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
                 solution_old_path = self._course_facade.get_answer_path(old_course_id, old_year, old_semester, old_moed, old_question_number)
                 solution_new_path = ""
-                print(solution_old_path)
                 if solution_old_path != "":
                     solution_new_path = self.fileManager.move_solution_file(solution_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
-                print(solution_new_path)
                 res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
                                                         new_year, new_semester, new_moed, new_question_number, exam_id,question_new_path, solution_new_path)
                 if res:
@@ -1053,6 +1134,10 @@ class NegevNerds:
                         "status": "error",
                         "message": "אחד מן הפרמטרים לא חוקי"
                         })
+    
+    def mark_notification_as_seen(self,notification_id):
+        notification_repo = NotificationRepository()
+        return notification_repo.mark_as_seen(notification_id)
 
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """

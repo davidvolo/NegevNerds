@@ -3,6 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from ..Base import Base
 
+from Backend.DataLayer.DiscussionFollow.DiscussionFollowModel import DiscussionFollowModel
+
 
 class UserModel(Base):
     """
@@ -26,6 +28,8 @@ class UserModel(Base):
     course_managers = relationship('CourseManagersModel', back_populates='manager')
     reactions = relationship('ReactionModel',
                             back_populates='user')
+    follows = relationship('DiscussionFollowModel', back_populates='user', cascade='all, delete-orphan')
+
 
     def to_business_model(self):
         from Backend.BusinessLayer.User.User import User

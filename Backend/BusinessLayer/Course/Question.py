@@ -8,6 +8,7 @@ from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 
 
 class Question:
@@ -139,7 +140,12 @@ class Question:
                                      question_id=self.id)
             if comment is not None:
                 self.comments.append(comment)
-                return set(comment.writer_id for comment in self.comments)
+                if prev_id != "0":
+                    comment_repo = CommentRepository()
+                    comment =comment_repo.get_comment_by_id(prev_id)
+                    return comment.writer_id   
+                else:
+                    return "0"         
             else:
                 raise Exception("Problem to create comment")
 

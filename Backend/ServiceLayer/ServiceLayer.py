@@ -529,7 +529,7 @@ class ServiceLayer:
                      writer_name,
                      writer_id
                      , prev_id,
-                     comment_text):
+                     comment_text, question_id):
         """
         Handles adding a comment to a question discussion.
         :return: JSON response indicating success or failure.
@@ -537,7 +537,7 @@ class ServiceLayer:
         try:
 
             result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
-                                                  writer_name,writer_id, prev_id, comment_text)
+                                                  writer_name,writer_id, prev_id, comment_text, question_id)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -547,6 +547,15 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
+    
+
+    def get_unapproved_notification_list(self,user_id):
+        return self.negev_nerds.get_unapproved_notification_list(user_id)
+
+    def mark_notification_as_seen(self,notification_id):
+        return self.negev_nerds.mark_notification_as_seen(notification_id)
+
+
 
     def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
         """
@@ -994,9 +1003,7 @@ class ServiceLayer:
             })
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
-            result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)
-            print("result from negevnerds ")
-            print(result)        
+            result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)    
             # if result.get("status") == "success":
             return json.dumps({
                 "success": True,
@@ -1112,6 +1119,20 @@ class ServiceLayer:
             "status": "error",
             "message": str(e)
         })
+    
+    def is_following(self, user_id, question_id):
+        try:
+            return self.negev_nerds.is_following(user_id, question_id)
+        except Exception as e:
+            raise e  # Let the controller handle the error
+    
+    def follow_question(self, user_id, question_id):
+        self.negev_nerds.follow_question(user_id, question_id)
+
+    def unfollow_question(self, user_id, question_id):
+        self.negev_nerds.unfollow_question(user_id, question_id)
+
+
     
     # def remove_course(self,course_id):
     #     try:
