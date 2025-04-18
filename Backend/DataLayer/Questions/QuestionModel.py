@@ -6,6 +6,7 @@ from ..Base import Base
 from ...BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.CommentData.CommentModel import CommentModel
 
+from Backend.DataLayer.DiscussionFollow.DiscussionFollowModel import DiscussionFollowModel
 
 class QuestionModel(Base):
 
@@ -31,6 +32,9 @@ class QuestionModel(Base):
     comments = relationship('CommentModel',
                           back_populates='question',
                           cascade='all, delete')
+    followers = relationship('DiscussionFollowModel', back_populates='question', cascade='all, delete-orphan')
+
+
 
     def to_business_model(self):
         from Backend.BusinessLayer.Course.Question import Question

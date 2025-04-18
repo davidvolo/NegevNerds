@@ -208,3 +208,43 @@ class UserRepository:
             raise e
         finally:
             session.close()
+
+    def get_user_email_by_id(self, user_id):
+        """
+        Retrieve a user's email by their ID
+
+        Args:
+            user_id (str): User's unique identifier
+
+        Returns:
+            str: Email address of the user, or None if not found
+        """
+        session = self.Session()
+        try:
+            user_model = session.query(UserModel).filter_by(user_id=user_id).first()
+            return user_model.email if user_model else None
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
+
+    def get_user_full_name_by_id(self, user_id):
+        """
+        Retrieve a user's full name by their ID
+
+        Args:
+            user_id (str): User's unique identifier
+
+        Returns:
+            str: Full name in the format "First Last", or None if not found
+        """
+        session = self.Session()
+        try:
+            user_model = session.query(UserModel).filter_by(user_id=user_id).first()
+            if user_model:
+                return f"{user_model.first_name} {user_model.last_name}"
+            return None
+        except Exception as e:
+            raise e
+        finally:
+            session.close()

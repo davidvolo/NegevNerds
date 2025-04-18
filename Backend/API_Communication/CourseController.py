@@ -5,7 +5,7 @@ import os
 import shutil
 import zipfile
 import requests  # Add this line at the top of your file
-from flask import Blueprint,request, jsonify, send_file
+from flask import Blueprint,request, jsonify, send_file, redirect
 from flask_cors import cross_origin, CORS
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -14,6 +14,7 @@ from Backend.DataLayer.DTOs.NotificationDTO import NotificationDTO
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 from urllib.parse import quote
+from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
 
 course_controller = Blueprint('course_controller', __name__)
 
@@ -907,10 +908,11 @@ def add_comment():
         writer_name = request.form.get('writer_name')
         writer_id = get_jwt_identity()
         prev_id = request.form.get('prev_id')
+        question_id = request.form.get('question_id')
         comment_text = request.form.get('comment_text')  # Optional
 
         # Validate required fields
-        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, comment_text]
+        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id, comment_text]
         if any(field is None for field in required_fields):
             return jsonify({
                 "success": False,
@@ -920,7 +922,7 @@ def add_comment():
         # Call the service layer
         result = serviceLayer.add_comment(
             course_id, year, semester, moed, question_number,
-            writer_name, writer_id, prev_id, comment_text
+            writer_name, writer_id, prev_id, comment_text, question_id
         )
 
         # Parse the service response
@@ -2118,34 +2120,167 @@ def update_course_topics():
             "error": str(e)
         }), 500
 
+@course_controller.route('/api/course/is_following', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def is_following():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+
+    try:
+        # Get current user from JWT token
+        user_id = get_jwt_identity()
+
+        # Get question_id from query params
+        question_id = request.args.get('question_id')
+
+        if not question_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing question_id."
+            }), 400
+
+        # Call the repository layer
+        is_following = serviceLayer.is_following(user_id=user_id, question_id=question_id)
+
+        return jsonify({
+            "success": True,
+            "is_following": is_following
+        }), 200
+
+    except Exception as e:
+        print(f"Error in is_following: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+@course_controller.route('/api/course/follow', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def follow_question():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not data or 'question_id' not in data:
+            return jsonify(success=False, message="Missing 'question_id' in request body."), 400
+
+        question_id = data['question_id']
+
+        # Check if already following
+        if serviceLayer.is_following(user_id, question_id):
+            return jsonify(success=False, message="Already following this question."), 400
+
+        serviceLayer.follow_question(user_id, question_id)
+
+        return jsonify(success=True, message="Followed successfully."), 200
+
+    except Exception as e:
+        print(f"Error in follow_question: {str(e)}")
+        return jsonify(success=False, message="An error occurred while following.", error=str(e)), 500
 
 
+@course_controller.route('/api/course/unfollow', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def unfollow_question():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not data or 'question_id' not in data:
+            return jsonify(success=False, message="Missing 'question_id' in request body."), 400
+
+        question_id = data['question_id']
+
+        # Check if the user is actually following this question
+        if not serviceLayer.is_following(user_id, question_id):
+            return jsonify(success=False, message="You are not following this question."), 400
+
+        serviceLayer.unfollow_question(user_id, question_id)
+
+        return jsonify(success=True, message="Unfollowed successfully."), 200
+
+    except Exception as e:
+        print(f"Error in unfollow_question: {str(e)}")
+        return jsonify(success=False, message="An error occurred while unfollowing.", error=str(e)), 500
 
 
+@course_controller.route('/api/course/get_unapproved_notification_list', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def get_unapproved_notification_list():
+    try:
+        user_id = get_jwt_identity()
+
+        res = serviceLayer.get_unapproved_notification_list(user_id)
+        res_dict = json.loads(res)  # 🔥 parse JSON string to dictionary
+        print(f'res:{res_dict}')
+
+        return jsonify(res_dict), 200
 
 
-# @course_controller.route('/api/course/delete_comment', methods=['DELETE'])
-# @cross_origin()
-# @jwt_required()
-# def delete_comment():
-#     if request.method == 'OPTIONS':
-#         response = jsonify(success=True)
-#         response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-#         response.headers.add('Access-Control-Allow-Methods', 'POST')
-#         return response
-#     try:
-#         data = request.get_json()
-#         comment_id = data.get('comment_id')
-#
-#
-#         # Validate input
-#         if not all([comment_id]):
-#             return jsonify({"success": False, "message": "Missing parameters"}), 400
-#
-#         # Call the service layer to delete the question
-#         serviceLayer.delete_comment(comment_id)
-#         return jsonify({"success": True, "message": "CommentData deleted successfully."}), 200
-#     except Exception as e:
-#         print(f"Error in delete_comment: {str(e)}")
-#         return jsonify({"success": False, "message": str(e)}), 500
+    except Exception as e:
+        print(f"Error in get_unapproved_notification_list: {e}")
+        return jsonify(success=False, message="Failed to fetch notifications", error=str(e)), 500
+
+@course_controller.route('/api/course/mark_as_seen', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def mark_as_seen():
+    try:
+        print("got_to_mark_as_seen")
+        print("Raw request data:", request.data)
+        data = request.get_json()
+
+        if not data or 'notification_id' not in data:
+            return jsonify(success=False, message="Missing 'notification_id' in request body."), 400
+
+        notification_id = data['notification_id']
+        print(f'notification_id: {notification_id}')
+
+        # Call service to mark as seen
+        result = serviceLayer.mark_notification_as_seen(notification_id)
+
+        if result:
+            return jsonify(success=True, message="Notification marked as seen"), 200
+        else:
+            return jsonify(success=False, message="Notification not found or not authorized"), 404
+
+    except Exception as e:
+        print(f"Error in mark_as_seen: {e}")
+        return jsonify(success=False, message="An error occurred", error=str(e)), 500
+
+@course_controller.route('/api/course/mark_as_seen_from_email', methods=['GET'])
+def mark_as_seen_from_email():
+    try:
+        notification_id = request.args.get("notification_id")
+        if not notification_id:
+            return "Missing notification_id", 400
+
+        # Mark as seen
+        result = serviceLayer.mark_notification_as_seen(notification_id)
+
+        if result:
+            # Fetch the notification to get the link
+            repo = NotificationRepository()
+            notification = repo.get_notification_by_id(notification_id)
+
+            if notification and notification.link:
+                return redirect(notification.link)
+            else:
+                return "Notification found, but no link to redirect.", 200
+        else:
+            return "Notification not found or already approved.", 404
+
+    except Exception as e:
+        print(f"Error in mark_as_seen_from_email: {e}")
+        return "Internal server error", 500
+
+

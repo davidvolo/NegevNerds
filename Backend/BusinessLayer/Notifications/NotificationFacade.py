@@ -23,6 +23,8 @@ class NotificationFacade:
         return self.late_notifications.get_last_user_notifications(user_id, number_of_notifications)
 
 
-    def send_notification(self, sender_id, receiver_id, message , need_approval):
-        self.late_notifications.add_notification(receiver_id=receiver_id, sender_id=sender_id, message=message,need_approval=need_approval)
+    def send_notification(self,receiver_id, sender_id, message, isApproved,link,appoint_system_manager, appoint_course_manager, comment_to_following,
+                 comment_to_comment, react_to_comment, remove_course_manager):
+        self.late_notifications.add_notification(receiver_id, sender_id, message, isApproved,link,appoint_system_manager, appoint_course_manager, comment_to_following,
+                 comment_to_comment, react_to_comment, remove_course_manager)
 
