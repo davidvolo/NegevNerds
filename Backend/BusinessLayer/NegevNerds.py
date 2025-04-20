@@ -505,20 +505,20 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to edit exam's link {e}")
 
-    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
-        """
-        Add a question to a course exam with an associated PDF file.
-
-        ining question details.
-        :return: Path to the saved PDF file.
-        """
-
-        try:
-            return self.courseFacade.get_link_to_answer(course_id, year, semester, moed, question_number)
-        except (CourseIsNotExist, ExamIsNotExist) as e:
-            raise e
-        except Exception as e:
-            raise Exception(f"Failed to get path: {e}")
+    # def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
+    #     """
+    #     Add a question to a course exam with an associated PDF file.
+    #
+    #     ining question details.
+    #     :return: Path to the saved PDF file.
+    #     """
+    #
+    #     try:
+    #         return self.courseFacade.get_link_to_answer(course_id, year, semester, moed, question_number)
+    #     except (CourseIsNotExist, ExamIsNotExist) as e:
+    #         raise e
+    #     except Exception as e:
+    #         raise Exception(f"Failed to get path: {e}")
 
     def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
                     comment_text, question_id):
@@ -648,41 +648,41 @@ class NegevNerds:
                 "success": False,
                 "message": "Failed to fetch notifications",
                 "error": str(e) })
+    #
+    # def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
+    #     """
+    #         Remove a reaction from a comment.
+    #     """
+    #     try:
+    #         self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
+    #                                       moed=moed, question_number=question_number,
+    #                                       comment_id=comment_id, reaction_id=reaction_id)
+    #         return "ReactionData removed successfully."
+    #     except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
+    #         raise e
+    #     except Exception as e:
+    #         raise Exception(f"Failed to remove reaction: {e}")
 
-    def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
-        """
-            Remove a reaction from a comment.
-        """
-        try:
-            self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
-                                          moed=moed, question_number=question_number,
-                                          comment_id=comment_id, reaction_id=reaction_id)
-            return "ReactionData removed successfully."
-        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
-            raise e
-        except Exception as e:
-            raise Exception(f"Failed to remove reaction: {e}")
-
-    def is_photo(self, file):
-        """
-        Check if the given file is a valid photo (JPEG, JPG, PNG).
-
-        :param file: The uploaded file object.
-        :return: True if the file is a valid photo, False otherwise.
-        """
-        if file:
-            # Get the MIME type of the file
-            mime_type, _ = mimetypes.guess_type(file.filename)
-            # Allowed photo MIME types
-            allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
-            return mime_type in allowed_photo_types
-        return False
+    # def is_photo(self, file):
+    #     """
+    #     Check if the given file is a valid photo (JPEG, JPG, PNG).
+    #
+    #     :param file: The uploaded file object.
+    #     :return: True if the file is a valid photo, False otherwise.
+    #     """
+    #     if file:
+    #         # Get the MIME type of the file
+    #         mime_type, _ = mimetypes.guess_type(file.filename)
+    #         # Allowed photo MIME types
+    #         allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
+    #         return mime_type in allowed_photo_types
+    #     return False
 
 
-    def search_free_text(self , text, course_id = None):
-        search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-        ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-        return ques_dtos
+    # def search_free_text(self , text, course_id = None):
+    #     search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+    #     ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+    #     return ques_dtos
 
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
@@ -852,6 +852,7 @@ class NegevNerds:
         """
         try:
             self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
+
                                           moed=moed, question_number=question_number,
                                           comment_id=comment_id, reaction_id=reaction_id)
             return "ReactionData removed successfully."
@@ -1036,14 +1037,14 @@ class NegevNerds:
                     "message": "נושאי הקורס עודכנו בהצלחה"
                 })
     
-    def delete_question_solution(self, course_id,year, semester, moed, question_number):
-        solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
-        if solution_path is not None:
-            self.fileManager.delete_file(solution_path)
-            question_repo = QuestionRepository()
-            question_repo.uploadSolution(question_id, "")
-            return True
-        return False
+    # def delete_question_solution(self, course_id,year, semester, moed, question_number):
+    #     solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
+    #     if solution_path is not None:
+    #         self.fileManager.delete_file(solution_path)
+    #         question_repo = QuestionRepository()
+    #         question_repo.uploadSolution(question_id, "")
+    #         return True
+    #     return False
     
     # def remove_course(self,course_id):
        
