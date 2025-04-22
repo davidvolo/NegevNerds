@@ -39,6 +39,9 @@ def allowed_file(filename):
     """Check if the file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def allowed_media_for_comment(filename):
+    """Check if the file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpeg', 'jpg', 'png'}
 
 def parse_jsonify(parsed_result):
     # Check the status and return appropriate response
@@ -536,6 +539,67 @@ def get_question_pdf():
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/get_comment_media', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_comment_media():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+        comment_id = request.args.get('comment_id')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}, comment_id={comment_id}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number, comment_id]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        media_path = serviceLayer.get_comment_media_link(course_id, year, semester, moed, question_number, comment_id)
+        print(f"Generated file path: {media_path}")
+
+        # בדיקה אם הקובץ קיים
+        if not media_path or not os.path.exists(media_path):
+            return jsonify({
+                "status": "success",
+                "media": None
+            }), 200
+
+        # שליחת הקובץ ללקוח
+
+        mime_type, _ = mimetypes.guess_type(media_path)
+
+        # if mime_type == 'application/pdf':
+        #     # If it's a PDF, send as PDF
+        #     return send_file(question_path, mimetype='application/pdf')
+        if mime_type and mime_type.startswith('image/'):
+            # If it's an image (JPEG, PNG, etc.), send as an image
+
+            return send_file(media_path, mimetype=mime_type)
+        else:
+            # Handle unsupported file types
+            return 'Unsupported file type', 400
+    except Exception as e:
+        print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 
 @course_controller.route('/api/course/get_answer_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
@@ -909,7 +973,8 @@ def add_comment():
         writer_id = get_jwt_identity()
         prev_id = request.form.get('prev_id')
         question_id = request.form.get('question_id')
-        comment_text = request.form.get('comment_text')  # Optional
+        comment_text = request.form.get('comment_text')
+        photo_file = request.files.get('photo_file')  # Optional
 
         # Validate required fields
         required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id, comment_text]
@@ -919,10 +984,16 @@ def add_comment():
                 "message": "Missing required fields."
             }), 400
 
+        if photo_file and not allowed_media_for_comment(photo_file.filename):
+            return jsonify({
+                "success": False,
+                "message": "Invalid file type for photo_file. Allowed types are JPEG, JPG, PNG."
+            }), 400
+
         # Call the service layer
         result = serviceLayer.add_comment(
             course_id, year, semester, moed, question_number,
-            writer_name, writer_id, prev_id, comment_text, question_id
+            writer_name, writer_id, prev_id, comment_text, photo_file, question_id
         )
 
         # Parse the service response

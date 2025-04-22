@@ -124,12 +124,12 @@ class Question:
             else:
                 print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, writer_name, writer_id,prev_id, comment_text, deleted, edited):
+    def add_comment(self, comment_id, writer_name, writer_id,prev_id, comment_text, deleted, edited, link_to_media):
         """
         Add a CommentData to the comments list.
         """
         with self.comments_lock:
-            comment = Comment.create(comment_id=self.generate_comment_id(),
+            comment = Comment.create(comment_id=comment_id,
                                      writer_name=writer_name,
                                      writer_id = writer_id,
                                      date=datetime.now(),
@@ -137,6 +137,7 @@ class Question:
                                      comment_text=comment_text,
                                      deleted=deleted,
                                      edited=edited,
+                                     link_to_media=link_to_media,
                                      question_id=self.id)
             if comment is not None:
                 self.comments.append(comment)
@@ -165,6 +166,12 @@ class Question:
         for comment in self.comments:
             if comment.comment_id == comment_id:
                 return comment.add_reaction(user_id, emoji)
+        raise CommentNotFound
+
+    def get_comment_media_link(self, comment_id):
+        for comment in self.comments:
+            if comment.comment_id == comment_id:
+                return comment.get_link_to_media()
         raise CommentNotFound
 
     def delete_comment(self, comment_id):

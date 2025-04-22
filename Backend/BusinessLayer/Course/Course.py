@@ -412,7 +412,7 @@ class Course:
             else:
                 raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
-    def add_comment(self, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
+    def add_comment(self, year, semester, moed, question_number, comment_id, writer_name, writer_id,prev_id, comment_text, link_to_media):
         """
         Add a CommentData to specific question.
         """
@@ -422,8 +422,7 @@ class Course:
         question = exam.get_question(question_number)
         if question is None:
             raise QuestionNotFound
-        return question.add_comment(writer_name, writer_id,prev_id, comment_text, False, False)
-
+        return question.add_comment(comment_id, writer_name, writer_id,prev_id, comment_text, False, False, link_to_media)
 
     def get_question_path(self, year, semester, moed, question_number):
         exam = self.get_exam(year=year,semester=semester,moed=moed)
