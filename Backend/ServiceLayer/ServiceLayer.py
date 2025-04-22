@@ -529,7 +529,7 @@ class ServiceLayer:
                      writer_name,
                      writer_id
                      , prev_id,
-                     comment_text, question_id):
+                     comment_text, photo_file, question_id):
         """
         Handles adding a comment to a question discussion.
         :return: JSON response indicating success or failure.
@@ -537,7 +537,7 @@ class ServiceLayer:
         try:
 
             result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
-                                                  writer_name,writer_id, prev_id, comment_text, question_id)
+                                                  writer_name,writer_id, prev_id, comment_text, photo_file, question_id)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -654,6 +654,15 @@ class ServiceLayer:
     #             "status": "error",
     #             "message": str(e)
     #         })
+
+    def get_comment_media_link(self, course_id, year, semester, moed, questionNumber, comment_id):
+        try:
+            return self.negev_nerds.get_comment_media_link(course_id, year, semester, moed, questionNumber, comment_id)
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
 
     def get_question_path(self, course_id, year, semester, moed, questionNumber):
         try:

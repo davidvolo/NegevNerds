@@ -1,5 +1,6 @@
 import logging
 import mimetypes
+import uuid
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationFacade
@@ -520,16 +521,32 @@ class NegevNerds:
     #     except Exception as e:
     #         raise Exception(f"Failed to get path: {e}")
 
+    def generate_comment_id(self):
+        return "comment" + str(uuid.uuid4())
+
     def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
-                    comment_text, question_id):
+                    comment_text, photo_file, question_id):
         """
                 Add a comment to a question discussion.
         """
         try:
+            comment_id = self.generate_comment_id()
+            link_to_media = ""
+            if photo_file is not None:
+                link_to_media = self.fileManager.save_media_for_comment(
+                    course_id=course_id,
+                    year=year,
+                    semester=semester,
+                    moed=moed,
+                    question_number=question_number,
+                    comment_id=comment_id,
+                    photo_file=photo_file
+            )
             father_comment_id = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
-                                                           moed=moed, question_number=question_number,
+                                                           moed=moed, question_number=question_number, comment_id=comment_id,
                                                           writer_name=writer_name, 
-                                                          writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
+                                                          writer_id=writer_id,prev_id=prev_id, comment_text=comment_text,
+                                                              link_to_media=link_to_media)
             # for commenter in comment_writers:
             #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
             frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
@@ -808,6 +825,14 @@ class NegevNerds:
             ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
             dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
             return dtos
+
+    def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
+        try:
+            return self.courseFacade.get_comment_media_link(course_id, year, semester, moed, question_number, comment_id)
+        except (CourseIsNotExist, ExamIsNotExist, CommentNotFound) as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Failed to get path: {e}")
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:

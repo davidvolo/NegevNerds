@@ -204,6 +204,33 @@ class FileManager:
 
         # return answer_file_path
 
+    def save_media_for_comment(self, course_id, year, semester, moed, question_number, comment_id, photo_file):
+        """
+        Saves the comment photo file (e.g., JPEG, PNG) to the appropriate directory.
+        """
+        # Construct the file path
+        course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+        year_folder = os.path.join(course_folder, str(year))
+        exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+        comments_folder = os.path.join(exam_folder, "comments")
+
+        # Create directories if they do not exist
+        os.makedirs(comments_folder, exist_ok=True)
+
+        # Determine the file extension (e.g., 'jpg', 'png') from the uploaded photo file
+        photo_extension = photo_file.filename.rsplit('.', 1)[-1].lower()
+        if photo_extension not in ["jpg", "jpeg", "png"]:
+            raise ValueError("Unsupported file format. Only JPEG and PNG are allowed.")
+
+        # Construct the file name and path
+        photo_file_path = os.path.join(comments_folder, f"{comment_id}.{photo_extension}")
+
+        # Save the photo file to disk
+        photo_file.seek(0)  # Ensure the file pointer is at the beginning
+        photo_file.save(photo_file_path)
+
+        return photo_file_path
+
     def save_question_file_pdf(self, course_id, year, semester, moed, question_number, pdf_question):
         """
         Saves the question PDF file to the appropriate directory.

@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 class CommentDTO:
-    def __init__(self, comment_id, writer_name, date, prev_id, comment_text, deleted, edited, reactions):
+    def __init__(self, comment_id, writer_name, date, prev_id, comment_text, deleted, edited, reactions, link_to_media):
         """
         Data Transfer Object for the CommentData class.
         """
@@ -14,6 +14,7 @@ class CommentDTO:
         self.deleted = deleted
         self.edited = edited
         self.reactions = reactions
+        self.link_to_media = link_to_media
 
     def to_dict(self):
         """
@@ -33,4 +34,5 @@ class CommentDTO:
                 reaction.to_dict() if hasattr(reaction, "to_dict") else reaction
                 for reaction in self.reactions
             ],
+            "link_to_media": self.link_to_media
         }

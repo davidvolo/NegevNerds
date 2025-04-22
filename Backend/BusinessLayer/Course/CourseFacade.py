@@ -502,12 +502,13 @@ class CourseFacade:
         except Exception as e:
             print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
             raise Exception(f"CourseFacade Error: {str(e)}")
-    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
+
+    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, writer_id,prev_id, comment_text, link_to_media):
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.add_comment(year, semester, moed, question_number, writer_name,writer_id, prev_id, comment_text)
+            return course.add_comment(year, semester, moed, question_number, comment_id, writer_name,writer_id, prev_id, comment_text, link_to_media)
 
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
@@ -608,6 +609,10 @@ class CourseFacade:
     #     """
     #     course = self.get_course(course_id)
     #     course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
+
+    def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
+        course = self.get_course(course_id)
+        return course.get_exam(year, semester, moed).get_question(question_number).get_comment_media_link(comment_id)
 
     def get_link_to_question(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
