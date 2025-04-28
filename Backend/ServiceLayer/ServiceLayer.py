@@ -371,93 +371,93 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
-        """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.search_exam_by_specifics(course_id, year, semester, moed)
+    # def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
+    #     """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.search_exam_by_specifics(course_id, year, semester, moed)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "No exams found for the given criteria."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "No exams found for the given criteria."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def search_all_course_exams(self, course_id):
+    #     """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.search_all_course_exmas(course_id)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "No exams found for the given criteria."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-    def search_all_course_exams(self, course_id):
-        """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.search_all_course_exmas(course_id)
+    # def edit_exam_course_name(self, user_id, course_id, year, semester, moed, new_course_name):
+    #     """Editing exam's course name """
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.edit_exam_course_name(user_id, course_id, year, semester, moed, new_course_name)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "Something went wrong"
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "No exams found for the given criteria."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
-
-    def edit_exam_course_name(self, user_id, course_id, year, semester, moed, new_course_name):
-        """Editing exam's course name """
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_course_name(user_id, course_id, year, semester, moed, new_course_name)
-
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "Something went wrong"
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
-
-    def edit_exam_link(self, course_id, year, semester, moed, new_link):
-        """Editing exam's link """
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_link(course_id, year, semester, moed, new_link)
-
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "Something went wrong."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def edit_exam_link(self, course_id, year, semester, moed, new_link):
+    #     """Editing exam's link """
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.edit_exam_link(course_id, year, semester, moed, new_link)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "Something went wrong."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
     # def edit_exam_year(self, course_id, year, semester, moed, new_year):
     #     """Editing exam's year """

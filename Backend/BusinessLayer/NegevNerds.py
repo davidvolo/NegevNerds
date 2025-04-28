@@ -26,7 +26,7 @@ from Backend.DataLayer.UserData.UserRepository import UserRepository
 import re
 import json
 # import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask_jwt_extended import create_access_token
 
@@ -189,7 +189,7 @@ class NegevNerds:
 
             stored_code, expiry_time = stored
 
-            if datetime.datetime.now() > expiry_time:
+            if datetime.now() > expiry_time:
                 return json.dumps({
                     "status": "error",
                     "message": "הקוד פג תוקף. בקש קוד חדש."
@@ -205,7 +205,7 @@ class NegevNerds:
             del self._user_facade.pending_reset_codes[email]
 
             # Generate temporary access token for reset-password flow
-            access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(minutes=3))
+            access_token = create_access_token(identity=email, expires_delta=timedelta(minutes=3))
 
             return json.dumps({
                 "status": "success",
@@ -310,23 +310,6 @@ class NegevNerds:
             except Exception as e:
                 return f"Error: {e}"
 
-#     def remove_course(self, course_id, user_id):
-#         """Remove an existing course from the system and delete its corresponding folder."""
-#         try:
-#             # Check if the user is a system manager or the course manager
-#             if self.is_system_manager(user_id) or self.courseFacade.is_course_manager(course_id, user_id):
-#                 # Remove the course using CourseFacade
-#                 if self.courseFacade.remove_course(course_id):
-#                     # Delete the course folder using FileManager
-#                     self.fileManager.delete_course_folder(course_id)
-#                     return f"Course {course_id} removed successfully."
-#                 else:
-#                     raise Exception("Failed to remove course.")
-#             else:
-#                 raise UserIsNotCourseManager(course_id)
-#         except Exception as e:
-#             return f"Error: {e}"
-
     def get_course_topics(self, course_id):
         return self._course_facade.get_course_topics(course_id)
 
@@ -347,25 +330,22 @@ class NegevNerds:
            return False
 
     def get_exam_full_pdf(self, course_id, year, semester, moed):
-        """Opens a new course in the system and saves the syllabus file."""
         try:
             return self.courseFacade.get_exam_full_pdf(course_id, year, semester, moed)
         except Exception as e:
             return f"Error: {e}"
 
     def check_exam_full_pdf(self, course_id, year, semester, moed):
-        """Opens a new course in the system and saves the syllabus file."""
         try:
             return self.courseFacade.check_exam_full_pdf(course_id, year, semester, moed)
         except Exception as e:
-            raise f"Error: {e}"
+            return f"Error: {e}"
 
     def checkExistSolution(self, course_id, year, semester, moed,question_number):
-        """Opens a new course in the system and saves the syllabus file."""
         try:
             return self.courseFacade.checkExistSolution(course_id, year, semester, moed,question_number)
         except Exception as e:
-            raise f"Error: {e}"
+            return f"Error: {e}"
     
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
@@ -400,7 +380,8 @@ class NegevNerds:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
 
-    def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
+    def uploadSolution(self, course_id, year, semester, moed, question_number, solution_file):
+        """add solution to question"""
         with self.upload_question_solution_lock:
             try:
                 if self._course_facade.checkExistSolution(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
@@ -430,14 +411,6 @@ class NegevNerds:
             except Exception as e:
                 print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
                 return {"status": "error", "message": str(e)}
-
-    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
-        """Editing exam's course name """
-        try:
-            self.courseFacade.edit_exam_course_name(course_id, year, semester, moed, new_course_name)
-            return "The exams' course name was updated successfully."
-        except Exception as e:
-            raise Exception(f"Failed to edit exam's course name {e}")
 
     def remove_course(self, course_id, user_id):
             """Remove an existing course from the system and delete its corresponding folder."""
@@ -480,31 +453,31 @@ class NegevNerds:
                     "message": str(e)
                 }
 
-    def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
-        """Search for exams by course ID and optionally filter by year, semester, and moed."""
-        try:
-            # Fetch all exams for the course from coursefacade
-            exams = self.courseFacade.search_exam_by_specifics(course_id, year, semester, moed)
-            return exams
-        except Exception as e:
-            raise Exception(f"Failed to search exams: {e}")
+    # def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
+    #     """Search for exams by course ID and optionally filter by year, semester, and moed."""
+    #     try:
+    #         # Fetch all exams for the course from coursefacade
+    #         exams = self.courseFacade.search_exam_by_specifics(course_id, year, semester, moed)
+    #         return exams
+    #     except Exception as e:
+    #         raise Exception(f"Failed to search exams: {e}")
 
-    def search_all_course_exams(self, course_id):
-        """Search for all the exams in the system for specific course"""
-        try:
-            # Fetch all exams for the course from coursefacade
-            exams = self.courseFacade.search_all_course_exams(course_id)
-            return exams
-        except Exception as e:
-            raise Exception(f"Failed to search exams: {e}")
+    # def search_all_course_exams(self, course_id):
+    #     """Search for all the exams in the system for specific course"""
+    #     try:
+    #         # Fetch all exams for the course from coursefacade
+    #         exams = self.courseFacade.search_all_course_exams(course_id)
+    #         return exams
+    #     except Exception as e:
+    #         raise Exception(f"Failed to search exams: {e}")
 
-    def edit_exam_link(self, course_id, year, semester, moed, new_link):
-        """Editing exam's link """
-        try:
-            self.courseFacade.edit_exam_link(course_id, year, semester, moed, new_link)
-            return "The exams' link was updated successfully."
-        except Exception as e:
-            raise Exception(f"Failed to edit exam's link {e}")
+    # def edit_exam_link(self, course_id, year, semester, moed, new_link):
+    #     """Editing exam's link """
+    #     try:
+    #         self.courseFacade.edit_exam_link(course_id, year, semester, moed, new_link)
+    #         return "The exams' link was updated successfully."
+    #     except Exception as e:
+    #         raise Exception(f"Failed to edit exam's link {e}")
 
     # def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
     #     """
@@ -695,12 +668,10 @@ class NegevNerds:
     #         return mime_type in allowed_photo_types
     #     return False
 
-
-    # def search_free_text(self , text, course_id = None):
-    #     search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-    #     ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-    #     return ques_dtos
-
+    def search_free_text(self , text, course_id = None):
+        search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+        ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+        return ques_dtos
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
         """
@@ -802,6 +773,13 @@ class NegevNerds:
             self.fileManager.delete_file(pathQuestion)
             if pathAnswer != "":
                 self.fileManager.delete_file(pathAnswer)
+            try:
+                elastic_id = f"{course_id}_{question_id}"
+                info_retrieval = self._pdfFacade.information_retrival
+                info_retrieval.elastic_search.delete(index=info_retrieval.index_name, id=elastic_id)
+                print(f"Deleted question {elastic_id} from ElasticSearch successfully.")
+            except Exception as e:
+                print(f"Warning: Failed to delete question {question_id} from ElasticSearch: {str(e)}")
 
         except Exception as e:
             raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
@@ -815,16 +793,6 @@ class NegevNerds:
             return questions
         except Exception as e:
             raise Exception(f"Error while searching by topic: {str(e)}")
-
-    def search_free_text(self , text, course_id = None):
-        if course_id is None:
-            search_dtos = self._pdfFacade.search_free_text(text=text)
-            ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-            return ques_dtos
-        else:
-            ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-            dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
-            return dtos
 
     def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
         try:
@@ -851,30 +819,8 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
 
-    # def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
-    #                 comment_text):
-    #     """
-    #             Add a comment to a question discussion.
-    #     """
-    #     try:
-    #         comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
-    #                                                        moed=moed, question_number=question_number,
-    #                                                       writer_name=writer_name, 
-    #                                                       writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
-    #         # for commenter in comment_writers:
-    #         #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
-    #         return "CommentData added successfully."
-    #     except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
-    #         raise e
-    #     except Exception as e:
-    #         raise Exception(f"Failed to add comment: {e}")
-
-    
-
     def remove_reaction(self, course_id, year, semester, moed, question_number, comment_id, reaction_id):
-        """
-            Remove a reaction from a comment.
-        """
+        """Remove a reaction from a comment."""
         try:
             self.courseFacade.remove_reaction(course_id=course_id, year=year, semester=semester,
 
@@ -887,8 +833,7 @@ class NegevNerds:
             raise Exception(f"Failed to remove reaction: {e}")
 
     def is_photo(self, file):
-        """
-        Check if the given file is a valid photo (JPEG, JPG, PNG).
+        """Check if the given file is a valid photo (JPEG, JPG, PNG).
 
         :param file: The uploaded file object.
         :return: True if the file is a valid photo, False otherwise.
@@ -910,9 +855,7 @@ class NegevNerds:
             raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 
     def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
-        """
-            delete comment.
-        """
+        """delete comment."""
         try:
             self.courseFacade.delete_comment(course_id=course_id, year=year, semester=semester,
                                            moed=moed, question_number=question_number,
@@ -924,9 +867,7 @@ class NegevNerds:
             raise Exception(f"Failed to delete comment: {e}")
 
     def edit_comment_text(self, course_id, year, semester, moed, question_number, comment_id, new_text):
-        """
-            delete comment.
-        """
+        """edit comment text."""
         try:
             self.courseFacade.edit_comment_text(course_id=course_id, year=year, semester=semester,
                                            moed=moed, question_number=question_number,
@@ -953,8 +894,6 @@ class NegevNerds:
             print(f"Error occurred: {str(e)}")
             raise Exception(f"Failed to search questions: {e}")
 
-   
-
     def get_user_last_notifications(self, user_id, number_of_notifications):
         """Search for questions based on the provided specifics for the course."""
         # try:
@@ -968,17 +907,16 @@ class NegevNerds:
         #     print(f"Error occurred: {str(e)}")
         #     raise Exception(f"Failed to search questions: {e}")
 
-
     def handleDownloadAllExamsZip(self, course_id):
-            """Download a zip file of the examsof the specific course."""
-            try:
-                # Fetch questions based on the specifics from the course
-                folderName , exams = self._course_facade.handleDownloadAllExamsZip(course_id)
+        """Download a zip file of the examsof the specific course."""
+        try:
+            # Fetch questions based on the specifics from the course
+            folderName , exams = self._course_facade.handleDownloadAllExamsZip(course_id)
 
-                return folderName, exams
-            except Exception as e:
-                print(f"Error occurred: {str(e)}")
-                raise Exception(f"Failed to search questions: {e}")
+            return folderName, exams
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            raise Exception(f"Failed to search questions: {e}")
 
     def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
         res = self._course_facade.edit_question_topic(course_id, year, semester, moed, question_number, topics)
@@ -1090,7 +1028,6 @@ class NegevNerds:
     def unfollow_question(self, user_id, question_id):
         repo = DiscussionFollowRepository()
         repo.unfollow(user_id, question_id)
-
 
     def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
         try:
@@ -1213,4 +1150,31 @@ class NegevNerds:
     #     except Exception as e:
     #         raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
 
+    # def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id,
+    #                 comment_text):
+    #     """
+    #             Add a comment to a question discussion.
+    #     """
+    #     try:
+    #         comment_writers = self.courseFacade.add_comment(course_id=course_id, year=year, semester=semester,
+    #                                                        moed=moed, question_number=question_number,
+    #                                                       writer_name=writer_name,
+    #                                                       writer_id=writer_id,prev_id=prev_id, comment_text=comment_text)
+    #         # for commenter in comment_writers:
+    #         #     self._notification_facade.send_notification(sender_id=writer_id, receiver_id=commenter,message=f"{writer_id}- add comment in discussion which you take part in the past", need_approval=False)
+    #         return "CommentData added successfully."
+    #     except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
+    #         raise e
+    #     except Exception as e:
+    #         raise Exception(f"Failed to add comment: {e}")
+
+    # def search_free_text(self , text, course_id = None):
+    #     if course_id is None:
+    #         search_dtos = self._pdfFacade.search_free_text(text=text)
+    #         ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+    #         return ques_dtos
+    #     else:
+    #         ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+    #         dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
+    #         return dtos
 
