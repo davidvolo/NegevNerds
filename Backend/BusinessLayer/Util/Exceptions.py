@@ -146,7 +146,6 @@ class ReactionNotFound(BaseError):
 
 class QuestionAlreadyInExam(BaseError):
     """Exception raised when the question is already part of the exam."""
-
     def __init__(self, question_id):
         message = f"The question with ID {question_id} is already in the exam."
         super().__init__(message, code=409)
@@ -154,7 +153,6 @@ class QuestionAlreadyInExam(BaseError):
 
 class QuestionDoesNotMeetExamFields(BaseError):
     """Exception raised when the question does not meet the required fields for the exam."""
-
     def __init__(self, question_id):
         message = f"The question {question_id} does not meet the required fields for the exam."
         super().__init__(message, code=400)  # Bad Request
@@ -162,7 +160,6 @@ class QuestionDoesNotMeetExamFields(BaseError):
 
 class QuestionNotFound(BaseError):
     """Exception raised when a question is not found in the list."""
-
     def __init__(self, question_id):
         message = f"Question '{question_id}' not found in the list."
         super().__init__(message, code=404)
@@ -170,7 +167,6 @@ class QuestionNotFound(BaseError):
 
 class TopicAlreadyExist(BaseError):
     """Exception raised when a question topic is already in the course topics."""
-
     def __init__(self, question_topic):
         message = f"Topic '{question_topic}' is already in the course topics."
         super().__init__(message, code=404)
@@ -178,7 +174,6 @@ class TopicAlreadyExist(BaseError):
 
 class TopicNotFound(BaseError):
     """Exception raised when a question topic is not found in the course topics."""
-
     def __init__(self, question_topic):
         message = f"Topic '{question_topic}' not found in the course topics."
         super().__init__(message, code=404)
@@ -187,14 +182,16 @@ class TopicNotFound(BaseError):
 class CommentNotFound(BaseError):
     """Exception raised when a CommentData is not found in the list."""
 
-    def __init__(self, comment_id):
-        message = f"CommentData with ID '{comment_id}' not found in the list."
+    def __init__(self, comment_id=None):
+        if comment_id is not None:
+            message = f"CommentData with ID '{comment_id}' not found in the list."
+        else:
+            message = "CommentData not found in the list."
         super().__init__(message, code=404)
 
 
-class UserIsNotCourseManager(BaseError):
-    """Exception raised when a CommentData is not found in the list."""
 
+class UserIsNotCourseManager(BaseError):
     def __init__(self, course_id):
         message = f"User is not manager of course{course_id}"
         super().__init__(message, code=404)

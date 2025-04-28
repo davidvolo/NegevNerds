@@ -18,12 +18,8 @@ class AnalyzerFacade:
         if not hasattr(self, 'course_syllabus'):
             self.course_syllabus = SyllabusAnalyzer()
 
-
-        self.information_retrival =  InformationRetrival()
-        self.question_analyser= QuestionAnalyzer()
-
-
-
+        self.information_retrival = InformationRetrival()
+        self.question_analyser = QuestionAnalyzer()
 
     def extract_text_from_pdf_file(self, question_file):
         return self.question_analyser.extract_text_from_pdf_file(question_file)

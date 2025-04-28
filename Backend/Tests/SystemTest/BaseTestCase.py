@@ -6,13 +6,19 @@ from sqlalchemy.orm import sessionmaker
 from Backend.DataLayer.Base import Base, delete_all_data
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 
+
 class BaseTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")
+        os.environ["APP_ENV"] = "test"  # חשוב להבטיח שהקוד ירוץ על סביבה טסט
+        # שימוש בדאטהבייס הקיים: instance/test_negevnerds.db
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        db_path = os.path.join(base_dir, "instance", "test_negevnerds.db")
+
         cls.engine = create_engine(f"sqlite:///{db_path}")
         cls.Session = sessionmaker(bind=cls.engine)
+
+        # Drop and create all tables fresh
         Base.metadata.drop_all(bind=cls.engine)
         Base.metadata.create_all(bind=cls.engine)
 
@@ -23,7 +29,13 @@ class BaseTestCase(unittest.TestCase):
     def setUp(self):
         self.session = self.Session()
         delete_all_data(engine=self.engine, session=self.session)
+        os.environ["APP_ENV"] = "test"  # שימוש בדאטהבייס טסט
         self.negev = NegevNerds(mkdir="test_directory")
+
+    def tearDown(self):
+        # מחיקת דאטה אחרי כל טסט
+        delete_all_data(engine=self.engine, session=self.session)
+        self.session.close()
 
     def _complete_user_registration(self, email, password, first_name, last_name):
         user, _ = self.negev.register(email, password, password, first_name, last_name)

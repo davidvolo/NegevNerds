@@ -183,10 +183,6 @@ class Exam:
     #     Remove a CommentData from the comments list of a specific question.
     #     """
     #     self.get_question(question_number).remove_comment(comment_id)
-    
-    # def edit_course_name(self, new_course_name):
-    #     """Edit the course name."""
-    #     self.course_name = new_course_name
 
     def edit_link(self, new_link):
         """Edit the exam link."""

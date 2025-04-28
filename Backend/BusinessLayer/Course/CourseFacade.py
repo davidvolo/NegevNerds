@@ -358,10 +358,6 @@ class CourseFacade:
 
         return sorted_exams
 
-    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).edit_course_name(new_course_name)
-
     def edit_exam_link(self, course_id, year, semester, moed, new_link):
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).edit_link(new_link)
@@ -448,7 +444,7 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
-    def get_exam_full_pdf(self, course_id, year, semester, moed, ):
+    def get_exam_full_pdf(self, course_id, year, semester, moed):
         """
         """
         try:
@@ -480,8 +476,6 @@ class CourseFacade:
             return course.checkExistQuestion(year, semester, moed,question_number)
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
-    
-    
     
     def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):
         try:
@@ -620,8 +614,10 @@ class CourseFacade:
 
     def get_link_to_answer(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
+        if course is None:
+            raise CourseIsNotExist(course_id)
         return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_answer()
-    
+
     def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
         course = self.get_course(course_id)
         if course is not None:

@@ -1,5 +1,7 @@
+import json
 import unittest
 import os
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from sqlalchemy import create_engine
@@ -8,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.DataLayer.Base import Base, delete_all_data
 from Backend.DataLayer.UserData.UserModel import UserModel
+from Backend.BusinessLayer.User.UserFacade import UserFacade
 
 
 class TestNegevNerdsUserManagement(unittest.TestCase):
@@ -39,36 +42,59 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         delete_all_data(engine=self.engine, session=self.session)
         self.session.close()  # סגירת session
 
-    # פונקציית עזר לרישום משתמש מלא (ללא מוקים)
+    from unittest.mock import patch
+
+    from unittest.mock import patch
+
+    from unittest.mock import patch
+
     def _complete_user_registration(self, email, password, first_name, last_name):
         """
-        מבצעת את תהליך הרישום המלא:
-         - קריאה ל־register,
-         - קריאה ל־register_termOfUse_part,
-        ומחזירה את המשתמש מתוך ה־UserFacade.
+        Performs the full user registration flow:
+        - Calls register (while mocking email sending),
+        - Calls register_authentication_part (simulating successful verification),
+        - Calls register_termOfUse_part (with encrypted password),
+        and returns the registered User object from UserFacade.
         """
         try:
-            user, _ = self.negev.register(email, password, password, first_name, last_name)
-            self.negev.register_termOfUse_part(email, password, first_name, last_name)
-            return self.negev._user_facade.getUser_by_email(email)
+            with patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code') as mock_send_auth_code, \
+                    patch(
+                        'Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_register_auth_part:
+
+                mock_send_auth_code.return_value = None
+                mock_register_auth_part.return_value = {"message": "Verification successful"}
+
+                # Step 1: Register the user (basic information)
+                encrypted_password, _ = self.negev.register(email, password, password, first_name, last_name)
+
+                # Step 2: Simulate successful authentication code verification
+                self.negev.register_authentication_part(email, "123456")
+
+                # Step 3: Complete the registration by accepting the terms of use
+                self.negev.register_termOfUse_part(email, encrypted_password, first_name, last_name)
+
+                # Return the registered user object
+                return self.negev._user_facade.getUser_by_email(email)
+
         except Exception as e:
             self.fail("User registration failed unexpectedly: " + str(e))
             return None
 
     # -------------- Registration Tests --------------
-
-    @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')  # Mock only authentication part
-    def test_register_valid_user(self, mock_auth_part):
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
+    @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')
+    def test_register_valid_user(self, mock_register_auth_part, mock_send_auth_code):
         """
         Test for registering with valid user data
         """
-        mock_auth_part.return_value = {"message": "Verification successful"}
-
         test_email = "newuser@post.bgu.ac.il"
         test_password = "ValidPass1!"
         test_first_name = "נועה"
         test_last_name = "עבודי"
-        auth_code = "123456"  # Fixed authentication code to simulate the email verification.
+
+        # Mock behaviors
+        mock_send_auth_code.return_value = None
+        mock_register_auth_part.return_value = {"message": "Verification successful"}
 
         # Step 1: Basic registration - store user details.
         registered_user, message = self.negev.register(
@@ -81,13 +107,14 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIsNotNone(registered_user, "Basic registration did not return a valid user.")
         self.assertNotIn("Error", message, "Basic registration returned an error message.")
 
+        auth_code = "123456"
         # Step 2: Registration with authentication code - simulate verifying the code.
         auth_response = self.negev.register_authentication_part(test_email, auth_code)
-        self.assertTrue(auth_response, "Authentication code registration step failed.")
+        self.assertIn("message", auth_response, "Authentication code registration step failed.")
 
         # Step 3: Acceptance of the terms of use - finalize the registration process.
         term_response = self.negev.register_termOfUse_part(test_email, test_password, test_first_name, test_last_name)
-        self.assertTrue(term_response, "Acceptance of the terms of use step failed.")
+        self.assertIsInstance(term_response, tuple, "Acceptance of the terms of use step failed.")
 
         found_user = self.negev._user_facade.getUser_by_email(test_email)
         self.assertIsNotNone(found_user, "User not found via UserFacade.getUser_by_email after registration.")
@@ -95,20 +122,14 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertEqual(found_user.first_name, test_first_name, "User first name does not match the input.")
         self.assertEqual(found_user.last_name, test_last_name, "User last name does not match the input.")
 
-        found_user = self.negev._user_facade.getUser_by_email(test_email)
-        self.assertIsNotNone(found_user, "User not found via getUser_by_email after registration.")
-        self.assertEqual(found_user.email, test_email, "User email does not match.")
-        self.assertEqual(found_user.first_name, test_first_name, "User first name does not match.")
-        self.assertEqual(found_user.last_name, test_last_name, "User last name does not match.")
-
     def test_register_non_bgu_email(self):
         """
         Verify that registration fails for a non-BGU email.
         """
         non_bgu_email = "test@gmail.com"
         test_password = "ValidPass1!"
-        test_first_name = "Test"
-        test_last_name = "User"
+        test_first_name = "יוזר"
+        test_last_name = "טסט"
 
         # Pre-check: Ensure the user is not registered.
         found_before = self.negev._user_facade.getUser_by_email(non_bgu_email)
@@ -137,7 +158,13 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         found_after = self.negev._user_facade.getUser_by_email(non_bgu_email)
         self.assertIsNone(found_after, "User should not exist in the system after failed registration.")
 
-    def test_register_already_registered_email(self):
+    from unittest.mock import patch
+
+    from unittest.mock import patch
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
+    @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')
+    def test_register_already_registered_email(self, mock_register_auth_part, mock_send_auth_code):
         """
         Verify that attempting to register an email that is already registered fails.
         """
@@ -145,7 +172,12 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         test_password = "ValidPass1!"
         test_first_name = "נועה"
         test_last_name = "עבודי"
-        # First registration attempt (assume correct process).
+
+        # Mock behaviors
+        mock_send_auth_code.return_value = None
+        mock_register_auth_part.return_value = {"message": "Verification successful"}
+
+        # First registration attempt
         user1, message1 = self.negev.register(
             test_email,
             test_password,
@@ -156,10 +188,15 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIsNotNone(user1, "Initial registration did not return a valid user.")
         self.assertNotIn("Error", message1, "Initial registration returned an error message.")
 
-        term_response = self.negev.register_termOfUse_part(test_email, test_password, test_first_name, test_last_name)
-        self.assertTrue(term_response, "Acceptance of the terms of use step failed.")
+        term_response = self.negev.register_termOfUse_part(
+            test_email,
+            test_password,
+            test_first_name,
+            test_last_name
+        )
+        self.assertIsInstance(term_response, tuple, "Acceptance of the terms of use step failed.")
 
-        # Now, attempt to register with the same email again.
+        # Now, attempt to register with the same email again
         user2, message2 = self.negev.register(
             test_email,
             test_password,
@@ -168,15 +205,16 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
             "קטלב"
         )
 
-        # Expect registration to fail (i.e. user2 should be None)
+        # Expect registration to fail (i.e., user2 should be None)
         self.assertIsNone(user2, "Registration should have failed for an already registered email.")
-        # Extract error message from the response.
+
+        # Extract error message
         if isinstance(message2, dict):
             err_msg = message2.get("Error", "")
         else:
             err_msg = message2
-        self.assertIn("קיים", err_msg,
-                      "Error message should indicate that the email is already registered.")
+
+        self.assertIn("קיים", err_msg, "Error message should indicate that the email is already registered.")
 
     def test_register_mismatching_passwords(self):
         """
@@ -203,20 +241,25 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIn("הסיסמה אינה", err_msg,
                       "Error message should indicate that passwords do not match.")
 
+    from unittest.mock import patch
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
     @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')
-    def test_register_incorrect_verification_code(self, mock_auth_part):
+    def test_register_incorrect_verification_code(self, mock_register_auth_part, mock_send_auth_code):
         """
         Verify that when an incorrect verification code is provided, the verification fails.
         """
-        mock_auth_part.return_value = {"Error": "Invalid verification code."}
-
         test_email = "verify@post.bgu.ac.il"
         test_password = "ValidPass1!"
         test_first_name = "נועה"
         test_last_name = "עבודי"
         incorrect_code = "000000"
 
-        # Basic registration
+        # Mock behaviors
+        mock_send_auth_code.return_value = None
+        mock_register_auth_part.return_value = {"Error": "Invalid verification code."}
+
+        # Step 1: Basic registration
         user, message = self.negev.register(
             test_email,
             test_password,
@@ -227,92 +270,109 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIsNotNone(user, "Basic registration did not return a valid user.")
         self.assertNotIn("Error", message, "Basic registration returned an error message.")
 
-        # Call authentication step with incorrect code.
+        # Step 2: Attempt verification with incorrect code
         auth_response = self.negev.register_authentication_part(test_email, incorrect_code)
-        # Here, since we patched the method, we expect an error message.
+
+        # Step 3: Verify that an error message is returned
         if isinstance(auth_response, dict):
             err_msg = auth_response.get("Error", "")
         else:
             err_msg = auth_response
+
         self.assertIn("Invalid verification code", err_msg,
                       "Error message should indicate that the verification code is invalid.")
 
     # -------------- Login & Logout Tests --------------
-
-    def test_login_valid_credentials(self):
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
+    @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')
+    def test_login_valid_credentials(self, mock_register_auth_part, mock_send_auth_code):
         """
         Test Case 1: Verify user can successfully log in with valid credentials.
         """
-        # Use patch for authentication part to simulate verification.
-        with patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_auth:
-            mock_auth.return_value = {"message": "Verification successful"}
-            test_email = "login@post.bgu.ac.il"
-            test_password = "ValidPass1!"
-            test_first_name = "לוגאין"
-            test_last_name = "יוזר"
+        test_email = "loginn@post.bgu.ac.il"
+        test_password = "ValidPass1!"
+        test_first_name = "לוגאין"
+        test_last_name = "יוזר"
 
-            # Registration process.
-            user, reg_msg = self.negev.register(
-                test_email,
-                test_password,
-                test_password,
-                test_first_name,
-                test_last_name
-            )
-            self.assertIsNotNone(user, "Registration did not return a valid user.")
-            # Simulate authentication and terms acceptance.
-            self.negev.register_authentication_part(test_email, "123456")
-            user_id, message = self.negev.register_termOfUse_part(test_email, test_password, test_first_name, test_last_name)
+        # Mock behaviors
+        mock_send_auth_code.return_value = None
+        mock_register_auth_part.return_value = {"message": "Verification successful"}
 
-        self.negev.logout(user_id)
+        # Step 1: Register the user completely using the helper
+        registered_user = self._complete_user_registration(
+            test_email, test_password, test_first_name, test_last_name
+        )
 
-        # Now attempt login with valid credentials.
-        with patch.object(self.negev._user_facade, 'login',
-                          return_value=(test_first_name, test_last_name, "user_id_1234", "Login successful")):
-            first, last, logged_user_id, login_response = self.negev.login(test_email, test_password)
-            print(login_response)
-        self.assertEqual("success", login_response.get("status"), "Login should succeed with valid credentials.")
-        self.assertEqual(first, test_first_name, "Returned first name does not match.")
-        self.assertEqual(last, test_last_name, "Returned last name does not match.")
-        self.assertIsNotNone(user_id, "User id should not be None for a valid login.")
+        self.assertIsNotNone(registered_user, "User registration failed unexpectedly.")
+        user_id = registered_user.get_user_id() if hasattr(registered_user, "get_user_id") else registered_user.user_id
 
-    def test_login_invalid_credentials(self):
+        # Step 2: Logout
+        logout_message = self.negev.logout(user_id)
+        self.assertIn("התנתקות", logout_message, "Logout should succeed.")
+
+        # Step 3: Attempt login with valid credentials
+        first_name, last_name, logged_user_id, login_response = self.negev.login(test_email, test_password)
+
+        # Assertions
+        self.assertIsNotNone(logged_user_id, "User ID should not be None after successful login.")
+        self.assertEqual(first_name, test_first_name, "Returned first name does not match.")
+        self.assertEqual(last_name, test_last_name, "Returned last name does not match.")
+        self.assertEqual(login_response.get("status"), "success", "Login should return success status.")
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
+    @patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part')
+    def test_login_invalid_credentials(self, mock_register_auth_part, mock_send_auth_code):
         """
         Test Case 2: Verify login fails with invalid credentials.
         """
-        # Option 1: Unregistered email.
+        # Mock behaviors
+        mock_send_auth_code.return_value = None
+        mock_register_auth_part.return_value = {"message": "Verification successful"}
+
+        # Option 1: Unregistered email
         unregistered_email = "nonexistent@post.bgu.ac.il"
         password = "SomePass1!"
+
         first, last, user_id, login_response = self.negev.login(unregistered_email, password)
+
         self.assertIsNone(first, "Login should fail for unregistered email.")
         self.assertEqual(login_response.get("status"), "error",
                          "Login response should indicate an error for unregistered email.")
         self.assertIn("Incorrect email or password", login_response.get("message"),
                       "Error message should indicate invalid credentials for unregistered email.")
 
-        # Option 2: Wrong password for a registered email.
-        with patch('Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_auth:
-            mock_auth.return_value = {"message": "Verification successful"}
-            email2 = "loginfail@post.bgu.ac.il"
-            correct_password = "ValidPass1!"
-            wrong_password = "WrongPass!"
-            firstName = "יוזר"
-            lastName = "כשלון"
-            user, reg_msg = self.negev.register(
-                email2, correct_password, correct_password, firstName, lastName
-            )
-            self.assertIsNotNone(user, "Registration did not return a valid user.")
-            self.negev.register_authentication_part(email2, "123456")
-            self.negev.register_termOfUse_part(email2, correct_password, firstName, lastName)
+        # Option 2: Wrong password for a registered email
+        email2 = "loginfail@post.bgu.ac.il"
+        correct_password = "ValidPass1!"
+        wrong_password = "WrongPass!"
+        first_name = "יוזר"
+        last_name = "כשלון"
 
-        # Attempt login with the wrong password.
+        # Registration process
+        user, reg_msg = self.negev.register(
+            email2, correct_password, correct_password, first_name, last_name
+        )
+        self.assertIsNotNone(user, "Registration did not return a valid user.")
+        self.assertNotIn("Error", reg_msg, "Registration returned an error message.")
+
+        # Simulate authentication and terms acceptance
+        self.negev.register_authentication_part(email2, "123456")
+        user_id, term_msg = self.negev.register_termOfUse_part(
+            email2, correct_password, first_name, last_name
+        )
+        self.assertIsInstance(term_msg, dict, "Terms acceptance should return a dictionary message.")
+
+        # Attempt login with wrong password
         first, last, user_id, login_response = self.negev.login(email2, wrong_password)
+
         self.assertIsNone(first, "Login should fail with an incorrect password.")
         self.assertEqual(login_response.get("status"), "error",
                          "Login response should indicate error for wrong password.")
         error_message = login_response.get("message", "")
-        self.assertTrue("Incorrect email or password" in error_message or "Invalid salt" in error_message,
-                        "Error message should indicate invalid credentials for wrong password.")
+        self.assertTrue(
+            "Incorrect email or password" in error_message or "Invalid salt" in error_message,
+            "Error message should indicate invalid credentials for wrong password."
+        )
 
     def test_logout_success(self):
         """
@@ -352,8 +412,8 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         """
         email = "username@post.bgu.ac.il"
         password = "ValidPass1!"
-        first_name = "Test"
-        last_name = "User"
+        first_name = "נועה"
+        last_name = "עבודי"
         user = self._complete_user_registration(email, password, first_name, last_name)
         self.assertIsNotNone(user, "User registration failed.")
 
@@ -377,6 +437,181 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         # Update the expectation to an empty list, since that is what the current implementation does.
         self.assertIsInstance(result, list, "Expected a list for an invalid user ID.")
         self.assertEqual(result, [], "Expected an empty list when the user is not found.")
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_reset_password_code')
+    def test_forgot_password_invalid_email(self, mock_send_reset_code):
+        """
+        Verify forgot_password fails with invalid email (non-BGU domain).
+        """
+        invalid_email = "user@gmail.com"
+        response = self.negev.forgot_password(invalid_email)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("האימייל חייב להיות של אוניברסיטת בן גוריון", data["message"])
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_reset_password_code')
+    def test_forgot_password_email_not_found(self, mock_send_reset_code):
+        """
+        Verify forgot_password fails if email is not registered.
+        """
+        email = "notfound@post.bgu.ac.il"
+        response = self.negev.forgot_password(email)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("כתובת אימייל לא נמצאה", data["message"])
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_reset_password_code')
+    def test_forgot_password_success(self, mock_send_reset_code):
+        """
+        Verify forgot_password succeeds with a registered BGU email.
+        """
+        email = "registered@post.bgu.ac.il"
+
+        # Simulate user existing
+        self.negev._user_facade.users_byEmail[email] = "DummyUser"
+
+        response = self.negev.forgot_password(email)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "success")
+        self.assertIn("מייל אימות נשלח", data["message"])
+
+    @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_reset_password_code')
+    def test_forgot_password_send_email_failure(self, mock_send_reset_code):
+        """
+        Verify forgot_password handles email sending failure.
+        """
+        email = "registered@post.bgu.ac.il"
+
+        # Simulate user existing
+        self.negev._user_facade.users_byEmail[email] = "DummyUser"
+
+        # Simulate exception on sending reset code
+        mock_send_reset_code.side_effect = Exception("Simulated failure")
+
+        response = self.negev.forgot_password(email)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("שליחת הקוד נכשלה", data["message"])
+
+    def test_verify_reset_code_not_found(self):
+        """
+        Verify verify_reset_code fails if no code exists for email.
+        """
+        email = "user@post.bgu.ac.il"
+        code = "123456"
+
+        # Clear any existing reset codes before running the test
+        self.negev._user_facade.pending_reset_codes.clear()
+
+        response = self.negev.verify_reset_code(email, code)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("לא נמצא קוד אימות", data["message"])
+
+    @patch('Backend.BusinessLayer.NegevNerds.create_access_token', return_value="dummy_token")
+    def test_verify_reset_code_expired(self, mock_create_token):
+        """
+        Verify verify_reset_code fails if the code is expired.
+        """
+        email = "user@post.bgu.ac.il"
+        code = "123456"
+
+        # Simulate expired code
+        self.negev._user_facade.pending_reset_codes[email] = (
+        code, datetime.now() - timedelta(minutes=5))
+
+        response = self.negev.verify_reset_code(email, code)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("הקוד פג תוקף", data["message"])
+
+    def test_verify_reset_code_wrong_code(self):
+        """
+        Verify verify_reset_code fails with incorrect code.
+        """
+        email = "user@post.bgu.ac.il"
+        correct_code = "123456"
+        wrong_code = "654321"
+
+        # Simulate stored correct code
+        self.negev._user_facade.pending_reset_codes[email] = (
+        correct_code, datetime.now() + timedelta(minutes=5))
+
+        response = self.negev.verify_reset_code(email, wrong_code)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("קוד אימות שגוי", data["message"])
+
+    @patch('Backend.BusinessLayer.NegevNerds.create_access_token', return_value="dummy_token")
+    def test_verify_reset_code_success(self, mock_create_token):
+        email = "user@post.bgu.ac.il"
+        code = "123456"
+
+        self.negev._user_facade.pending_reset_codes.clear()
+        self.negev._user_facade.pending_reset_codes[email] = (
+            code, datetime.now() + timedelta(minutes=5)
+        )
+
+        response = self.negev.verify_reset_code(email, code)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "success")
+        self.assertIn("token", data)
+
+    def test_reset_new_password_invalid_password(self):
+        """
+        Verify reset_new_password fails if password is invalid.
+        """
+        email = "user@post.bgu.ac.il"
+        bad_password = "short"
+
+        response = self.negev.reset_new_password(email, bad_password)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("הסיסמה אינה עומדת בדרישות", data["message"])
+
+    def test_reset_new_password_success(self):
+        """
+        Verify reset_new_password succeeds with valid password.
+        """
+        email = "user@post.bgu.ac.il"
+        good_password = "ValidPass1!"
+
+        # Simulate user existing
+        self.negev._user_facade.users_byEmail[email] = "DummyUser"
+
+        # Mock successful password reset
+        self.negev._user_facade.reset_new_password = lambda email, password: True
+
+        response = self.negev.reset_new_password(email, good_password)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "success")
+        self.assertIn("הסיסמה עודכנה", data["message"])
+
+    def test_reset_new_password_failure(self):
+        """
+        Verify reset_new_password handles failure if user not found.
+        """
+        email = "user@post.bgu.ac.il"
+        good_password = "ValidPass1!"
+
+        # Mock failed password reset
+        self.negev._user_facade.reset_new_password = lambda email, password: False
+
+        response = self.negev.reset_new_password(email, good_password)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "error")
+        self.assertIn("אירעה שגיאה בעדכון הסיסמה", data["message"])
 
 
 if __name__ == '__main__':
