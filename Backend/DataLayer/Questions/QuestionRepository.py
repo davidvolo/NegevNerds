@@ -37,7 +37,6 @@ class QuestionRepository:
         self.engine = create_engine(f'sqlite:///{db_path}')
 
         # Ensure all tables are created
-
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
     def add_question(self, question, exam_id):

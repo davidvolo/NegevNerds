@@ -6,6 +6,7 @@ import threading
 
 from Backend.BusinessLayer.Course import enums
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 
 
 
@@ -1140,7 +1141,30 @@ class ServiceLayer:
 
     def unfollow_question(self, user_id, question_id):
         self.negev_nerds.unfollow_question(user_id, question_id)
+    
+    def appoint_system_manager(self,nominee_email, nominator_user_id):
+        return self.negev_nerds.appoint_system_manager(nominee_email, nominator_user_id)
 
+    def disapprove_system_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.disapprove_system_manager_appoint(notification_id,user_id)
+    
+    def approve_system_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.approve_system_manager_appoint(notification_id,user_id)
+
+    def appoint_course_manager(self,nominee_email, nominator_user_id, course_id):
+        return self.negev_nerds.appoint_course_manager(nominee_email, nominator_user_id, course_id)
+
+    def disapprove_course_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.disapprove_course_manager_appoint(notification_id,user_id)
+    
+    def approve_course_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.approve_course_manager_appoint(notification_id,user_id)
+    
+    def is_system_manager(self,user_id ):
+        return self.negev_nerds.is_system_manager(user_id)
+    
+    def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
+        return self.negev_nerds.remove_course_manager(remove_user_email, nominator_user_id, course_id)
 
     
     # def remove_course(self,course_id):
@@ -1172,7 +1196,7 @@ class ServiceLayer:
             courses = init_data.get("courses", [])
 
             usersId = []
-
+            repo = SystemManagersRepository()
             # Register users
             for i in range(len(users)):
                 curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])

@@ -1700,10 +1700,14 @@ def is_system_manager():
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
             "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
+            "user95ee1f18-1d65-4b9c-849d-3f35d1c3408e"
             ]
 
         user_id = get_jwt_identity()
         if user_id in user_ids_managers:
+            return jsonify({"success": True, "is_system_manager": True}), 200
+        res = serviceLayer.is_system_manager(user_id)
+        if res:
             return jsonify({"success": True, "is_system_manager": True}), 200
         else:
             return jsonify({"success": False, "is_system_manager": False}), 200
@@ -2363,5 +2367,148 @@ def mark_as_seen_from_email():
     except Exception as e:
         print(f"Error in mark_as_seen_from_email: {e}")
         return "Internal server error", 500
+
+
+@course_controller.route('/api/course/appoint_system_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def appoint_system_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        nominee_email = data.get('email')
+
+        # Validate input
+        if not nominee_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        nominee_email = nominee_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.appoint_system_manager(nominee_email, nominator_user_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/appoint_course_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def appoint_course_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        nominee_email = data.get('email')
+        course_id = data.get('course_id')
+
+        # Validate input
+        if not nominee_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: course ID"
+            }), 400
+        nominee_email = nominee_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.appoint_course_manager(nominee_email, nominator_user_id, course_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/remove_course_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def remove_course_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        remove_user_email = data.get('email')
+        course_id = data.get('course_id')
+
+        # Validate input
+        if not remove_user_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: course ID"
+            }), 400
+        remove_user_email = remove_user_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.remove_course_manager(remove_user_email, nominator_user_id, course_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 
 

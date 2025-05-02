@@ -686,3 +686,154 @@ def reset_new_password():
             "message": "שגיאה בשרת",
             "error": str(e)
         }), 500
+
+@user_controller.route('/api/user/disapprove_system_manager_appoint', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def disapprove_system_manager_appoint():
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+
+        if not notification_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: notification_id"
+            }), 400
+
+        user_id = get_jwt_identity()  # The user who is disapproving
+
+        result = serviceLayer.disapprove_system_manager_appoint(notification_id, user_id)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "הסירוב נקלט בהצלחה.")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "שגיאה בעיבוד הסירוב")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in disapprove_system_manager_appoint: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+@user_controller.route('/api/user/approve_system_manager_appoint', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def approve_system_manager_appoint():
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+
+        if not notification_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: notification_id"
+            }), 400
+
+        user_id = get_jwt_identity()  # The user who is disapproving
+
+        result = serviceLayer.approve_system_manager_appoint(notification_id, user_id)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "הסירוב נקלט בהצלחה.")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "שגיאה בעיבוד הסירוב")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in approve_system_manager_appoint: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+@user_controller.route('/api/user/disapprove_course_manager_appoint', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def disapprove_course_manager_appoint():
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+
+        if not notification_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: notification_id"
+            }), 400
+
+        user_id = get_jwt_identity()  # The user who is disapproving
+
+        result = serviceLayer.disapprove_course_manager_appoint(notification_id, user_id)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "הסירוב נקלט בהצלחה.")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "שגיאה בעיבוד הסירוב")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in disapprove_course_manager_appoint: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+
+@user_controller.route('/api/user/approve_course_manager_appoint', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def approve_course_manager_appoint():
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+
+        if not notification_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: notification_id"
+            }), 400
+
+        user_id = get_jwt_identity()  # The user who is approving
+
+        result = serviceLayer.approve_course_manager_appoint(notification_id, user_id)
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "הסירוב נקלט בהצלחה.")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "שגיאה בעיבוד הסירוב")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in approve_course_manager_appoint: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500

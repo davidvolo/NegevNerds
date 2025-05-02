@@ -22,6 +22,9 @@ from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepos
 from Backend.DataLayer.DiscussionFollow.DiscussionFollowRepository import DiscussionFollowRepository
 from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
 from Backend.DataLayer.UserData.UserRepository import UserRepository
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
+from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
+
 
 import re
 import json
@@ -69,13 +72,17 @@ class NegevNerds:
             self._course_facade = CourseFacade()
             self._pdfFacade = AnalyzerFacade()
             self._file_manager = FileManager(resolved_dir)
-            self._system_managers = []
+            # self._system_managers = []
             self._initialized = True
             self._notification_facade = NotificationFacade()
             self.open_course_lock = threading.Lock()
             self.add_question_lock = threading.Lock()
             self.upload_exam_lock = threading.Lock()
             self.upload_question_solution_lock = threading.Lock()
+            self._system_managers = set()
+            SystemManagers_repo =SystemManagersRepository()
+            print("initilaze system managers")
+            self._system_managers = SystemManagers_repo.get_all_system_manager_ids()
 
     # Getter methods for accessing the facades and file manager
     @property
@@ -93,11 +100,16 @@ class NegevNerds:
     @property
     def system_managers(self):
         return self._system_managers
+    
+
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""
         # return user_id in self.system_managers
-        return True
+        if user_id in self._system_managers:
+            return True
+        system_managers_repo = SystemManagersRepository()
+        return system_managers_repo.is_system_manager(user_id)
 
     def register(self, email, password, password_confirm, first_name, last_name):
         """Register a new user - first phase"""
@@ -288,9 +300,7 @@ class NegevNerds:
     def is_user_manager(self, course_id, user_id):
         """Delegates to CourseManagersRepository to check if user is a course manager."""
         try:
-            course_managers_repo = CourseManagersRepository()
-            # return course_managers_repo.is_user_manager(course_id, user_id)
-            return course_managers_repo.is_exist(course_id, user_id)
+            return self._course_facade.is_course_manager(course_id,user_id )
         except Exception as e:
             raise Exception(f"Error in NegevNerds.is_user_manager: {str(e)}")
 
@@ -558,7 +568,7 @@ class NegevNerds:
             question_link = f"{frontend_base_url}/question/{course_id}/{year}/{semester}/{moed}/{question_number}"
             if receiver_id != "0" and receiver_id != user_id:
                 user_repo = UserRepository()
-                writer_name =user_repo.get_user_full_name_by_id(receiver_id)
+                writer_name =user_repo.get_user_full_name_by_id(user_id)
                 message = f"{writer_name} הוסיפ/ה רגש על תגובה שלך בדיון "
                 self._notification_facade.send_notification(receiver_id=receiver_id, sender_id=user_id, message = message, isApproved=False,
                                                                 link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
@@ -1101,7 +1111,213 @@ class NegevNerds:
     def mark_notification_as_seen(self,notification_id):
         notification_repo = NotificationRepository()
         return notification_repo.mark_as_seen(notification_id)
+    
+    def appoint_system_manager(self,nominee_email, nominator_user_id):
+        print(nominator_user_id)
+        if self.userFacade.is_valid_email(nominee_email):
+            user_nominee = self.userFacade.getUser_by_email(nominee_email)
+            if user_nominee is not None:
+                if user_nominee.user_id in self._system_managers:
+                    return json.dumps({
+                        "status": "error",
+                        "message": " משתמש זה כבר הינו מנהל מערכת"
+                        })
+                user_nominator = self.userFacade.getUser_by_id(nominator_user_id)
+                system_manager_repo = SystemManagersRepository()
+                if not system_manager_repo.is_system_manager(user_nominee.user_id):
+                    message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} מעוניינ/ת לקדם אותך לתפקיד מנהל מערכת "
+                    self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
+                                                                link="",appoint_system_manager=True, appoint_course_manager=False, comment_to_following=False,
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+                    return json.dumps({
+                    "status": "success",
+                    "message": "The nomination request was sent successfully."
+                })
+                else:
+                    return json.dumps({
+                        "status": "error",
+                        "message": " משתמש זה כבר הינו מנהל מערכת"
+                        })
+                    
+            else:
+                 return json.dumps({
+                        "status": "error",
+                        "message": " אימייל זה לא קיים במערכת"
+                        })
+        else:
+            return json.dumps({
+                        "status": "error",
+                        "message": " נא להקליד אימייל חוקי"
+                        })
+        
+            
+    def appoint_course_manager(self,nominee_email, nominator_user_id, course_id):
+        if self.userFacade.is_valid_email(nominee_email):
+            user_nominee = self.userFacade.getUser_by_email(nominee_email)
+            if user_nominee is not None:
+                user_nominator = self.userFacade.getUser_by_id(nominator_user_id)
+                course_manager_repo = CourseManagersRepository()
+                if not course_manager_repo.is_exist(course_id,user_nominee.user_id):
+                    course_repo = CourseRepository()
+                    course = course_repo.get_course_by_id(course_id)
+                    message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} מעוניינ/ת לקדם אותך לתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id} "
+                    frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+                    course_link = f"{frontend_base_url}/course/{course_id}"
+                    self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
+                                                                link=course_link,appoint_system_manager=False, appoint_course_manager=True, comment_to_following=False,
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+                    return json.dumps({
+                    "status": "success",
+                    "message": "The nomination request was sent successfully."
+                })
+                else:
+                    return json.dumps({
+                        "status": "error",
+                        "message": " משתמש זה כבר הינו מנהל קורס"
+                        })
+                    
+            else:
+                 return json.dumps({
+                        "status": "error",
+                        "message": " אימייל זה לא קיים במערכת"
+                        })
+        else:
+            return json.dumps({
+                        "status": "error",
+                        "message": " נא להקליד אימייל חוקי"
+                        })
+        
+    def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
+        if self.userFacade.is_valid_email(remove_user_email):
+            user_nominee = self.userFacade.getUser_by_email(remove_user_email)
+            if user_nominee is not None:
+                user_nominator = self.userFacade.getUser_by_id(nominator_user_id)
+                if self._course_facade.is_course_manager(course_id,user_nominee.user_id):
+                    if self._course_facade.get_course(course_id).get_course_manager_count() > 1:
+                        self._course_facade.remove_manager_from_course(course_id,user_nominee.user_id)
+                        course = self._course_facade.get_course(course_id)
+                        message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} הסיר/ת אותך מתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id} "
+                        frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+                        course_link = f"{frontend_base_url}/course/{course_id}"
+                        self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
+                                                                    link=course_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                        comment_to_comment=False, react_to_comment=False, remove_course_manager=True)
+                        return json.dumps({
+                        "status": "success",
+                        "message": "The removal request was sent successfully."
+                    })
+                    else:
+                        return json.dumps({
+                            "status": "error",
+                            "message": "משתמש זה הינו מנהל הקורס היחיד כרגע.\nנא למנות קודם כל מנהל קורס חדש"
+                            })
+                else:
+                    return json.dumps({
+                        "status": "error",
+                        "message": " משתמש זה אינו מנהל קורס"
+                        })
+                    
+            else:
+                 return json.dumps({
+                        "status": "error",
+                        "message": " אימייל זה לא קיים במערכת"
+                        })
+        else:
+            return json.dumps({
+                        "status": "error",
+                        "message": " נא להקליד אימייל חוקי"
+                        })
+        
+    def disapprove_system_manager_appoint(self, notification_id, sender_id):
+        notification_repo = NotificationRepository()
+        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        if not reciever_id:
+            return json.dumps({
+                "status": "error",
+                "message": "Notification not found"
+            })
+        # reciever_id = notification.sender_user_id
+        user_sender = self.userFacade.getUser_by_id(sender_id)
+        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} סירב/ה להצעה שלך להתמנות לתפקיד מנהל מערכת "
+        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
+                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+        return json.dumps({
+        "status": "success",
+        "message": "הבקשה נדחתה בהצלחה"
+            })
+    
+    def approve_system_manager_appoint(self, notification_id, sender_id):
+        notification_repo = NotificationRepository()
+        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        if not reciever_id:
+            return json.dumps({
+                "status": "error",
+                "message": "Notification not found"
+            })
+        # reciever_id = notification.sender_user_id
+        notification_repo.mark_as_seen_all_system_manager_appoints(sender_id)
+        system_managers_repo = SystemManagersRepository()
+        system_managers_repo.add_system_manager(sender_id)
+        self._system_managers.add(sender_id)
+        user_sender = self.userFacade.getUser_by_id(sender_id)
+        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} הסכימ/ה להצעה שלך להתמנות לתפקיד מנהל מערכת "
+        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
+                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+        return json.dumps({
+        "status": "success",
+        "message": "הבקשה נדחתה בהצלחה"
+            })
+    
+    def disapprove_course_manager_appoint(self, notification_id, sender_id):
+        notification_repo = NotificationRepository()
+        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        if not reciever_id:
+            return json.dumps({
+                "status": "error",
+                "message": "Notification not found"
+            })
+        # reciever_id = notification.sender_user_id
+        user_sender = self.userFacade.getUser_by_id(sender_id)
+        match = re.search(r'״(.+?)״\s+([\d.]+)', message)
+        course_name = match.group(1)
+        course_id = match.group(2)
+        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} סירב/ה להצעה שלך להתמנות לתפקיד מנהל קורס, בקורס ״{course_name}״ {course_id} "
+        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
+                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+        return json.dumps({
+        "status": "success",
+        "message": "הבקשה נדחתה בהצלחה"
+            })
 
+
+    def approve_course_manager_appoint(self, notification_id, sender_id):
+        notification_repo = NotificationRepository()
+        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        if not reciever_id:
+            return json.dumps({
+                "status": "error",
+                "message": "Notification not found"
+            })
+        # reciever_id = notification.sender_user_id
+        match = re.search(r'״(.+?)״\s+([\d.]+)', message)
+        course_name = match.group(1)
+        course_id = match.group(2)
+        if not self._course_facade.is_course_manager(course_id,sender_id ):
+            self._course_facade.add_manager_to_course(course_id, sender_id)
+        if not self._user_facade.is_registerToCourse(course_id, sender_id):
+            self._user_facade.registerToCourse(course_id, sender_id)
+        user_sender = self.userFacade.getUser_by_id(sender_id)
+        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} הסכימ/ה להצעה שלך להתמנות לתפקיד מנהל קורס, בקורס ״{course_name}״ {course_id} "
+        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
+                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
+                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+        return json.dumps({
+        "status": "success",
+        "message": "הבקשה נדחתה בהצלחה"
+            })
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """
 #     try:

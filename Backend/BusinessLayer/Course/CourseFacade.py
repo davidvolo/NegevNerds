@@ -13,6 +13,7 @@ from datetime import datetime
 
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -234,7 +235,10 @@ class CourseFacade:
     def is_course_manager(self, course_id, user_id):
         """Checks if the user is a manager of the given course."""
         course = self.get_course(course_id)
-        return user_id in course.managers
+        if user_id in course.managers:
+            return True
+        course_manager_repo = CourseManagersRepository()
+        return course_manager_repo.is_exist(course_id,user_id)
 
     def add_manager_to_course(self, course_id, manager_id):
         """
@@ -245,6 +249,8 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.add_manager(manager_id)
+
+
 
     def remove_manager_from_course(self, course_id, manager_id):
         """
