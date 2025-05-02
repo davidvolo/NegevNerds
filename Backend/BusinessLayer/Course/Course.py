@@ -63,6 +63,10 @@ class Course:
     def get_topics(self):
         with self.course_topics_lock:
             return self.course_topics
+    
+    def get_course_manager_count(self):
+        managers_Repo = CourseManagersRepository()
+        return managers_Repo.get_course_manager_count(self.course_id)
 
     def get_all_exams(self):
         """Retrieve all exams from the exams dictionary."""

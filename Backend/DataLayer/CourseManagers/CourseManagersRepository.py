@@ -117,6 +117,13 @@ class CourseManagersRepository:
             raise e
         finally:
             session.close()
+    
+    def get_course_manager_count(self, course_id):
+        session = self.Session()
+        try:
+            return session.query(CourseManagersModel).filter_by(course_id=course_id).count()
+        finally:
+            session.close()
 
     
    

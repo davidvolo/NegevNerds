@@ -91,6 +91,21 @@ class User:
                 self._repo.update_user(self)
             else:
                 raise UserAlreadyRegisterToCourse()
+    
+    def is_registerToCourse(self, course_id):
+        """
+        Register user to a course and update the database
+
+        Raises:
+            UserAlreadyRegisterToCourse: If user is already registered
+        """
+        with self.courses_lock:
+            if course_id in self.courses:
+                return True
+            user_courses_repo = UserCoursesRepository()
+            if user_courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
+                return True
+            return False
 
     def removeCourse(self, course_id):
         with self.courses_lock:
