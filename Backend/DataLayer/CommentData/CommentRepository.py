@@ -55,6 +55,7 @@ class CommentRepository:
                 text=comment.comment_text,
                 deleted=comment.deleted,
                 edited=comment.edited,
+                link_to_media=comment.link_to_media,
                 question_id=question_id
             )
 

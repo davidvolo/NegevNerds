@@ -10,7 +10,8 @@ from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name,writer_id, date=None, prev_id=None, comment_text="", deleted=None, edited=None, reactions=None):
+    def __init__(self, comment_id, writer_name,writer_id, link_to_media, date=None, prev_id=None, comment_text="",
+                 deleted=None, edited=None, reactions=None):
         """
         Initialize a CommentData instance.
         """
@@ -23,10 +24,11 @@ class Comment:
         self.reactions = reactions if reactions is not None else [] #reactions_list
         self.deleted = deleted
         self.edited = edited
+        self.link_to_media = link_to_media
         self.reactions_lock = threading.Lock()
 
     @classmethod
-    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, edited, question_id):
+    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, edited, link_to_media, question_id):
         """
         Class method to create a new comment and save to database
         Returns:
@@ -41,7 +43,8 @@ class Comment:
             prev_id=prev_id,
             comment_text=comment_text,
             deleted=deleted,
-            edited=edited
+            edited=edited,
+            link_to_media=link_to_media
         )
         comment_repo = CommentRepository()
         comment_repo.add_comment(comment, question_id)
@@ -62,8 +65,12 @@ class Comment:
             comment_text=self.comment_text,
             deleted=self.deleted,
             edited=self.edited,
-            reactions=reaction_dtos
+            reactions=reaction_dtos,
+            link_to_media=self.link_to_media
         )
+
+    def get_link_to_media(self):
+        return self.link_to_media
 
     def generate_reaction_id(self):
         return "reaction" + str(uuid.uuid4())

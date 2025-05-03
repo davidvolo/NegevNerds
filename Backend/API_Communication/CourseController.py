@@ -39,6 +39,9 @@ def allowed_file(filename):
     """Check if the file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def allowed_media_for_comment(filename):
+    """Check if the file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpeg', 'jpg', 'png'}
 
 def parse_jsonify(parsed_result):
     # Check the status and return appropriate response
@@ -536,6 +539,67 @@ def get_question_pdf():
             "message": str(e)
         }), 500
 
+@course_controller.route('/api/course/get_comment_media', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_comment_media():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+        comment_id = request.args.get('comment_id')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}, comment_id={comment_id}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number, comment_id]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        media_path = serviceLayer.get_comment_media_link(course_id, year, semester, moed, question_number, comment_id)
+        print(f"Generated file path: {media_path}")
+
+        # בדיקה אם הקובץ קיים
+        if not media_path or not os.path.exists(media_path):
+            return jsonify({
+                "status": "success",
+                "media": None
+            }), 200
+
+        # שליחת הקובץ ללקוח
+
+        mime_type, _ = mimetypes.guess_type(media_path)
+
+        # if mime_type == 'application/pdf':
+        #     # If it's a PDF, send as PDF
+        #     return send_file(question_path, mimetype='application/pdf')
+        if mime_type and mime_type.startswith('image/'):
+            # If it's an image (JPEG, PNG, etc.), send as an image
+
+            return send_file(media_path, mimetype=mime_type)
+        else:
+            # Handle unsupported file types
+            return 'Unsupported file type', 400
+    except Exception as e:
+        print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 
 @course_controller.route('/api/course/get_answer_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
@@ -909,7 +973,8 @@ def add_comment():
         writer_id = get_jwt_identity()
         prev_id = request.form.get('prev_id')
         question_id = request.form.get('question_id')
-        comment_text = request.form.get('comment_text')  # Optional
+        comment_text = request.form.get('comment_text')
+        photo_file = request.files.get('photo_file')  # Optional
 
         # Validate required fields
         required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id, comment_text]
@@ -919,10 +984,16 @@ def add_comment():
                 "message": "Missing required fields."
             }), 400
 
+        if photo_file and not allowed_media_for_comment(photo_file.filename):
+            return jsonify({
+                "success": False,
+                "message": "Invalid file type for photo_file. Allowed types are JPEG, JPG, PNG."
+            }), 400
+
         # Call the service layer
         result = serviceLayer.add_comment(
             course_id, year, semester, moed, question_number,
-            writer_name, writer_id, prev_id, comment_text, question_id
+            writer_name, writer_id, prev_id, comment_text, photo_file, question_id
         )
 
         # Parse the service response
@@ -1620,10 +1691,14 @@ def is_system_manager():
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
             "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
+            "user5932eea2-3e58-4410-a6c5-500fcde5546b"
             ]
 
         user_id = get_jwt_identity()
         if user_id in user_ids_managers:
+            return jsonify({"success": True, "is_system_manager": True}), 200
+        res = serviceLayer.is_system_manager(user_id)
+        if res:
             return jsonify({"success": True, "is_system_manager": True}), 200
         else:
             return jsonify({"success": False, "is_system_manager": False}), 200
@@ -2283,5 +2358,148 @@ def mark_as_seen_from_email():
     except Exception as e:
         print(f"Error in mark_as_seen_from_email: {e}")
         return "Internal server error", 500
+
+
+@course_controller.route('/api/course/appoint_system_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def appoint_system_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        nominee_email = data.get('email')
+
+        # Validate input
+        if not nominee_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        nominee_email = nominee_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.appoint_system_manager(nominee_email, nominator_user_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/appoint_course_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def appoint_course_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        nominee_email = data.get('email')
+        course_id = data.get('course_id')
+
+        # Validate input
+        if not nominee_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: course ID"
+            }), 400
+        nominee_email = nominee_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.appoint_course_manager(nominee_email, nominator_user_id, course_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+    
+@course_controller.route('/api/course/remove_course_manager', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def remove_course_manager():
+    try:
+        # Extract the email from the POST request JSON
+        data = request.get_json()
+        remove_user_email = data.get('email')
+        course_id = data.get('course_id')
+
+        # Validate input
+        if not remove_user_email:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: email"
+            }), 400
+        if not course_id:
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameter: course ID"
+            }), 400
+        remove_user_email = remove_user_email.lower()
+
+        nominator_user_id = get_jwt_identity()  # Get the user_id from JWT token
+
+        # Find the user_id by the given email
+        
+        result = serviceLayer.remove_course_manager(remove_user_email, nominator_user_id, course_id)
+
+        parsed_result = json.loads(result)
+
+        if parsed_result.get("status") == "success":
+            return jsonify({
+                "success": True,
+                "message": parsed_result.get("message", "System manager appointed successfully")
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": parsed_result.get("message", "Unknown error")
+            }), 400
+
+    except Exception as e:
+        print(f"Error in appoint_system_manager: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
 
 

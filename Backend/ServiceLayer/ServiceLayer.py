@@ -6,6 +6,7 @@ import threading
 
 from Backend.BusinessLayer.Course import enums
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 
 
 
@@ -372,93 +373,93 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
-        """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.search_exam_by_specifics(course_id, year, semester, moed)
+    # def search_exam_by_specifics(self, course_id, year: int, semester=None, moed=None):
+    #     """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.search_exam_by_specifics(course_id, year, semester, moed)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "No exams found for the given criteria."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "No exams found for the given criteria."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def search_all_course_exams(self, course_id):
+    #     """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.search_all_course_exmas(course_id)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "No exams found for the given criteria."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-    def search_all_course_exams(self, course_id):
-        """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.search_all_course_exmas(course_id)
+    # def edit_exam_course_name(self, user_id, course_id, year, semester, moed, new_course_name):
+    #     """Editing exam's course name """
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.edit_exam_course_name(user_id, course_id, year, semester, moed, new_course_name)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "Something went wrong"
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "No exams found for the given criteria."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
-
-    def edit_exam_course_name(self, user_id, course_id, year, semester, moed, new_course_name):
-        """Editing exam's course name """
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_course_name(user_id, course_id, year, semester, moed, new_course_name)
-
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "Something went wrong"
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
-
-    def edit_exam_link(self, course_id, year, semester, moed, new_link):
-        """Editing exam's link """
-        try:
-            # Call the business layer method with the provided arguments
-            result = self.negev_nerds.edit_exam_link(course_id, year, semester, moed, new_link)
-
-            # Check if any exams are found
-            if not result:
-                return json.dumps({
-                    "status": "error",
-                    "message": "Something went wrong."
-                })
-            return json.dumps({
-                "status": "success",
-                "data": result
-            })
-        except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def edit_exam_link(self, course_id, year, semester, moed, new_link):
+    #     """Editing exam's link """
+    #     try:
+    #         # Call the business layer method with the provided arguments
+    #         result = self.negev_nerds.edit_exam_link(course_id, year, semester, moed, new_link)
+    #
+    #         # Check if any exams are found
+    #         if not result:
+    #             return json.dumps({
+    #                 "status": "error",
+    #                 "message": "Something went wrong."
+    #             })
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
     # def edit_exam_year(self, course_id, year, semester, moed, new_year):
     #     """Editing exam's year """
@@ -530,7 +531,7 @@ class ServiceLayer:
                      writer_name,
                      writer_id
                      , prev_id,
-                     comment_text, question_id):
+                     comment_text, photo_file, question_id):
         """
         Handles adding a comment to a question discussion.
         :return: JSON response indicating success or failure.
@@ -538,7 +539,7 @@ class ServiceLayer:
         try:
 
             result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
-                                                  writer_name,writer_id, prev_id, comment_text, question_id)
+                                                  writer_name,writer_id, prev_id, comment_text, photo_file, question_id)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -655,6 +656,15 @@ class ServiceLayer:
     #             "status": "error",
     #             "message": str(e)
     #         })
+
+    def get_comment_media_link(self, course_id, year, semester, moed, questionNumber, comment_id):
+        try:
+            return self.negev_nerds.get_comment_media_link(course_id, year, semester, moed, questionNumber, comment_id)
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
 
     def get_question_path(self, course_id, year, semester, moed, questionNumber):
         try:
@@ -1132,7 +1142,30 @@ class ServiceLayer:
 
     def unfollow_question(self, user_id, question_id):
         self.negev_nerds.unfollow_question(user_id, question_id)
+    
+    def appoint_system_manager(self,nominee_email, nominator_user_id):
+        return self.negev_nerds.appoint_system_manager(nominee_email, nominator_user_id)
 
+    def disapprove_system_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.disapprove_system_manager_appoint(notification_id,user_id)
+    
+    def approve_system_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.approve_system_manager_appoint(notification_id,user_id)
+
+    def appoint_course_manager(self,nominee_email, nominator_user_id, course_id):
+        return self.negev_nerds.appoint_course_manager(nominee_email, nominator_user_id, course_id)
+
+    def disapprove_course_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.disapprove_course_manager_appoint(notification_id,user_id)
+    
+    def approve_course_manager_appoint(self, notification_id,user_id):
+        return self.negev_nerds.approve_course_manager_appoint(notification_id,user_id)
+    
+    def is_system_manager(self,user_id ):
+        return self.negev_nerds.is_system_manager(user_id)
+    
+    def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
+        return self.negev_nerds.remove_course_manager(remove_user_email, nominator_user_id, course_id)
 
     
     # def remove_course(self,course_id):
@@ -1164,7 +1197,7 @@ class ServiceLayer:
             courses = init_data.get("courses", [])
 
             usersId = []
-
+            repo = SystemManagersRepository()
             # Register users
             for i in range(len(users)):
                 curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])

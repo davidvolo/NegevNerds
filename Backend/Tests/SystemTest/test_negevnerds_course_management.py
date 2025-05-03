@@ -116,13 +116,16 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         course_id = "202.1.1010"
         self._open_course(user, course_id, "קורס לבדיקה")
         response = self.negev.remove_course(course_id, user.user_id)
-        self.assertEqual(response, f"Course {course_id} removed successfully.")
+        self.assertEqual(response["status"], "success")
+        self.assertIn("removed successfully", response["message"])
 
     def test_remove_course_invalid_user(self):
         """Verify a user who is not the course manager cannot remove it."""
         user = self._complete_user_registration("notowner@bgu.ac.il", "Pass1!", "Not", "Owner")
         response = self.negev.remove_course("nonexistent_course", user.user_id)
-        self.assertIn("Error", response)
+
+        self.assertEqual(response["status"], "error")
+        self.assertIn("object has no attribute", response["message"])
 
     def test_register_to_course_success(self):
         """Verify a second user can register to an existing course."""

@@ -19,6 +19,7 @@ class CommentModel(Base):
     text = Column(String, nullable=False)
     deleted = Column(Boolean, nullable=False)
     edited = Column(Boolean, nullable=False)
+    link_to_media = Column(String, nullable=True)
     question_id = Column(String, ForeignKey('questions.question_id'), nullable=False)
 
     question = relationship('QuestionModel',
@@ -40,6 +41,7 @@ class CommentModel(Base):
             comment_text=self.text,
             deleted=self.deleted,
             edited=self.edited,
+            link_to_media=self.link_to_media,
             reactions=business_reactions
         )
         return comment
@@ -55,5 +57,6 @@ class CommentModel(Base):
             prev_id=comment.prev_id,
             text=comment.text,
             deleted=comment.deleted,
-            edited=comment.edited
+            edited=comment.edited,
+            link_to_media=comment.link_to_media
         )

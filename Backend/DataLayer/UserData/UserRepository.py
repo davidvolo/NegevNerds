@@ -2,9 +2,10 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from Backend.DataLayer.Base import Base
 
 from Backend.BusinessLayer.Course.Course import Course
-from Backend.DataLayer.UserData.UserModel import Base, UserModel
+from Backend.DataLayer.UserData.UserModel import  UserModel
 from Backend.DataLayer.UserCourses.UserCoursesModel import UserCoursesModel
 
 
@@ -41,6 +42,7 @@ class UserRepository:
         # Use the full path to create the SQLite engine
         #print(f"Resolved database path: {db_path}")
         self.engine = create_engine(f'sqlite:///{db_path}')
+        # print("Tables SQLAlchemy knows:", Base.metadata.tables.keys())
 
         # Ensure all tables are created
 

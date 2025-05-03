@@ -150,5 +150,39 @@ class NotificationRepository:
             raise e
         finally:
             session.close()
+    
+    def get_notification_by_id_and_mark_as_seen(self, notification_id):
+        session = self.Session()
+        try:
+            notification_model = session.query(NotificationModel).filter_by(notification_id=notification_id).first()
+            if not notification_model:
+                raise ValueError(f"No notification found with ID {notification_id}")
+            # _ = notification_model.sender_user_id
+            notification_model.IsApproved = True  # Update the status
+            session.commit()
+            return notification_model.sender_user_id, notification_model.message
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
+
+    def mark_as_seen_all_system_manager_appoints(self, receiver_id):
+        session = self.Session()
+        try:
+            notifications = session.query(NotificationModel).filter_by(
+                receiver_user_id=receiver_id,
+                AppointSystemManager=True
+            ).all()
+
+            for notif in notifications:
+                notif.IsApproved = True
+
+            session.commit()
+        except Exception as e:
+            print(f"Error in mark_as_seen_all_system_manager_appoints: {e}")
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 

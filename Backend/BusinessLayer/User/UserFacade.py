@@ -50,10 +50,7 @@ class UserFacade:
         """Verify a password against a stored hashed password."""
         return bcrypt.checkpw(provided_password.encode('utf-8'), stored_hashed_password.encode('utf-8'))
 
-    def is_valid_email(self,email):
-        """Validate email domain."""
-        return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
-
+  
     def is_valid_name(self, name):
         """
         Validates a name to ensure it contains only Hebrew characters, spaces, tabs, and hyphens.
@@ -394,6 +391,14 @@ class UserFacade:
             return []
         return curr_user.get_courses()
 
+    def is_registerToCourse(self, courseId, userId):
+        """Add user to course (through UserData object)."""
+        user = self.getUser_by_id(userId)
+        if user:
+            return user.is_registerToCourse(courseId)
+        else:
+            raise UserDoesnotExistsError(userId)
+        
     def registerToCourse(self, courseId, userId):
         """Add user to course (through UserData object)."""
         user = self.getUser_by_id(userId)
@@ -428,7 +433,6 @@ class UserFacade:
         return user
 
     def getUser_by_email(self, email):
-
         user = self.users_byEmail.get(email)
         if user is not None:
             return user

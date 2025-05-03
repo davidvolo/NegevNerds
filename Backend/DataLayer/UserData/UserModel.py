@@ -26,9 +26,11 @@ class UserModel(Base):
     # Define the relationship
     courses = relationship('UserCoursesModel', back_populates='user', cascade='all, delete-orphan')
     course_managers = relationship('CourseManagersModel', back_populates='manager')
+
     reactions = relationship('ReactionModel',
                             back_populates='user')
     follows = relationship('DiscussionFollowModel', back_populates='user', cascade='all, delete-orphan')
+    system_manager = relationship('SystemManagersModel', back_populates='manager')
 
 
     def to_business_model(self):

@@ -8,7 +8,7 @@ from Backend.DataLayer.UserData.UserRepository import UserRepository
 from email.mime.text import MIMEText
 import smtplib
 import logging
-
+from socketio_instance import socketio
 
 class LateNotifications:
     _instance = None
@@ -31,8 +31,20 @@ class LateNotifications:
                  comment_to_comment, react_to_comment, remove_course_manager):
         notification_id = self.generateNotificationId()
         backend_base_url = os.getenv("BACKEND_BASE_URL", "http://localhost:5001")
-        approval_link = f"{backend_base_url}/api/course/mark_as_seen_from_email?notification_id={notification_id}"
-        email_body = f"{message}\n\nלאישור וקבלת עדכונים נוספים:\n{approval_link}"
+        frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+        if appoint_system_manager:
+            approval_link = f"{frontend_base_url}/home"
+            email_body = f"{message}\n\nלצפייה וקבלת עדכונים נוספים:\n{approval_link}"
+        elif appoint_course_manager or remove_course_manager:
+            approval_link = link
+            email_body = f"{message}\n\nלעמוד הקורס וקבלת עדכונים נוספים:\n{approval_link}"
+        elif comment_to_comment or react_to_comment or comment_to_following:
+            approval_link = f"{backend_base_url}/api/course/mark_as_seen_from_email?notification_id={notification_id}"        
+            email_body = f"{message}\n\nלאישור וקבלת עדכונים נוספים:\n{approval_link}"
+        else:
+            approval_link = f"{frontend_base_url}/home"
+            email_body = f"{message}\n\לצפייה וקבלת עדכונים נוספים:\n{approval_link}"
+
 
         # 📧 Email config
         sender_email = os.getenv("EMAIL_ADDRESS")
@@ -43,7 +55,6 @@ class LateNotifications:
         userRepo = UserRepository()
         receiver_email = userRepo.get_user_email_by_id(receiver_id)
         subject = "התראה חדשה מ-NegevNerds"
-        email_body = f"{message}\n\nלאישור וקבלת עדכונים נוספים:\n{approval_link}"
         msg = MIMEText(email_body)
         msg["Subject"] = subject
         msg["From"] = sender_email
@@ -62,6 +73,30 @@ class LateNotifications:
         Notification.create(notification_id=notification_id,receiver_user_id=receiver_id, sender_user_id=sender_id,  message=message, timestamp=datetime.now(), 
                              link=link,isApproved=isApproved, appoint_system_manager=appoint_system_manager,appoint_course_manager= appoint_course_manager,
                              comment_to_following=comment_to_following,comment_to_comment=comment_to_comment, react_to_comment=react_to_comment, remove_course_manager= remove_course_manager)
+
+        socketio.emit(
+        "NEW_NOTIFICATION",
+        {
+            "type": "NEW_NOTIFICATION",
+            "notification": {
+                "notification_id": notification_id,
+                "message": message,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "link": link,
+                "receiver_user_id": receiver_id,
+                "appoint_system_manager": appoint_system_manager,
+                "appoint_course_manager": appoint_course_manager,
+                "comment_to_following": comment_to_following,
+                "comment_to_comment": comment_to_comment,
+                "react_to_comment": react_to_comment,
+                "remove_course_manager": remove_course_manager
+            }
+        },
+        to=receiver_id  # ✅ Emit only to the user who joined their room
+    )
+
+        print(f"📡 Emitting to: notification_to_{receiver_id}")
+
 
     def generateNotificationId(self):
         return "notification-" + str(uuid.uuid4())

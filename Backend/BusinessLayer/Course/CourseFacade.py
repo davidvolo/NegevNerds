@@ -13,6 +13,7 @@ from datetime import datetime
 
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
+from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -234,7 +235,10 @@ class CourseFacade:
     def is_course_manager(self, course_id, user_id):
         """Checks if the user is a manager of the given course."""
         course = self.get_course(course_id)
-        return user_id in course.managers
+        if user_id in course.managers:
+            return True
+        course_manager_repo = CourseManagersRepository()
+        return course_manager_repo.is_exist(course_id,user_id)
 
     def add_manager_to_course(self, course_id, manager_id):
         """
@@ -245,6 +249,8 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.add_manager(manager_id)
+
+
 
     def remove_manager_from_course(self, course_id, manager_id):
         """
@@ -358,10 +364,6 @@ class CourseFacade:
 
         return sorted_exams
 
-    def edit_exam_course_name(self, course_id, year, semester, moed, new_course_name):
-        course = self.get_course(course_id)
-        course.get_exam(year, semester, moed).edit_course_name(new_course_name)
-
     def edit_exam_link(self, course_id, year, semester, moed, new_link):
         course = self.get_course(course_id)
         course.get_exam(year, semester, moed).edit_link(new_link)
@@ -448,7 +450,7 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
-    def get_exam_full_pdf(self, course_id, year, semester, moed, ):
+    def get_exam_full_pdf(self, course_id, year, semester, moed):
         """
         """
         try:
@@ -481,8 +483,6 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
     
-    
-    
     def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):
         try:
             course = self.get_course(course_id)
@@ -502,12 +502,13 @@ class CourseFacade:
         except Exception as e:
             print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
             raise Exception(f"CourseFacade Error: {str(e)}")
-    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id,prev_id, comment_text):
+
+    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, writer_id,prev_id, comment_text, link_to_media):
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.add_comment(year, semester, moed, question_number, writer_name,writer_id, prev_id, comment_text)
+            return course.add_comment(year, semester, moed, question_number, comment_id, writer_name,writer_id, prev_id, comment_text, link_to_media)
 
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
@@ -609,14 +610,20 @@ class CourseFacade:
     #     course = self.get_course(course_id)
     #     course.get_exam(year, semester, moed).get_question(question_number).remove_comment(comment_id)
 
+    def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
+        course = self.get_course(course_id)
+        return course.get_exam(year, semester, moed).get_question(question_number).get_comment_media_link(comment_id)
+
     def get_link_to_question(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
         return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_question()
 
     def get_link_to_answer(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
+        if course is None:
+            raise CourseIsNotExist(course_id)
         return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_answer()
-    
+
     def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
         course = self.get_course(course_id)
         if course is not None:
