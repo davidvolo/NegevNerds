@@ -1,6 +1,14 @@
+# import eventlet
+# eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
+import threading
+
+from flask_socketio import SocketIO, emit, join_room
+import jwt as pyjwt  # Rename to avoid collision with Flask-JWT-Extended
 
 from waitress import serve
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -17,10 +25,9 @@ import sys
 import subprocess
 import psutil
 import time
+from socketio_instance import socketio  # ✅ Import the shared instance
 
 sys.path.append('/home/david/backend/NegevNerds')
-
-
 
 
 app = Flask(__name__)
@@ -50,6 +57,39 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
+
+# socketio.init_app(app)  # ✅ Hook into Flask app
+# socketio.init_app(app, cors_allowed_origins=[
+#     "http://localhost:3000",
+#     "http://132.72.116.86:3000",
+#     "https://132.72.116.86:3000",
+#     "https://negevnerds.cs.bgu.ac.il",
+#     "https://api.negevnerds.cs.bgu.ac.il"
+# ])
+socketio.init_app(app, cors_allowed_origins="*")
+
+
+def verify_token(token):
+    try:
+        decoded = pyjwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
+        return decoded.get("sub")  # <-- ✅ Match your payload
+    except pyjwt.ExpiredSignatureError:
+        print("Token expired")
+    except pyjwt.InvalidTokenError:
+        print("Invalid token")
+    return None
+    
+
+@socketio.on("connect")
+def handle_connect():
+    token = request.args.get("token")
+    print("Received token:", token)
+    user_id = verify_token(token)
+    if user_id:
+        join_room(user_id)
+        print(f"✅ User {user_id} joined their room")
+    else:
+        print("❌ Invalid or missing token — connection rejected")
 
 
 # Register controllers
@@ -99,6 +139,9 @@ def start_elasticsearch():
     print("Elasticsearch is starting...")
     time.sleep(10)  # Wait a few seconds for Elasticsearch to start
 
+def initialize():
+    service_layer = ServiceLayer(NegevNerds("../"))
+    service_layer.initialize_system()
 
 def main():
 
@@ -111,9 +154,10 @@ def main():
     print("Starting the ExamData Preparation System API...")
 
 
-    service_layer = ServiceLayer(NegevNerds("../"))
-    service_layer.initialize_system()
-
+    # service_layer = ServiceLayer(NegevNerds("../"))
+    # service_layer.initialize_system()
+    print("Starting the ExamData Preparation System API...")
+    threading.Thread(target=initialize).start()
     # Run with werkzeug (development server)
 #    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 #     context.load_cert_chain(
@@ -125,8 +169,12 @@ def main():
 #     http_server = WSGIServer(('0.0.0.0', 5001), app)
 #     http_server.serve_forever()
 
-    threads = (cpu_count() * 2) + 1
-    serve(app, host='0.0.0.0', port=5001, threads=threads)
+    # threads = (cpu_count() * 2) + 1
+    # serve(app, host='0.0.0.0', port=5001, threads=threads)  # ❌ WSGI (Waitress, no WebSocket support)
+    print("📢 About to start the SocketIO server...")
+    # socketio.run(app, host="0.0.0.0", port=5001)  # ✅ ASGI (eventlet-based WebSocket server)
+    socketio.run(app, host="0.0.0.0", port=5001)
+
 
 #     app.run(host='0.0.0.0', port=5001)
 
