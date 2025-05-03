@@ -325,11 +325,11 @@ class ServiceLayer:
     def search_free_text(self, text, course_id =None):
         """Handle user logout and return JSON."""
         try:
-            result = self.negev_nerds.search_free_text(text=text, course_id=course_id)
+            result , first_suggestion = self.negev_nerds.search_free_text(text=text, course_id=course_id)
 
             questions_dict = [question.to_dict() for question in result]
 
-            if not questions_dict:
+            if not questions_dict and not first_suggestion:
                 return json.dumps({
                     "status": "error",
                     "message": "No questions found for the given criteria."
@@ -337,7 +337,8 @@ class ServiceLayer:
 
             return json.dumps({
                 "status": "success",
-                "message": questions_dict
+                "message": questions_dict,
+                "first_suggestion": first_suggestion
             })
         except Exception as e:
             return json.dumps({

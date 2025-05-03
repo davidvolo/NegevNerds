@@ -29,8 +29,6 @@ class UserCoursesRepository:
         if not os.path.exists(db_dir):
             os.makedirs(db_dir, exist_ok=True)
 
-        # Use the full path to create the SQLite engine
-        #print(f"Resolved database path: {db_path}")
         self.engine = create_engine(f'sqlite:///{db_path}')
 
         # Ensure all tables are created
@@ -105,11 +103,9 @@ class UserCoursesRepository:
             List[UserData]: List of business layer UserData objects
         """
         try:
-            # Use the session context manager for automatic session handling
+
             with self.Session() as session:
-                # Querying with join to fetch associated users more efficiently
                 associations = session.query(UserCoursesModel).filter_by(course_id=course_id).all()
-                # Convert to business model objects
                 return [association.user.to_business_model() for association in associations]
         except Exception as e:
             raise e

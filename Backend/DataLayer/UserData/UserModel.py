@@ -33,12 +33,7 @@ class UserModel(Base):
 
     def to_business_model(self):
         from Backend.BusinessLayer.User.User import User
-        """
-        Convert SQLAlchemy model to Business Layer UserData object
 
-        Returns:
-            UserData: Business layer UserData instance
-        """
         user = User(
             user_id=self.user_id,
             email=self.email,
@@ -47,21 +42,12 @@ class UserModel(Base):
             last_name=self.last_name,
             loggedIn=self.logged_in
         )
-        #user.courses = self.courses
         user.courses = [course.course_id for course in self.courses]
         return user
 
     @classmethod
     def from_business_model(cls, user):
-        """
-        Create a UserModel instance from a Business Layer UserData object
 
-        Args:
-            user (UserData): Business layer UserData instance
-
-        Returns:
-            UserModel: SQLAlchemy UserModel instance
-        """
         return cls(
             user_id=user.user_id,
             email=user.email,

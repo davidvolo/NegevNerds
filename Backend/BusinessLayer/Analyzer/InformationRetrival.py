@@ -5,17 +5,30 @@ import re
 import pdfplumber
 from collections import defaultdict
 
+from dotenv import load_dotenv
+import os
+
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from elasticsearch import Elasticsearch
 
 
+
+# Load environment variables from .env file
+load_dotenv()
+
+
 class InformationRetrival:
     def __init__(self):
-        self.elastic_search = Elasticsearch("https://localhost:9200",
-                                            basic_auth=("elastic", "K7Eg6Gh_HOp*9kZyLMd4"),
-                                            verify_certs=False)
+        elastic_url = os.getenv('ELASTICSEARCH_URL')
+        elastic_username = os.getenv('ELASTICSEARCH_USER_NAME')
+        elastic_password = os.getenv('ELASTICSEARCH_PASSWORD')
+        self.elastic_search = Elasticsearch(
+            elastic_url,
+            basic_auth=(elastic_username, elastic_password),
+            verify_certs=False
+        )
         self.common_words_en = set(self.get_english_common_words())  # Set of common English words
         self.common_words_he = set(self.get_common_hebrew())  # Set of common Hebrew words
         self.words_repository = WordsQuestionsRepository()
@@ -36,51 +49,40 @@ class InformationRetrival:
             })
 
     def search_free_text(self, query: str, course_id: int = None, limit: int = 50) -> list:
-        """
-        Search for the best matching questions based on the query and return a list of QuestionDTO objects.
 
-        :param query: The input free-text query.
-        :param course_id: The course ID to filter results by (optional).
-        :param limit: The maximum number of results to return (default is 50).
-        :return: A list of up to `limit` QuestionDTOs with the most relevant matches.
-        """
-        # Step 1: Build the Elasticsearch query
+
         es_query = {
             "size": limit,
             "query": {
                 "bool": {
-                    "should": [
+                    "must": [  # מחפש התאמה מדויקת יחסית
                         {
-                            "match": {
-                                "text": {
-                                    "query": query,
-                                    "fuzziness": "AUTO"  # Fuzzy matching for better results on misspellings
-                                }
-                            }
-                        },
-                        {
-                            "match": {
-                                "text": {
-                                    "query": query,
-                                    "operator": "and"  # Only return results where all terms appear
-                                }
+                            "match_phrase": {  # חיפוש ביטוי מדויק
+                                "text": query
                             }
                         }
                     ],
-                    "filter": [{"term": {"course_id": str(course_id)}}] if course_id else [],
-                    "minimum_should_match": 1  # Return documents that match at least one condition
+                    "filter": [{"term": {"course_id": str(course_id)}}] if course_id else []
+                }
+            },
+            "suggest": {
+                "text_suggestion": {
+                    "text": query,
+                    "term": {
+                        "field": "text"
+                    }
                 }
             },
             "sort": [
-                {"_score": {"order": "desc"}},  # Sort by relevance score (default behavior)
+                {"_score": {"order": "desc"}},
             ]
         }
 
-        # Step 2: Execute the search query in Elasticsearch
+
         res = self.elastic_search.search(index=self.index_name, body=es_query)
+
         hits = res['hits']['hits']
 
-        # Step 3: Convert the hits into QuestionDTO objects
         question_dtos = []
         for hit in hits:
             source = hit['_source']
@@ -90,8 +92,13 @@ class InformationRetrival:
             )
             question_dtos.append(question_dto)
 
-        # Step 4: Return the list of QuestionDTO objects
-        return question_dtos
+        suggestions = res.get('suggest', {}).get('text_suggestion', [])
+        first_suggestion = None
+        for suggest in suggestions:
+            if suggest.get('options'):
+                first_suggestion = suggest['options'][0]['text']
+                break
+        return question_dtos, first_suggestion
 
 
     def index_question_to_elasticsearch(self, question_id, course_id, all_text):
@@ -117,6 +124,7 @@ class InformationRetrival:
         self.index_question_to_elasticsearch(question_id=question_id, course_id=course_id, all_text=all_text)
 
         self.update_words(words=words, question_id=question_id, course_id=course_id)
+
 
     def process_photo(self, text, question_id , course_id):
 
@@ -150,7 +158,6 @@ class InformationRetrival:
         words_set = set(words)
         all_text = " ".join(words_set)
         self.index_question_to_elasticsearch(question_id=question_id, course_id=course_id, all_text=all_text)
-
         self.update_words(words=words_set, question_id=question_id, course_id=course_id)
 
 
@@ -163,75 +170,6 @@ class InformationRetrival:
                     self.words_repository.add_word_to_question(word, question_id, course_id)
 
 
-
-    # def search_free_text(self, text: str) -> list:
-    #     """
-    #     Search for the 50 best matching question IDs based on the number of words in common with the text.
-    #
-    #     :param text: The input free-text string.
-    #     :return: A list of up to 50 question IDs with the most words in common with the text.
-    #     """
-    #     from collections import defaultdict
-    #
-    #     # Step 1: Split the input text into words
-    #     words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
-    #
-    #     # Step 2: Dictionary to count the number of matching words for each question ID
-    #     dto_count = defaultdict(int)
-    #
-    #     # Step 3: Iterate over words and fetch associated question IDs
-    #     for word in words:
-    #         word = word.lower()
-    #         search_dtos = self.words_repository.get_search_dto_by_word(word)
-    #         for dto in search_dtos:
-    #             dto_count[dto] += 1
-    #
-    #         # Step 4: Sort SearchDTOs by frequency (descending), with a secondary sort by course ID and question ID
-    #     sorted_dtos = sorted(
-    #         dto_count.items(),
-    #         key=lambda item: (-item[1], item[0].course_id, item[0].question_id)
-    #         # Primary sort by count, then course/question IDs
-    #     )
-    #
-    #     # Step 5: Extract the top 50 SearchDTOs
-    #     top_50_dtos = [dto for dto, _ in sorted_dtos[:50]]
-    #
-    #     return top_50_dtos
-
-
-    # def search_free_text_with_course(self, text, course_id) -> list:
-    #     """
-    #     Search for the 50 best matching question IDs based on the number of words in common with the text.
-    #
-    #     :param text: The input free-text string.
-    #     :return: A list of up to 50 question IDs with the most words in common with the text.
-    #     """
-    #     from collections import defaultdict
-    #
-    #     # Step 1: Split the input text into words
-    #     words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
-    #
-    #     # Step 2: Dictionary to count the number of matching words for each question ID
-    #     question_word_count = defaultdict(int)
-    #
-    #     # Step 3: Iterate over words and fetch associated question IDs
-    #     for word in words:
-    #         word = word.lower()
-    #         question_ids = self.words_repository.get_questions_id_by_word_and_course(word, course_id)
-    #         for question_id in question_ids:
-    #             question_word_count[question_id] += 1
-    #
-    #     # Step 4: Sort question IDs by the number of matching words (descending)
-    #     # If counts are equal, secondary sorting by question ID (optional)
-    #     sorted_questions = sorted(
-    #         question_word_count.items(),
-    #         key=lambda item: (-item[1], item[0])  # Sort by count descending, then by ID ascending
-    #     )
-    #
-    #     # Step 5: Extract the top 50 question IDs
-    #     top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
-    #
-    #     return top_50_questions
 
 
 
@@ -429,3 +367,75 @@ class WordIndex2:
             else:
                 reversed_words.append(word)
         return " ".join(reversed_words)
+
+
+
+    # def search_free_text(self, text: str) -> list:
+    #     """
+    #     Search for the 50 best matching question IDs based on the number of words in common with the text.
+    #
+    #     :param text: The input free-text string.
+    #     :return: A list of up to 50 question IDs with the most words in common with the text.
+    #     """
+    #     from collections import defaultdict
+    #
+    #     # Step 1: Split the input text into words
+    #     words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
+    #
+    #     # Step 2: Dictionary to count the number of matching words for each question ID
+    #     dto_count = defaultdict(int)
+    #
+    #     # Step 3: Iterate over words and fetch associated question IDs
+    #     for word in words:
+    #         word = word.lower()
+    #         search_dtos = self.words_repository.get_search_dto_by_word(word)
+    #         for dto in search_dtos:
+    #             dto_count[dto] += 1
+    #
+    #         # Step 4: Sort SearchDTOs by frequency (descending), with a secondary sort by course ID and question ID
+    #     sorted_dtos = sorted(
+    #         dto_count.items(),
+    #         key=lambda item: (-item[1], item[0].course_id, item[0].question_id)
+    #         # Primary sort by count, then course/question IDs
+    #     )
+    #
+    #     # Step 5: Extract the top 50 SearchDTOs
+    #     top_50_dtos = [dto for dto, _ in sorted_dtos[:50]]
+    #
+    #     return top_50_dtos
+
+
+    # def search_free_text_with_course(self, text, course_id) -> list:
+    #     """
+    #     Search for the 50 best matching question IDs based on the number of words in common with the text.
+    #
+    #     :param text: The input free-text string.
+    #     :return: A list of up to 50 question IDs with the most words in common with the text.
+    #     """
+    #     from collections import defaultdict
+    #
+    #     # Step 1: Split the input text into words
+    #     words = text.split()  # You may want to preprocess (e.g., lowercase, remove punctuation) as needed.
+    #
+    #     # Step 2: Dictionary to count the number of matching words for each question ID
+    #     question_word_count = defaultdict(int)
+    #
+    #     # Step 3: Iterate over words and fetch associated question IDs
+    #     for word in words:
+    #         word = word.lower()
+    #         question_ids = self.words_repository.get_questions_id_by_word_and_course(word, course_id)
+    #         for question_id in question_ids:
+    #             question_word_count[question_id] += 1
+    #
+    #     # Step 4: Sort question IDs by the number of matching words (descending)
+    #     # If counts are equal, secondary sorting by question ID (optional)
+    #     sorted_questions = sorted(
+    #         question_word_count.items(),
+    #         key=lambda item: (-item[1], item[0])  # Sort by count descending, then by ID ascending
+    #     )
+    #
+    #     # Step 5: Extract the top 50 question IDs
+    #     top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
+    #
+    #     return top_50_questions
+

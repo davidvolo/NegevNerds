@@ -402,11 +402,14 @@ class NegevNerds:
     def uploadSolution(self, course_id, year, semester, moed, question_number,solution_file):
         with self.upload_question_solution_lock:
             try:
+                print("uploadSolution 1", flush=True)
                 if self._course_facade.checkExistSolution(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
                     raise Exceptions.CourseAlreadyExists
                 answer_path = ""
+                print("uploadSolution 2", flush=True)
                 if solution_file is not None:
-                    if self.is_photo(answer_path):
+                    if self.is_photo(solution_file):
+                        print("type:photo", flush=True)
                         answer_path = self.fileManager.save_photo_answer_file(
                             course_id=course_id,
                             year=year,
@@ -416,6 +419,7 @@ class NegevNerds:
                             photo_file=solution_file
                         )
                     else:
+                        print("type:pdf", flush=True)
                         answer_path = self.fileManager.save_answer_file_pdf(
                             course_id=course_id,
                             year=year,
@@ -679,10 +683,10 @@ class NegevNerds:
     #     return False
 
 
-    # def search_free_text(self , text, course_id = None):
-    #     search_dtos = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-    #     ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-    #     return ques_dtos
+    def search_free_text(self , text, course_id = None):
+        search_dtos, suggestion= self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
+        ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
+        return ques_dtos, suggestion
 
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
@@ -799,15 +803,6 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Error while searching by topic: {str(e)}")
 
-    def search_free_text(self , text, course_id = None):
-        if course_id is None:
-            search_dtos = self._pdfFacade.search_free_text(text=text)
-            ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
-            return ques_dtos
-        else:
-            ids = self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
-            dtos = self.courseFacade.get_questions_dto_by_ids(ids, course_id)
-            return dtos
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
