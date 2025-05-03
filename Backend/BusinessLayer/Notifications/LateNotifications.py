@@ -8,7 +8,7 @@ from Backend.DataLayer.UserData.UserRepository import UserRepository
 from email.mime.text import MIMEText
 import smtplib
 import logging
-
+from socketio_instance import socketio
 
 class LateNotifications:
     _instance = None
@@ -73,6 +73,30 @@ class LateNotifications:
         Notification.create(notification_id=notification_id,receiver_user_id=receiver_id, sender_user_id=sender_id,  message=message, timestamp=datetime.now(), 
                              link=link,isApproved=isApproved, appoint_system_manager=appoint_system_manager,appoint_course_manager= appoint_course_manager,
                              comment_to_following=comment_to_following,comment_to_comment=comment_to_comment, react_to_comment=react_to_comment, remove_course_manager= remove_course_manager)
+
+        socketio.emit(
+        "NEW_NOTIFICATION",
+        {
+            "type": "NEW_NOTIFICATION",
+            "notification": {
+                "notification_id": notification_id,
+                "message": message,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "link": link,
+                "receiver_user_id": receiver_id,
+                "appoint_system_manager": appoint_system_manager,
+                "appoint_course_manager": appoint_course_manager,
+                "comment_to_following": comment_to_following,
+                "comment_to_comment": comment_to_comment,
+                "react_to_comment": react_to_comment,
+                "remove_course_manager": remove_course_manager
+            }
+        },
+        to=receiver_id  # ✅ Emit only to the user who joined their room
+    )
+
+        print(f"📡 Emitting to: notification_to_{receiver_id}")
+
 
     def generateNotificationId(self):
         return "notification-" + str(uuid.uuid4())
