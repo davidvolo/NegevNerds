@@ -516,7 +516,7 @@ def get_question_pdf():
             return jsonify({
                 "status": "error",
                 "message": "File not found"
-            }), 404
+            }), 400
 
         # שליחת הקובץ ללקוח
 
@@ -638,7 +638,7 @@ def get_answer_pdf():
             return jsonify({
                 "status": "error",
                 "message": "File not found"
-            }), 404
+            }), 400
 
         # שליחת הקובץ ללקוח
         mime_type, _ = mimetypes.guess_type(answer_path)
@@ -1513,18 +1513,7 @@ def download_exam_pdf():
         print(result)     
         parsed_result = json.loads(result)
 
-        # if parsed_result.get("has_link"):
-        #     # If the file exists, send it
-        #     file_path = parsed_result.get("link")
-        #     if os.path.exists(file_path):
-        #         filename = f"{course_id}_{year}_{semester}_{moed}.pdf"
-        #         return send_file(file_path, as_attachment=True, download_name=filename, mimetype='application/pdf')
-        #         # return send_file(file_path, as_attachment=True, mimetype='application/pdf')
-        #     else:
-        #         return jsonify({
-        #             "success": False,
-        #             "message": "The file path does not exist on the server."
-        #         }), 404
+
         if parsed_result.get("has_link"):
             file_path = parsed_result.get("link")
             if os.path.exists(file_path):
@@ -1621,13 +1610,15 @@ def uploadSolution():
     try:
         # Validate that a file is included in the request
         if 'solution_file' not in request.files:
+            print("problem with name")
             return jsonify({
                 "success": False,
                 "message": "No file part in the request"
             }), 400
 
         solution_file = request.files['solution_file']
-        answer_file = request.files.get('pdf_answer')  # Optional
+        print("file name" , solution_file.filename)
+        #answer_file = request.files.get('pdf_answer')  # Optional
 
 
         # Validate file
@@ -2079,7 +2070,7 @@ def deleteQuestionSolution():
         if res:
             return jsonify(success=True), 200
         else:
-            return jsonify(success=False, message="No solution file found."), 404
+            return jsonify(success=False, message="No solution file found."), 400
 
     except Exception as e:
         print(f"Error deleting solution: {e}")
@@ -2336,7 +2327,7 @@ def mark_as_seen():
         if result:
             return jsonify(success=True, message="Notification marked as seen"), 200
         else:
-            return jsonify(success=False, message="Notification not found or not authorized"), 404
+            return jsonify(success=False, message="Notification not found or not authorized"), 400
 
     except Exception as e:
         print(f"Error in mark_as_seen: {e}")
@@ -2362,7 +2353,7 @@ def mark_as_seen_from_email():
             else:
                 return "Notification found, but no link to redirect.", 200
         else:
-            return "Notification not found or already approved.", 404
+            return "Notification not found or already approved.", 400
 
     except Exception as e:
         print(f"Error in mark_as_seen_from_email: {e}")

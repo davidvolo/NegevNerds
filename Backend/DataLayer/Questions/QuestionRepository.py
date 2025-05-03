@@ -40,21 +40,19 @@ class QuestionRepository:
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
     def add_question(self, question, exam_id):
-        if isinstance(question.semester,Semester):
-            question.semester =question.semester.value
+        if isinstance(question.semester , Semester):
+            question.semester = question.semester.value
         if isinstance(question.moed, Moed):
-            question.moed =question.moed.value
+            question.moed = question.moed.value
 
         session = self.Session()
         try:
-            # Convert business model to SQLAlchemy model
             question_model = QuestionModel(
                 question_id=question.id,
                 year=question.year,
                 is_american=question.is_american,
                 link_to_question=question.link_to_question,
                 link_to_answer = question.link_to_answer,
-                # link_to_exam=question.link_to_exam,
                 semester=question.semester,
                 moed=question.moed,
                 question_number=question.question_number,
