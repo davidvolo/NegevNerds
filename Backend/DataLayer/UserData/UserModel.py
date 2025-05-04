@@ -31,6 +31,8 @@ class UserModel(Base):
                             back_populates='user')
     follows = relationship('DiscussionFollowModel', back_populates='user', cascade='all, delete-orphan')
     system_manager = relationship('SystemManagersModel', back_populates='manager')
+    user_notifications = relationship('NotificationsSettingModel', back_populates='notification_setting')
+
 
 
     def to_business_model(self):

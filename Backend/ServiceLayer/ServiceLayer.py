@@ -1165,6 +1165,12 @@ class ServiceLayer:
     
     def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
         return self.negev_nerds.remove_course_manager(remove_user_email, nominator_user_id, course_id)
+    
+    def get_notification_settings(self,user_id):
+        return self.negev_nerds.get_notification_settings(user_id)
+    
+    def update_notification_settings(self, user_id, settings_dict):
+        return self.negev_nerds.update_notification_settings(user_id, settings_dict)
 
     
     # def remove_course(self,course_id):

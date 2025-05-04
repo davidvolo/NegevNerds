@@ -24,7 +24,7 @@ class NotificationFacade:
 
 
     def send_notification(self,receiver_id, sender_id, message, isApproved,link,appoint_system_manager, appoint_course_manager, comment_to_following,
-                 comment_to_comment, react_to_comment, remove_course_manager):
+                 comment_to_comment, react_to_comment, remove_course_manager, send_email = False):
         self.late_notifications.add_notification(receiver_id, sender_id, message, isApproved,link,appoint_system_manager, appoint_course_manager, comment_to_following,
-                 comment_to_comment, react_to_comment, remove_course_manager)
+                 comment_to_comment, react_to_comment, remove_course_manager,send_email)
 

@@ -24,7 +24,7 @@ from Backend.DataLayer.Noitifications.NotificationRepository import Notification
 from Backend.DataLayer.UserData.UserRepository import UserRepository
 from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
-
+from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository import NotificationsSettingRepository
 
 import re
 import json
@@ -535,10 +535,11 @@ class NegevNerds:
             frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
             question_link = f"{frontend_base_url}/question/{course_id}/{year}/{semester}/{moed}/{question_number}"
             if father_comment_id != "0" and father_comment_id != writer_id:
+                send_email = self._user_facade.should_send_notification(father_comment_id,"CommentToComment")
                 message = f"{writer_name} הגיב/ה על תגובה שלך בדיון "
                 self._notification_facade.send_notification(receiver_id=father_comment_id, sender_id=writer_id, message = message, isApproved=False,
                                                                 link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                    comment_to_comment=True, react_to_comment=False, remove_course_manager=False)
+                    comment_to_comment=True, react_to_comment=False, remove_course_manager=False, send_email =send_email )
 
             discussion_following_repo =  DiscussionFollowRepository()
             get_user_following_discuussion = discussion_following_repo.get_followers_for_question(question_id)
@@ -546,9 +547,10 @@ class NegevNerds:
             for user_id in get_user_following_discuussion:
                 if user_id != writer_id and user_id != father_comment_id:
                     message = f"{writer_name} הוסיפ/ה תגובה בדיון שאת/ה עוקב/ת אחריו"
+                    send_email = self._user_facade.should_send_notification(user_id,"CommentToFollowing")
                     self._notification_facade.send_notification(receiver_id=user_id, sender_id=writer_id, message = message, isApproved=False,
                                                                 link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=True,
-                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False, send_email =send_email)
             
             return "CommentData added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound) as e:
@@ -570,9 +572,10 @@ class NegevNerds:
                 user_repo = UserRepository()
                 writer_name =user_repo.get_user_full_name_by_id(user_id)
                 message = f"{writer_name} הוסיפ/ה רגש על תגובה שלך בדיון "
+                send_email = self._user_facade.should_send_notification(receiver_id, "ReactToComment")
                 self._notification_facade.send_notification(receiver_id=receiver_id, sender_id=user_id, message = message, isApproved=False,
                                                                 link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                    comment_to_comment=False, react_to_comment=True, remove_course_manager=False)
+                    comment_to_comment=False, react_to_comment=True, remove_course_manager=False, send_email = send_email)
 
 
             #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
@@ -1126,9 +1129,10 @@ class NegevNerds:
                 system_manager_repo = SystemManagersRepository()
                 if not system_manager_repo.is_system_manager(user_nominee.user_id):
                     message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} מעוניינ/ת לקדם אותך לתפקיד מנהל מערכת "
+                    send_email = self._user_facade.should_send_notification(user_nominee.user_id, "AppointSystemManager")
                     self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
                                                                 link="",appoint_system_manager=True, appoint_course_manager=False, comment_to_following=False,
-                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False, send_email = send_email)
                     return json.dumps({
                     "status": "success",
                     "message": "The nomination request was sent successfully."
@@ -1163,9 +1167,10 @@ class NegevNerds:
                     message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} מעוניינ/ת לקדם אותך לתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id} "
                     frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
                     course_link = f"{frontend_base_url}/course/{course_id}"
+                    send_email = self._user_facade.should_send_notification(user_nominee.user_id, "AppointCourseManager")
                     self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
                                                                 link=course_link,appoint_system_manager=False, appoint_course_manager=True, comment_to_following=False,
-                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+                    comment_to_comment=False, react_to_comment=False, remove_course_manager=False, send_email=send_email)
                     return json.dumps({
                     "status": "success",
                     "message": "The nomination request was sent successfully."
@@ -1199,9 +1204,10 @@ class NegevNerds:
                         message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} הסיר/ת אותך מתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id} "
                         frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
                         course_link = f"{frontend_base_url}/course/{course_id}"
+                        send_email = self._user_facade.should_send_notification(user_nominee.user_id, "RemoveCourseManager")
                         self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
                                                                     link=course_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                        comment_to_comment=False, react_to_comment=False, remove_course_manager=True)
+                        comment_to_comment=False, react_to_comment=False, remove_course_manager=True, send_email = send_email)
                         return json.dumps({
                         "status": "success",
                         "message": "The removal request was sent successfully."
@@ -1318,6 +1324,16 @@ class NegevNerds:
         "status": "success",
         "message": "הבקשה נדחתה בהצלחה"
             })
+
+    def get_notification_settings(self, user_id):
+        repo = NotificationsSettingRepository()
+        return repo.get_settings_by_user_id(user_id)
+    
+    def update_notification_settings(self, user_id, settings_dict):
+            return self._user_facade.update_notification_settings(user_id, settings_dict)
+            
+
+
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """
 #     try:

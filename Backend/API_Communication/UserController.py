@@ -837,3 +837,77 @@ def approve_course_manager_appoint():
             "success": False,
             "message": str(e)
         }), 500
+
+
+@user_controller.route('/api/user/get_notification_settings', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def get_notification_settings():
+    try:
+        user_id = get_jwt_identity()
+        settings = serviceLayer.get_notification_settings(user_id)
+        if settings:
+            return jsonify({
+                "success": True,
+                "settings": settings
+            }), 200
+        else:
+            return jsonify({
+                "success": True,
+                "settings": {
+                    "AppointSystemManager": False,
+                    "AppointCourseManager": False,
+                    "CommentToFollowing": False,
+                    "CommentToComment": False,
+                    "ReactToComment": False,
+                    "RemoveCourseManager": False
+                }
+            }), 200
+
+    except Exception as e:
+        print(f"Error in get_notification_settings: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+@user_controller.route('/api/user/update_notification_settings', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def update_notification_settings():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        expected_keys = [
+            "AppointSystemManager", "AppointCourseManager", "CommentToFollowing",
+            "CommentToComment", "ReactToComment", "RemoveCourseManager"
+        ]
+
+        # Make sure all expected keys exist
+        for key in expected_keys:
+            if key not in data:
+                return jsonify({
+                    "success": False,
+                    "message": f"Missing key: {key}"
+                }), 400
+
+        result = serviceLayer.update_notification_settings(user_id, data)
+        if result:
+            return jsonify({
+                "success": True,
+                "message": "Settings updated successfully"
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to update settings"
+            }), 400
+
+    except Exception as e:
+        print(f"Error in update_notification_settings: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
