@@ -81,11 +81,11 @@ def verify_token(token):
 @socketio.on("connect")
 def handle_connect():
     token = request.args.get("token")
-    print("Received token:", token)
+    # print("Received token:", token)
     user_id = verify_token(token)
     if user_id:
         join_room(user_id)
-        print(f"✅ User {user_id} joined their room")
+        # print(f"✅ User {user_id} joined their room")
     else:
         print("❌ Invalid or missing token — connection rejected")
 

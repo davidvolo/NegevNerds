@@ -1691,7 +1691,7 @@ def is_system_manager():
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
             "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
-            "user5932eea2-3e58-4410-a6c5-500fcde5546b"
+            "user5ed4456a-1cb8-4164-b55b-45c67fabde3e"
             ]
 
         user_id = get_jwt_identity()

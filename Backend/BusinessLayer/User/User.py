@@ -3,6 +3,7 @@ import threading
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.UserData.UserRepository import UserRepository  # Import the repository
 from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
+from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository import NotificationsSettingRepository
 
 
 class User:
@@ -19,6 +20,14 @@ class User:
 
         # Create a repository instance for database operations
         self._repo = UserRepository()
+        self.notification_settings = {
+            "AppointSystemManager": True,
+            "AppointCourseManager": True,
+            "CommentToFollowing": True,
+            "CommentToComment": True,
+            "ReactToComment": True,
+            "RemoveCourseManager": True
+        }
 
     @classmethod
     def create(cls, user_id, email, password, first_name, last_name):
@@ -37,6 +46,10 @@ class User:
         )
         user_repository = UserRepository()
         user_repository.add_user(user)
+        settings_repository = NotificationsSettingRepository()
+        settings_repository.save_or_update_settings(user_id, user.notification_settings)
+
+
 
         # db.session.add(user)
         # db.session.commit()
@@ -56,7 +69,11 @@ class User:
             User: UserData instance or None if not found
         """
         repo = UserRepository()
-        return repo.get_user_by_id(user_id)
+        user = repo.get_user_by_id(user_id)
+        settings_repo = NotificationsSettingRepository()
+        user.notification_settings = settings_repo.get_settings_by_user_id(user_id)
+        return user
+    
 
     def login(self):
         """
@@ -166,5 +183,37 @@ class User:
 
     def get_last_name(self):
         return self.last_name
+
+    def update_notification_settings(self, settings_dict):
+        repo = NotificationsSettingRepository()
+        success = repo.update_settings(self.user_id, settings_dict)
+        if success:
+            if self.notification_settings is None:
+                self.notification_settings = settings_dict.copy()
+            else:
+                self.notification_settings.update(settings_dict)
+        return success
+
+    
+    def should_send_notification(self, notification_type):
+        """
+        Checks whether this user has enabled a specific type of notification.
+        Prefers in-memory settings; falls back to DB if needed.
+        """
+        if self.notification_settings and notification_type in self.notification_settings:
+            return self.notification_settings[notification_type]
+
+        # Fallback to repository check
+        setting_repo = NotificationsSettingRepository()
+        result = setting_repo.is_notification_enabled(self.user_id, notification_type)
+
+        # 🔄 Cache the result in memory for next time
+        if self.notification_settings is None:
+            self.notification_settings = {}
+        self.notification_settings[notification_type] = result
+
+        return result
+
+
 
 

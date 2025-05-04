@@ -448,6 +448,20 @@ class UserFacade:
                 self.users_byEmail[email] = user
             return user
 
+    def update_notification_settings(self,user_id, settings_dict):
+        user = self.users_byId.get(user_id)
+        if user is  None:
+            user_repo = UserRepository()
+            user = user_repo.get_user_by_id(user_id=user_id)
+        return user.update_notification_settings(settings_dict)
+    
+    def should_send_notification(self, user_id,notification_type):
+        user = self.users_byId.get(user_id)
+        if user is  None:
+            user_repo = UserRepository()
+            user = user_repo.get_user_by_id(user_id=user_id)
+        return user.should_send_notification(notification_type)
+
     def registerWithoutAuth(self, email, password, first_name, last_name):
         """
         Unified register function.
