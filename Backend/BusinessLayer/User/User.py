@@ -133,6 +133,12 @@ class User:
                 courses_repo.remove_user_from_course(user_id=self.user_id, course_id=course_id)
             else:
                 raise UserIsNotRegisterToCourse()
+    
+    def update_user_name(self, first_name, last_name):
+        self.first_name = first_name
+        self.last_name = last_name
+        return self._repo.update_user_name(self.user_id, first_name,last_name)
+
 
     def editProfile(self, email=None, password=None, first_name=None, last_name=None):
         """

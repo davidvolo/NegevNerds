@@ -271,6 +271,26 @@ class CommentRepository:
             raise Exception(f"Error updating replies prev_id: {str(e)}")
         finally:
             session.close()
+    
+
+    def update_user_name(self, user_id, first_name, last_name):
+        session = self.Session()
+        try:
+            # 🔁 Update writer_name in CommentModel too
+            full_name = f"{first_name} {last_name}"
+            comment_session = self.Session()
+            comment_session.query(CommentModel).filter_by(writer_id=user_id).update(
+                {CommentModel.writer_name: full_name}
+            )
+            comment_session.commit()
+
+            return True
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error updating user name: {str(e)}")
+        finally:
+            session.close()
+
 
 
 

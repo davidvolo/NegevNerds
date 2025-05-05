@@ -815,6 +815,11 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Error while searching by topic: {str(e)}")
 
+    def update_user_name(self,user_id, first_name, last_name):
+        success =  self._user_facade.update_user_name(user_id, first_name, last_name)
+        if success:
+            comments_repo = CommentRepository()
+            return comments_repo.update_user_name(user_id, first_name, last_name)
 
     def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
         try:
