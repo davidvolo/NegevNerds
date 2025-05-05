@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.DataLayer.CommentData.CommentModel import Base, CommentModel
+from Backend.DataLayer.ProfilePicture.ProfilePictureModel import ProfilePictureModel
 
 
 class CommentRepository:
@@ -186,26 +187,59 @@ class CommentRepository:
         finally:
             session.close()
 
+    # def get_comments_metadata_by_question_id(self, question_id):
+    #     """
+    #     Fetch all comment IDs and their writer IDs for a specific question ID.
+
+    #     Args:
+    #         question_id (str): The ID of the question.
+
+    #     Returns:
+    #         list[dict]: A list of dictionaries with comment ID and writer ID.
+    #     """
+    #     session = self.Session()
+    #     try:
+    #         # Query to fetch comment ID and writer ID
+    #         comments = session.query(CommentModel.comment_id, CommentModel.writer_id).filter_by(question_id=question_id).all()
+    #         return [{"comment_id": comment.comment_id, "writer_id": comment.writer_id} for comment in comments]
+    #     except Exception as e:
+    #         raise Exception(f"Error fetching comments metadata: {str(e)}")
+    #     finally:
+    #         session.close()
     def get_comments_metadata_by_question_id(self, question_id):
         """
-        Fetch all comment IDs and their writer IDs for a specific question ID.
-
-        Args:
-            question_id (str): The ID of the question.
+        Fetch all comment IDs, writer IDs, and their profile picture paths for a specific question ID.
 
         Returns:
-            list[dict]: A list of dictionaries with comment ID and writer ID.
+            list[dict]: A list of dictionaries with comment_id, writer_id, and profile_picture_path.
         """
         session = self.Session()
         try:
-            # Query to fetch comment ID and writer ID
-            comments = session.query(CommentModel.comment_id, CommentModel.writer_id).filter_by(question_id=question_id).all()
-            return [{"comment_id": comment.comment_id, "writer_id": comment.writer_id} for comment in comments]
+            # Join CommentModel with ProfilePictureModel on writer_id
+            results = session.query(
+                CommentModel.comment_id,
+                CommentModel.writer_id,
+                ProfilePictureModel.link
+            ).outerjoin(
+                ProfilePictureModel,
+                CommentModel.writer_id == ProfilePictureModel.user_id
+            ).filter(
+                CommentModel.question_id == question_id
+            ).all()
+
+            return [
+                {
+                    "comment_id": comment_id,
+                    "writer_id": writer_id,
+                    "profile_picture_path": link  # just use `link`, don't fallback
+                }
+                for comment_id, writer_id, link in results
+            ]
         except Exception as e:
             raise Exception(f"Error fetching comments metadata: {str(e)}")
         finally:
             session.close()
-    
+
 
     def get_replies_by_comment_id(self, comment_id):
         """

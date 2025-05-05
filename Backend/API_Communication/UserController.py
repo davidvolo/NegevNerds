@@ -1,12 +1,13 @@
 import json
 from datetime import timedelta
-
-from flask import Flask, request, jsonify, Blueprint
+import os
+from flask import Flask, request, jsonify, Blueprint, send_file
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
+import logging
 
 user_controller = Blueprint('user_controller', __name__)
 
@@ -933,5 +934,48 @@ def update_name():
 
     except Exception as e:
         print(f"Error updating name: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@user_controller.route('/api/user/upload_profile_picture', methods=['POST'])
+@jwt_required()
+def upload_profile_picture():
+    try:
+        user_id = get_jwt_identity()
+        if 'profile_picture' not in request.files:
+            return jsonify({"success": False, "message": "Missing file."}), 400
+
+        file = request.files['profile_picture']
+
+        file_path = serviceLayer.upload_profile_picture(user_id, file)
+        return jsonify({"success": True, "profile_picture_path": file_path}), 200
+    except Exception as e:
+        print(f"Error in upload_profile_picture: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@user_controller.route('/api/user/get_profile_picture', methods=['GET'])
+@jwt_required()
+def get_profile_picture():
+    try:
+        # DEBUG: log incoming request
+        logging.warning(f"🔍 Incoming request: {request.method} {request.path}")
+        logging.warning(f"Headers: {dict(request.headers)}")
+
+        user_id = get_jwt_identity()
+        profile_pic_path = serviceLayer.get_profile_picture_path(user_id)
+
+        if not profile_pic_path or not os.path.exists(profile_pic_path):
+            logging.warning("⚠️ No profile picture found, returning default.")
+            return send_file('files/default-avatar.png', mimetype='image/png')
+
+        # Determine MIME type
+        extension = profile_pic_path.rsplit('.', 1)[-1].lower()
+        mimetype = f"image/{'jpeg' if extension == 'jpg' else extension}"
+        logging.warning(f"✅ Serving image: {profile_pic_path} with mimetype {mimetype}")
+        return send_file(profile_pic_path, mimetype=mimetype)
+
+    except Exception as e:
+        logging.error(f"❌ Exception: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 

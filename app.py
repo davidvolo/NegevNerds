@@ -152,10 +152,11 @@ def main():
     print("Starting the Preparation System API...")
 
 
-    # service_layer = ServiceLayer(NegevNerds("../"))
-    # service_layer.initialize_system()
+    service_layer = ServiceLayer(NegevNerds("../"))
+    service_layer.initialize_system()
     print("Starting the ExamData Preparation System API...")
-    threading.Thread(target=initialize).start()
+    # threading.Thread(target=initialize).start()
+
     # Run with werkzeug (development server)
 #    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 #     context.load_cert_chain(

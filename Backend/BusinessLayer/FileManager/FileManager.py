@@ -461,4 +461,36 @@ class FileManager:
         shutil.move(old_path, new_file_path)
 
         return new_file_path
+    
+    def save_profile_picture(self, user_id, photo_file):
+        """
+        Saves a user's profile picture in 'profile_pictures' folder.
+        Overwrites any existing picture, regardless of extension.
+
+        :param user_id: The ID of the user (used as file name)
+        :param photo_file: File-like object (e.g., from Flask's request.files)
+        :return: Full path to the saved photo
+        """
+        import glob
+
+        # Create the directory if it doesn't exist
+        profile_folder = os.path.join(self._base_dir, "profile_pictures")
+        os.makedirs(profile_folder, exist_ok=True)
+
+        # Get file extension and validate
+        photo_extension = photo_file.filename.rsplit('.', 1)[-1].lower()
+        if photo_extension not in ["jpg", "jpeg", "png"]:
+            raise ValueError("Unsupported file format. Only JPEG and PNG are allowed.")
+
+        # Remove existing file with same user_id (regardless of extension)
+        for existing_file in glob.glob(os.path.join(profile_folder, f"{user_id}.*")):
+            os.remove(existing_file)
+
+        # Save new file
+        photo_path = os.path.join(profile_folder, f"{user_id}.{photo_extension}")
+        photo_file.seek(0)
+        photo_file.save(photo_path)
+
+        return photo_path
+
 
