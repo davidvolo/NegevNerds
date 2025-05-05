@@ -1177,7 +1177,12 @@ class ServiceLayer:
         return self.negev_nerds.update_user_name(user_id, first_name, last_name)
 
 
-    
+    def upload_profile_picture(self, user_id, file):
+        return self.negev_nerds.upload_profile_picture(user_id, file)
+
+    def get_profile_picture_path(self,user_id):
+        return self.negev_nerds.get_profile_picture_path(user_id)
+
     # def remove_course(self,course_id):
     #     try:
     #         return self.negev_nerds.remove_course(course_id)

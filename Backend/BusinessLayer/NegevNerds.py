@@ -1,7 +1,7 @@
 import logging
 import mimetypes
 import uuid
-
+import base64
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationFacade
 from Backend.BusinessLayer.FileManager.FileManager import FileManager
@@ -25,7 +25,7 @@ from Backend.DataLayer.UserData.UserRepository import UserRepository
 from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository import NotificationsSettingRepository
-
+from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
 import re
 import json
 # import datetime
@@ -875,13 +875,45 @@ class NegevNerds:
             return mime_type in allowed_photo_types
         return False
     
+# import os
+# import base64
+
     def get_comments_metadata(self, question_id):
-        try:         
+        """
+        Returns a list of metadata dicts for each comment, including profile picture in base64.
+        """
+        try:
             comment_repo = CommentRepository()
             comments_metaData = comment_repo.get_comments_metadata_by_question_id(question_id)
+
+            print(f"[DEBUG] Found {len(comments_metaData)} comments metadata for question_id={question_id}")
+
+            # Add base64 image for each comment
+            # Add base64 image for each comment
+            for item in comments_metaData:
+                image_path = item.get("profile_picture_path")
+                print(f'image_path: {image_path}')
+                if image_path and os.path.exists(image_path):
+                    try:
+                        with open(image_path, "rb") as img_file:
+                            encoded = base64.b64encode(img_file.read()).decode("utf-8")
+                            item["profile_picture_base64"] = encoded
+                    except Exception:
+                        item["profile_picture_base64"] = None
+                else:
+                    item["profile_picture_base64"] = None  # ⬅️ Good: blank if no image
+
+                item.pop("profile_picture_path", None)
+
             return comments_metaData
+
         except Exception as e:
-            raise Exception(f"Error in NegevNerds delete_question: {str(e)}")
+            print(f"[FATAL] Could not fetch comments metadata: {e}")
+            return []
+
+
+        except Exception as e:
+            raise Exception(f"Error in NegevNerds get_comments_metadata: {str(e)}")
 
     def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """delete comment."""
@@ -1348,6 +1380,28 @@ class NegevNerds:
     def update_notification_settings(self, user_id, settings_dict):
             return self._user_facade.update_notification_settings(user_id, settings_dict)
             
+    def upload_profile_picture(self, user_id, file):
+        try:
+            profile_pic_path = self._file_manager.save_profile_picture(user_id, file)
+            profile_pic_repo = ProfilePictureRepository()
+            success =  profile_pic_repo.update_profile_pic(user_id, profile_pic_path) 
+            if success:
+                return profile_pic_path
+        except Exception as e:
+            raise Exception(f"Failed to upload profile picture: {str(e)}")
+
+    def get_profile_picture_path(self, user_id):
+        """
+        Fetch the saved profile picture path for a given user.
+
+        :param user_id: ID of the user
+        :return: Relative path to the profile picture (str) or None if not found
+        """
+        try:
+            profile_pic_repo = ProfilePictureRepository()
+            return profile_pic_repo.get_path_by_user_id(user_id)
+        except Exception as e:
+            raise Exception(f"Error retrieving profile picture path: {str(e)}")
 
 
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):

@@ -32,6 +32,7 @@ class UserModel(Base):
     follows = relationship('DiscussionFollowModel', back_populates='user', cascade='all, delete-orphan')
     system_manager = relationship('SystemManagersModel', back_populates='manager')
     user_notifications = relationship('NotificationsSettingModel', back_populates='notification_setting')
+    profile_pictures = relationship('ProfilePictureModel', back_populates='user_profile_pic')
 
 
 
