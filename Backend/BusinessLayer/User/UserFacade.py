@@ -113,9 +113,15 @@ class UserFacade:
 
             if not self.is_valid_name(first_name):
                 raise Exception("השם הפרטי אינו תקין.")
+            
+            if len(first_name) > 25:
+                raise Exception("השם הפרטי יכול להיות ארוך יותר מ-25 תווים.")
 
             if not self.is_valid_name(last_name):
                 raise Exception("שם המשפחה אינו תקין.")
+            
+            if len(last_name) > 25:
+                raise Exception("השם משפחה יכול להיות ארוך יותר מ-25 תווים.")
 
             if not self.is_valid_password(password):
                 raise Exception("הסיסמה אינה תקינה.")
@@ -189,22 +195,6 @@ class UserFacade:
         """Validate email domain."""
         return bool(re.match(r".+@(post\.bgu\.ac\.il|bgu\.ac\.il)$", email))
     
-    
-    def is_valid_name(self, name):
-        """
-        Validates a name to ensure it contains only Hebrew characters, spaces, tabs, and hyphens.
-
-        Args:
-        name (str): The name to validate.
-
-        Returns:
-        bool: True if the name is valid, False otherwise.
-        """
-        # Regular expression to allow only Hebrew characters, spaces, tabs, and hyphens
-        hebrew_name_regex = r'^[\u0590-\u05FF]+([\s\t-][\u0590-\u05FF]+)*$'
-        
-        # Validate the name using regex
-        return bool(re.match(hebrew_name_regex, name))
 
     
     def is_valid_password(self,password):
@@ -499,6 +489,17 @@ class UserFacade:
         return user_id, {"message": f"UserData {first_name} {last_name} registered successfully."}
 
 
+    def update_user_name(self, user_id, first_name, last_name):
+        if not self.is_valid_name(first_name):
+            raise Exception("השם הפרטי אינו תקין.")
+        if not self.is_valid_name(last_name):
+            raise Exception("שם המשפחה אינו תקין.")
+        if len(first_name) > 25 or len(last_name) > 25:
+            raise Exception("השם לא יכול להיות ארוך יותר מ-25 תווים.")
+        user = self.getUser_by_id(user_id)
+        if user is None:
+            raise Exception("בעיה עם האיידי של המשתמש.")
+        return user.update_user_name(first_name, last_name)
 
 
 

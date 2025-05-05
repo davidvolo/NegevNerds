@@ -911,3 +911,27 @@ def update_notification_settings():
             "message": str(e)
         }), 500
 
+@user_controller.route('/api/user/update_name', methods=['POST'])
+@cross_origin()
+@jwt_required()
+def update_name():
+    try:
+        data = request.get_json()
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        user_id = get_jwt_identity()
+
+        if not first_name or not last_name:
+            return jsonify({"success": False, "message": "Missing name fields"}), 400
+
+        success = serviceLayer.update_user_name(user_id, first_name, last_name)
+
+        if success:
+            return jsonify({"success": True, "message": "Name updated successfully"}), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to update name"}), 400
+
+    except Exception as e:
+        print(f"Error updating name: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+

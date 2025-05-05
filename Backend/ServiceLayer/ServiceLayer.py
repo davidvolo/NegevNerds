@@ -1172,6 +1172,10 @@ class ServiceLayer:
     
     def update_notification_settings(self, user_id, settings_dict):
         return self.negev_nerds.update_notification_settings(user_id, settings_dict)
+    
+    def update_user_name(self,user_id, first_name, last_name):
+        return self.negev_nerds.update_user_name(user_id, first_name, last_name)
+
 
     
     # def remove_course(self,course_id):

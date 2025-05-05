@@ -250,3 +250,23 @@ class UserRepository:
             raise e
         finally:
             session.close()
+    
+    def update_user_name(self, user_id, first_name, last_name):
+        session = self.Session()
+        try:
+            user = session.query(UserModel).filter_by(user_id=user_id).first()
+            if not user:
+                return False
+
+            user.first_name = first_name
+            user.last_name = last_name
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Error updating user name: {e}")
+            return False
+        finally:
+            session.close()
+
