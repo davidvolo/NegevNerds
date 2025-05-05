@@ -47,6 +47,9 @@ class AnalyzerFacade:
     def splitPDF(self, pdf_file, lines):
         return self.question_analyser.splitPDF(pdf_file=pdf_file, lines=lines)
 
+    def remove_question_from_search(self, question_id, course_id):
+        self.information_retrival.remove_question_from_search(course_id=course_id, question_id=question_id)
+
 
 
 
