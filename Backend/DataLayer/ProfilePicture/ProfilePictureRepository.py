@@ -59,3 +59,26 @@ class ProfilePictureRepository:
             raise Exception(f"Error in get_path_by_user_id: {str(e)}")
         finally:
             session.close()
+    
+    def delete_pic(self, user_id):
+        """
+        Deletes the profile picture file and its DB record for the given user_id, if it exists.
+
+        :param user_id: ID of the user
+        :return: True if deleted, False if no picture found
+        """
+        session = self.Session()
+        try:
+            record = session.query(ProfilePictureModel).filter_by(user_id=user_id).first()
+            if not record:
+                return False  # No DB entry
+
+            session.delete(record)  # Delete DB row
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error deleting profile picture for user {user_id}: {e}")
+        finally:
+            session.close()
+

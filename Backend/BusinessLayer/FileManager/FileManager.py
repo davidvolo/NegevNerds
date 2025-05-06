@@ -1,6 +1,7 @@
 import os
 import shutil
 
+import glob
 
 import threading
 import os
@@ -492,5 +493,31 @@ class FileManager:
         photo_file.save(photo_path)
 
         return photo_path
+    
+    def delete_profile_picture(self, user_id):
+        """
+        Deletes the profile picture of a user if it exists.
+
+        :param user_id: The ID of the user whose profile picture is to be deleted.
+        :return: True if a picture was deleted, False if none existed.
+        """
+
+        profile_folder = os.path.join(self._base_dir, "profile_pictures")
+
+        # Find all matching files for the user (any extension)
+        matching_files = glob.glob(os.path.join(profile_folder, f"{user_id}.*"))
+
+        if not matching_files:
+            return False  # No picture found
+
+        # Delete all matching pictures (should be at most one)
+        for file_path in matching_files:
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                raise Exception(f"Error deleting profile picture: {str(e)}")
+
+        return True
+
 
 

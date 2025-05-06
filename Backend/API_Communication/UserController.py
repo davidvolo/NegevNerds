@@ -177,23 +177,28 @@ def register_termOfUse_part():
 
     try:
         # Extract data from the request
-        data = request.get_json()
+        # data = request.get_json()
+        # if not request.content_type.startswith('multipart/form-data'):
+        #     return jsonify({"success": False, "message": "Expected multipart/form-data"}), 400
+
+        form = request.form
+        profile_picture_file = request.files.get('profile_picture')  # Could be None
 
         # Validate input
-        if not all(key in data for key in ['email', 'password', 'first_name', 'last_name']):
+        if not all(key in form for key in ['email', 'password', 'first_name', 'last_name']):
             return jsonify({
                 "success": False,
                 "message": "Missing required fields"
             }), 400
 
         # Extract data
-        email = data.get('email')
-        password = data.get('password')
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
+        email = form.get('email')
+        password = form.get('password')
+        first_name = form.get('first_name')
+        last_name = form.get('last_name')
 
         # Call the service layer's register method directly
-        result = serviceLayer.register_termOfUse_part(email, password, first_name, last_name)
+        result = serviceLayer.register_termOfUse_part(email, password, first_name, last_name, profile_picture_file)
 
         # Parse the JSON string
         parsed_result = json.loads(result)
@@ -979,3 +984,22 @@ def get_profile_picture():
         logging.error(f"❌ Exception: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
+@user_controller.route('/api/user/delete_profile_picture', methods=['POST'])
+@jwt_required()
+def delete_profile_picture():
+    try:
+        user_id = get_jwt_identity()
+        success = serviceLayer.delete_profile_picture(user_id)
+
+        if success:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": "No profile picture found to delete."
+            }), 404  # 404 is more appropriate here
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500

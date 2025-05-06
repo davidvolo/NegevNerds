@@ -96,10 +96,10 @@ class ServiceLayer:
                 "message": str(e)
             })
         
-    def register_termOfUse_part(self, email, password, first_name, last_name):
+    def register_termOfUse_part(self, email, password, first_name, last_name, profile_picture_file):
         """Handle user acception of the term of use in the registration and return JSON."""
         try:
-            userid ,result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name)
+            userid ,result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name, profile_picture_file)
 
             if "Error" in result:
                 return json.dumps({
@@ -1182,6 +1182,9 @@ class ServiceLayer:
 
     def get_profile_picture_path(self,user_id):
         return self.negev_nerds.get_profile_picture_path(user_id)
+    
+    def delete_profile_picture(self, user_id):
+        return self.negev_nerds.delete_profile_picture(user_id)
 
     # def remove_course(self,course_id):
     #     try:
