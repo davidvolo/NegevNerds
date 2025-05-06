@@ -132,10 +132,13 @@ class NegevNerds:
         except Exception as e:
             return f"Error: {e}"
         
-    def register_termOfUse_part(self, email, password, first_name, last_name):
+    def register_termOfUse_part(self, email, password, first_name, last_name, profile_picture_file):
         """Register a new user - user approve the terms"""
         try:
-            return self.userFacade.register_termOfUse_part(email, password, first_name, last_name)
+            user_id, message = self.userFacade.register_termOfUse_part(email, password, first_name, last_name)
+            if profile_picture_file is not None:
+                self.upload_profile_picture(user_id, profile_picture_file)
+            return user_id, message
         except Exception as e:
             return f"Error: {e}"
     
@@ -1403,6 +1406,11 @@ class NegevNerds:
         except Exception as e:
             raise Exception(f"Error retrieving profile picture path: {str(e)}")
 
+    def delete_profile_picture(self, user_id):
+        succuess = self.fileManager.delete_profile_picture(user_id)
+        if succuess:
+            repo = ProfilePictureRepository()
+            return repo.delete_pic(user_id)
 
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """
