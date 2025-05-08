@@ -988,7 +988,46 @@ class ServiceLayer:
                 "message": "An unexpected error occurred in the service layer.",
                 "error": str(e)
             })
-    
+
+    def upload_full_exam_solution(self, course_id, year, semester, moed, solution, line_data):
+        try:
+            self.negev_nerds.split_solution_PDF(course_id, year, semester, moed, solution, line_data)
+            result = self.negev_nerds.add_exam_solution(course_id, year, semester, moed, solution)
+
+            if result.get("status") == "success":
+                return json.dumps({
+                    "status": "success",
+                    "message": result.get("message", "File uploaded successfully."),
+                    "has_link": result.get("has_link", False),
+                    "link": result.get("link", None)
+                })
+            else:
+                return json.dumps({
+                    "status": "error",
+                    "message": result.get("message", "An error occurred while uploading the file.")
+                })
+        except Exception as e:
+            print(f"Error in serviceLayer.upload_full_exam_pdf: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "message": "An unexpected error occurred in the service layer.",
+                "error": str(e)
+            })
+
+    def existFullExamSolution(self, course_id, year, semester, moed):
+        try:
+            result = self.negev_nerds.existFullExamSolution(course_id, year, semester, moed)
+            return json.dumps({"status": "success", "data": result})
+        except Exception as e:
+            print(f"Error in serviceLayer.existFullExamSolution: {str(e)}")
+            return json.dumps({
+                "status": "error",
+                "data": "An unexpected error occurred in the service layer.",
+                "error": str(e)
+            })
+
+
+
     def uploadSolution(self, course_id, year, semester, moed,question_number, solution_file):
         try:
             result = self.negev_nerds.uploadSolution(course_id, year, semester, moed,question_number, solution_file)
@@ -1012,6 +1051,8 @@ class ServiceLayer:
                 "message": "An unexpected error occurred in the service layer.",
                 "error": str(e)
             })
+
+
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
             result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)    
@@ -1034,7 +1075,28 @@ class ServiceLayer:
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             })
-        
+
+
+    def get_exam_solution_pdf_link(self, course_id, year, semester, moed):
+        try:
+            result = self.negev_nerds.get_exam_solution_pdf_link(course_id, year, semester, moed)
+
+            return json.dumps({
+                "success": True,
+                "has_link": result is not None,
+                "message": "Operation successful.",
+                "link": result  # Link will be used only if needed
+            })
+
+        except Exception as e:
+            print(f"Error in get_exam_pdf_link: {str(e)}")
+            return json.dumps({
+                "success": False,
+                "message": "An unexpected error occurred.",
+                "error": str(e)
+            })
+
+
     def handleDownloadAllExamsZip(self, course_id):
         try:
             folderName, exams = self.negev_nerds.handleDownloadAllExamsZip(course_id)

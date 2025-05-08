@@ -479,6 +479,115 @@ def get_course_topics():
         }), 500
 
 
+# check exist full solution function
+@course_controller.route('/api/course/check_exist_full_solution', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def check_exist_full_solution():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        data = request.get_json()
+        # קבלת פרמטרים מ-Query String
+        course_id = data.get('course_id')
+        year = data.get('year')
+        semester = data.get('semester')
+        moed = data.get('moed')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בדיקה אם הקובץ קיים
+        if serviceLayer.check_exam_full_pdf(course_id, year, semester, moed):
+            return jsonify({
+                "status": "success",
+                "data": True
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "data": False
+            }), 200
+
+    except Exception as e:
+        print(f"Error in check_answer_for_question: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@course_controller.route('/api/course/get_exam_full_pdf', methods=['GET', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def get_exam_full_pdf():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    try:
+        # קבלת פרמטרים מ-Query String
+        course_id = request.args.get('course_id')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        moed = request.args.get('moed')
+        question_number = request.args.get('question_number')
+
+        print(
+            f"Received parameters: course_id={course_id}, year={year}, semester={semester}, moed={moed}, question_number={question_number}")
+
+        # בדיקת פרמטרים
+        if not all([course_id, year, semester, moed, question_number]):
+            return jsonify({
+                "status": "error",
+                "message": "Missing required parameters"
+            }), 400
+
+        # בניית הנתיב של הקובץ
+        solution_link = serviceLayer.get_exam_solution_pdf_link(course_id, year, semester, moed, question_number)
+        print(f"Generated file path: {solution_link}")
+
+        # בדיקה אם הקובץ קיים
+        if not os.path.exists(solution_link):
+            return jsonify({
+                "status": "error",
+                "message": "File not found"
+            }), 400
+
+        # שליחת הקובץ ללקוח
+
+        mime_type, _ = mimetypes.guess_type(solution_link)
+
+        if mime_type == 'application/pdf':
+            # If it's a PDF, send as PDF
+            return send_file(solution_link, mimetype='application/pdf')
+
+        else:
+            # Handle unsupported file types
+            return 'Unsupported file type', 400
+    except Exception as e:
+        print(f"Error in get_pdf: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+
+
 @course_controller.route('/api/course/get_question_pdf', methods=['GET', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
@@ -1480,6 +1589,143 @@ def uploadFullExamPdf():
             "error": str(e)
         }), 500
     
+
+@course_controller.route('/api/course/uploadFullExamSolution', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def uploadFullExamSolution():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Headers', 'multipart/form-data')
+
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields from the form data
+        print("Content-Type:", request.content_type)
+        for entry in request.files:
+            print("Received request to upload full exam PDF file" , entry)
+        for entry in request.form:
+            print("Received request to upload full exam PDF" , entry)
+
+        # Validate that a file is included in the request
+        if 'solution_pdf' not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "No file part in the request"
+            }), 400
+
+        solution_pdf = request.files['solution_pdf']
+
+        # Validate file
+        if solution_pdf.filename == '':
+            return jsonify({
+                "success": False,
+                "message": "No file selected for upload"
+            }), 400
+
+        # Extract additional fields from the form data
+        course_id = request.form.get('course_id')
+        year = request.form.get('year')
+        semester = request.form.get('semester')
+        moed = request.form.get('moed')
+        line_data = request.form.get('line_data')
+        lines = json.loads(line_data)
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed, line_data]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters"
+            }), 400
+
+        # Call service layer to handle logic
+        result = serviceLayer.upload_full_exam_solution(course_id, int(year), semester, moed, solution_pdf, lines)
+        parsed_result = json.loads(result)
+
+        return jsonify({
+            "success": parsed_result.get("status") == "success",
+            "message": parsed_result.get("message"),
+            "has_link": parsed_result.get("has_link", False),
+            "link": parsed_result.get("link", None)
+        }), 200 if parsed_result.get("status") == "success" else 400
+
+    except Exception as e:
+        print(f"Error in upload_full_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
+
+# download exam full solution function
+@course_controller.route('/api/course/downloadExamFullSolution', methods=['POST', 'OPTIONS'])
+@cross_origin()
+@jwt_required()
+def download_exam_full_solution():
+    if request.method == 'OPTIONS':
+        response = jsonify(success=True)
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    try:
+        # Extract required fields
+        data = request.get_json()
+        course_id = data.get('course_id')
+        year = int(data.get('year'))
+        semester = data.get('semester')
+        moed = data.get('moed')
+
+        # Validate required fields
+        if not all([course_id, year, semester, moed]):
+            return jsonify({
+                "success": False,
+                "message": "Missing required parameters."
+            }), 400
+
+        # Call service layer to get the link
+        result = serviceLayer.get_exam_solution_pdf_link(course_id, year, semester, moed)
+        parsed_result = json.loads(result)
+        print("parsed res", parsed_result)
+        if parsed_result.get("has_link"):
+            file_path = parsed_result.get("link")
+            if os.path.exists(file_path):
+                filename = f"{course_id}_{year}_{semester}_{moed}_solution.pdf"
+
+                # Log the file size and first few bytes for debugging
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    print(f"File size: {len(file_content)} bytes")
+                    print(f"First 100 bytes of file: {file_content[:100]}")
+
+                return send_file(
+                    file_path,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype='application/pdf'
+                )
+
+        else:
+            # No file link exists
+            return jsonify({
+                "success": True,
+                "message": "המבחן המלא לא קיים במערכת.\n את/ה מוזמנ/ת לתרום לאתר ולהעלות אותה"
+            }), 200
+
+    except Exception as e:
+        print(f"Error in download_exam_pdf: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "An unexpected error occurred.",
+            "error": str(e)
+        }), 500
+
 
 @course_controller.route('/api/course/downloadExamPdf', methods=['POST', 'OPTIONS'])
 @cross_origin()

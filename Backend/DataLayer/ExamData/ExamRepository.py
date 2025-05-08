@@ -61,6 +61,7 @@ class ExamRepository:
                 year=exam.year,
                 link=exam.link,
                 course_id=exam.course_id,
+                link_to_solution=exam.link_to_solution
             )
 
             session.add(exam_model)
@@ -132,6 +133,7 @@ class ExamRepository:
                 year = exam_model.year
                 semester = exam_model.semester
                 moed = exam_model.moed
+                #link_to_solution = exam_model.link_to_solution  # Assuming this is stored in the database
                 link = exam_model.link  # Assuming this is stored in the database
                 if link != "":
                     
@@ -310,6 +312,7 @@ class ExamRepository:
             exam_model.moed = exam.moed
             exam_model.year = exam.year
             exam_model.link = exam.link
+            exam_model.link_to_solution = exam.link_to_solution
 
             session.commit()
         except Exception as e:
