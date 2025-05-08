@@ -17,6 +17,7 @@ class ExamModel(Base):
     exam_id = Column(String, unique=True)
     course_id = Column(String, ForeignKey('courses.course_id'),  nullable=False,primary_key=True)
     link = Column(String, nullable=True)
+    link_to_solution = Column(String, nullable=True)
 
     course = relationship('CourseModel', back_populates='exams')
     questions = relationship('QuestionModel', back_populates='exam', cascade='all, delete')
@@ -33,7 +34,8 @@ class ExamModel(Base):
             moed=Moed(self.moed),
             year=self.year,
             link=self.link,
-            course_id=self.course_id
+            course_id=self.course_id,
+            link_to_solution=self.link_to_solution
         )
         return exam
 
@@ -45,5 +47,6 @@ class ExamModel(Base):
             moed=exam.moed.value,
             year=exam.year,
             link=exam.link,
-            course_id=exam.course_id
+            course_id=exam.course_id,
+            link_to_solution=exam.link_to_solution
         )

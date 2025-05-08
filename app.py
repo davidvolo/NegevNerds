@@ -113,12 +113,6 @@ def custom_401(error):
 
 
 
-def is_elasticsearch_running():
-    for proc in psutil.process_iter(['name', 'cmdline']):
-        if 'elasticsearch' in ' '.join(proc.info['cmdline']):
-            return True
-    return False
-
 
 # Function to check if Elasticsearch is running
 def is_elasticsearch_running():

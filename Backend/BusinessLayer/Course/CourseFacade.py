@@ -461,6 +461,25 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
+    def existFullExamSolution(self, course_id, year, semester, moed):
+        course = self.get_course(course_id)
+        if not course:
+            raise Exception(f"Course with ID {course_id} not found.")
+        return course.existFullExamSolution(year, semester, moed)
+
+    def get_full_exam_solution(self, course_id, year, semester, moed):
+        """
+        """
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.get_full_exam_solution(year, semester, moed)
+        except Exception as e:
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
+
+
     def checkExistSolution(self, course_id, year, semester, moed,question_number ):
         """
         """
@@ -492,7 +511,17 @@ class CourseFacade:
         except Exception as e:
             print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
             raise Exception(f"CourseFacade Error: {str(e)}")
-    
+
+    def upload_full_exam_solution(self, course_id, year, semester, moed, solution_path):
+        try:
+            course = self.get_course(course_id)
+            if not course:
+                raise Exception(f"Course with ID {course_id} not found.")
+            return course.upload_full_exam_solution(year, semester, moed, solution_path)
+        except Exception as e:
+            print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
+            raise Exception(f"CourseFacade Error: {str(e)}")
+
     def uploadSolution(self, course_id, year, semester, moed, question_number, answer_path_path):
         try:
             course = self.get_course(course_id)

@@ -378,6 +378,20 @@ class NegevNerds:
                 print(e)
             question_number = question_number+1
 
+    def split_solution_PDF(self, course_id, year, semester, moed, solution, line_data):
+        if self._course_facade.existFullExamSolution(course_id=course_id, year=year, semester=semester, moed=moed):
+            raise Exceptions.ExamAlreadyExists
+        question_number = 1
+        solution_files = self._pdfFacade.splitPDF(solution, line_data)
+        for curr_solution in solution_files:
+            try:
+                if self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number):
+                    if not self.courseFacade.checkExistSolution(course_id=course_id, year=year, semester=semester, moed=moed, question_number=question_number):
+                        self.uploadSolution(course_id=course_id, year=year, semester=semester, moed=moed, question_number=question_number, solution_file=curr_solution)
+            except Exception as e:
+                print(e)
+            question_number = question_number+1
+
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
 
@@ -392,6 +406,33 @@ class NegevNerds:
         except Exception as e:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
+
+
+    def existFullExamSolution(self, course_id, year, semester, moed):
+        return self.courseFacade.check_exam_full_solution(course_id, year, semester, moed)
+
+
+    def get_exam_solution_pdf_link(self, course_id, year, semester, moed):
+        try:
+            link_to_solution = self.courseFacade.get_full_exam_solution(course_id, year, semester, moed)
+            return link_to_solution
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def add_exam_solution(self, course_id, year, semester, moed, solution):
+        try:
+            with self.upload_exam_lock:
+                if self._course_facade.existFullExamSolution(course_id=course_id, year=year , semester=semester, moed=moed):
+                    raise Exceptions.ExamAlreadyExists
+                if solution.content_type != 'application/pdf':
+                    raise ValueError("The uploaded file is not a valid PDF.")
+                solution_path = self._file_manager.save_exam_solution_file(course_id, year, semester, moed, solution)
+                self.courseFacade.upload_full_exam_solution(course_id, year, semester, moed, solution_path)
+                return {"status": "success", "message": "File uploaded and saved successfully.", "link": solution_path}
+        except Exception as e:
+            print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
 
     def uploadSolution(self, course_id, year, semester, moed, question_number, solution_file):
         """add solution to question"""

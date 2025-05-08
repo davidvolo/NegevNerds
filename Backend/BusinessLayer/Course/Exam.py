@@ -10,7 +10,7 @@ from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
 
 
 class Exam:
-    def __init__(self, exam_id, course_id, link, year, semester, moed):
+    def __init__(self, exam_id, course_id, link, year, semester, moed, link_to_solution=None):
         """
         Initialize an ExamData instance.
         """
@@ -21,11 +21,12 @@ class Exam:
         self.semester = Semester(semester)  # Ensuring semester is an Enum
         self.moed = Moed(moed)
         self.questions_list = {}  # <Question number, Question>
-
         self.questions_lock = threading.Lock()
+        self.link_to_solution = link_to_solution
+
 
     @classmethod
-    def create(cls, exam_id, course_id, link, year , semester , moed):
+    def create(cls, exam_id, course_id, link, year , semester , moed, link_to_solution=None):
         """
         Class method to create a new user and save to database
         Returns:
@@ -38,6 +39,7 @@ class Exam:
             year=year,
             semester=semester,
             moed=moed,
+            link_to_solution=link_to_solution
         )
         exam_repo = ExamRepository()
         exam_repo.add_exam(exam)
@@ -136,6 +138,39 @@ class Exam:
             return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
         except Exception as e:
             print(f"Error in ExamData.upload_full_exam_pdf: {str(e)}")
+            return {"status": "error", "message": str(e)}
+
+
+    def existFullExamSolution(self):
+        """
+        Check if the full exam solution link is not None.
+        """
+        if self.link_to_solution is None:
+            return False
+        if self.link_to_solution == "":
+            return False
+        return True
+
+    def get_full_exam_solution(self):
+        """
+        Get the full exam solution link.
+        """
+        if self.link_to_solution is None:
+            raise ValueError("Full exam solution link is not set.")
+        return self.link_to_solution
+
+    def upload_full_exam_solution(self, exam_solution_path):
+        try:
+            # Update the in-memory link property
+            self.link_to_solution = exam_solution_path
+
+            # Update the record in the database
+            exam_repo = ExamRepository()  # Assuming you have an ExamRepository for database operations
+            exam_repo.update_exam(self)
+
+            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+        except Exception as e:
+            print(f"Error in ExamData.upload_full_exam_solution_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
 
     def remove_question(self, question_number):

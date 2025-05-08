@@ -295,6 +295,47 @@ class Course:
             return True
         else:
             return False
+
+    def get_full_exam_solution(self, year, semester, moed):
+        """
+        Checks if the full exam solution PDF exists and returns the result.
+
+        Args:
+            year (int): Year of the exam.
+            semester (str): Semester of the exam.
+            moed (str): ExamData session.
+
+        Returns:
+            dict: Result indicating if the PDF link exists or not.
+
+        Raises:
+            ExamIsNotExist: If the exam does not exist.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.link_to_solution
+
+
+    def existFullExamSolution(self, year, semester, moed):
+        """
+        Checks if the full exam solution PDF exists and returns the result.
+
+        Args:
+            year (int): Year of the exam.
+            semester (str): Semester of the exam.
+            moed (str): ExamData session.
+
+        Returns:
+            dict: Result indicating if the PDF link exists or not.
+
+        Raises:
+            ExamIsNotExist: If the exam does not exist.
+        """
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.existFullExamSolution() # Check for the exam link
     
     def checkExistSolution(self, year, semester, moed,question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
@@ -317,11 +358,17 @@ class Course:
             return False
         return question.id, question_details, question.link_to_question, question.link_to_answer
 
-    def upload_full_exam_pdf(self, year, semester, moed, exam_path):
+    def upload_full_exam_pdf(self, year, semester, moed, solution_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:
             raise Exception(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
-        return exam.upload_full_exam_pdf(exam_path)
+        return exam.upload_full_exam_pdf(solution_path)
+
+    def upload_full_exam_solution(self, year, semester, moed, solution_path):
+        exam = self.get_exam(year, semester, moed)
+        if not exam:
+            raise Exception(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
+        return exam.upload_full_exam_solution(solution_path)
 
     def uploadSolution(self, year, semester, moed, question_number, answer_path_path):
         exam = self.get_exam(year, semester, moed)

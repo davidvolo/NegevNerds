@@ -120,7 +120,6 @@ class FileManager:
 
     def save_exam_file_by_path(self, course_id, year, semester, moed, exam_content):
         """Saves the exam file in the course's year folder."""
-
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
 
@@ -138,6 +137,7 @@ class FileManager:
     def save_exam_file(self, course_id, year, semester, moed, pdf_file):
         """Saves the exam file in the course's year folder."""
         try:
+            pdf_file.seek(0)
             # Define folder paths
             course_folder = os.path.join(self._base_dir, f"course_{course_id}")
             year_folder = os.path.join(course_folder, str(year))
@@ -157,6 +157,30 @@ class FileManager:
         except Exception as e:
             raise Exception(f"Failed to save exam file: {str(e)}")
 
+
+    def save_exam_solution_file(self, course_id, year, semester, moed, pdf_file):
+        """Saves the exam file in the course's year folder."""
+        try:
+            print(f"Uploaded file size: {pdf_file.content_length}")
+            pdf_file.seek(0)
+            # Define folder paths
+            course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+            year_folder = os.path.join(course_folder, str(year))
+
+            # Create the year folder if it doesn't exist
+            if not os.path.exists(year_folder):
+                os.makedirs(year_folder)
+
+            # Define the file path
+            exam_file_path = os.path.join(year_folder, f"solution_exam_{course_id}_{year}_{semester}_{moed}.pdf")
+
+            # Read the file content and write it to the desired location
+            with open(exam_file_path, 'wb') as file:
+                file.write(pdf_file.read())  # Read the content from the FileStorage object
+
+            return exam_file_path
+        except Exception as e:
+            raise Exception(f"Failed to save exam file: {str(e)}")
 
     # def save_question_file(self, course_id, year, semester, moed, question_number, question_content_pdf):
     #     """Saves a question file inside the corresponding exam folder."""
