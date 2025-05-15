@@ -2,24 +2,21 @@
 # eventlet.monkey_patch()
 from gevent import monkey
 monkey.patch_all()
-import threading
 
-from flask_socketio import SocketIO, emit, join_room
-import jwt as pyjwt  # Rename to avoid collision with Flask-JWT-Extended
+import jwt as pyjwt
 
-from waitress import serve
-from flask import Flask, jsonify, request
+from flask_socketio import join_room
+
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
-from multiprocessing import cpu_count
+from flask_jwt_extended import JWTManager
 
 from Backend.API_Communication.UserController import user_controller
 from Backend.API_Communication.CourseController import course_controller
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.ServiceLayer.ServiceLayer import ServiceLayer
-import os
 import sys
 
 import subprocess
@@ -64,31 +61,34 @@ CORS(app, resources={
 #     "https://negevnerds.cs.bgu.ac.il",
 #     "https://api.negevnerds.cs.bgu.ac.il"
 # ])
-socketio.init_app(app, cors_allowed_origins="*")
+#socketio.init_app(app, cors_allowed_origins="*")
 
+
+
+socketio.init_app(app)
 
 def verify_token(token):
     try:
         decoded = pyjwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
-        return decoded.get("sub")  # <-- ✅ Match your payload
+        return decoded.get("sub")
     except pyjwt.ExpiredSignatureError:
         print("Token expired")
     except pyjwt.InvalidTokenError:
         print("Invalid token")
     return None
-    
+
 
 @socketio.on("connect")
-def handle_connect():
-    token = request.args.get("token")
-    # print("Received token:", token)
+def handle_connect(auth):
+    token = auth.get("token") if auth else None
+    print(f"Received token: {token}")
     user_id = verify_token(token)
     if user_id:
         join_room(user_id)
-        # print(f"✅ User {user_id} joined their room")
+        print(f"User {user_id} joined room")
     else:
-        print("❌ Invalid or missing token — connection rejected")
-
+        print("❌ Invalid or missing token")
+        return False  # זה ינתק את החיבור אם הטוקן לא תקין
 
 # Register controllers
 app.register_blueprint(user_controller)
