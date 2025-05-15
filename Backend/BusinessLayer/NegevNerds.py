@@ -1460,6 +1460,16 @@ class NegevNerds:
             full_name, email = self._user_facade.get_user_name_email(manager_id)
             res.append((full_name, email))
         return res 
+    
+    def get_system_managers(self):
+        res = []
+        for id in self._system_managers():
+            full_name, email = self._user_facade.get_user_name_email(id)
+            res.append((full_name, email))
+        return res
+        
+
+
 
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """
