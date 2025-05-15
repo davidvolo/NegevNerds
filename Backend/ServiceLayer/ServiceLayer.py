@@ -1247,6 +1247,9 @@ class ServiceLayer:
     
     def delete_profile_picture(self, user_id):
         return self.negev_nerds.delete_profile_picture(user_id)
+    
+    def get_course_managers(self, course_id):
+        return self.negev_nerds.get_course_managers(course_id)
 
     # def remove_course(self,course_id):
     #     try:

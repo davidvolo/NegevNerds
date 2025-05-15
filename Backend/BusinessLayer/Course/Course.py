@@ -167,6 +167,11 @@ class Course:
         with self.managers_lock:
             return self.managers
 
+    def get_course_managers(self):
+        repo = CourseManagersRepository()
+        managers_id = repo.get_course_manager_ids(self.course_id)
+        return managers_id
+    
     def get_users(self):
         with self.users_lock:
             return self.users

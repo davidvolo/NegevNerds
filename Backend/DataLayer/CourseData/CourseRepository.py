@@ -140,4 +140,8 @@ class CourseRepository:
             return course is not None
         finally:
             session.close()
+    
+
+   
+
 

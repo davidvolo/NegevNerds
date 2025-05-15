@@ -659,3 +659,9 @@ class CourseFacade:
             return course.edit_question_topic( year, semester, moed, question_number, topics)
         else :
             raise CourseIsNotExist(course_id)
+    
+    def get_course_managers(self, course_id):
+        course = self.get_course(course_id)
+        if course is None:
+            raise CourseIsNotExist(course_id)
+        return course.get_course_managers()

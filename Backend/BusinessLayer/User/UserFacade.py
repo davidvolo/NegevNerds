@@ -184,6 +184,9 @@ class UserFacade:
         except Exception as e:
             raise Exception("האישור נכשל. הרשמה בוטלה.")
 
+    def get_user_name_email(self, user_id):
+        repo = UserRepository()
+        return repo.get_user_full_name__email_by_id(user_id)
 
     def get_user_name(self, user_id):
         curr_user = self.getUser_by_id(user_id=user_id)

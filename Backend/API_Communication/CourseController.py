@@ -2749,3 +2749,28 @@ def remove_course_manager():
 
 
 
+
+@course_controller.route('/api/course/get_course_managers', methods=['GET'])
+@cross_origin()
+@jwt_required()
+def get_course_managers():
+    course_id = request.args.get('course_id')
+
+    if not course_id:
+        return jsonify(success=False, message="Missing course_id"), 400
+    try:
+        res = serviceLayer.get_course_managers(course_id)  # list of (full_name, email)
+
+        # Convert to list of dicts for JSON compatibility
+        formatted_res = [
+            {"full_name": full_name, "email": email}
+            for (full_name, email) in res
+        ]
+
+        return jsonify(success=True, managers=formatted_res)
+
+    except Exception as e:
+        print(f"Error fetching course managers: {e}")
+        return jsonify(success=False, message="Server error"), 500
+
+

@@ -94,6 +94,13 @@ class CourseManagersRepository:
             raise e
         finally:
             session.close()
+    def get_course_manager_ids(self, course_id):
+        session = self.Session()
+        try:
+            rows = session.query(CourseManagersModel).filter_by(course_id=course_id).all()
+            return [row.user_id for row in rows]
+        finally:
+            session.close()
 
 
     def is_exist(self, course_id,user_id ):
