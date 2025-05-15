@@ -250,6 +250,27 @@ class UserRepository:
             raise e
         finally:
             session.close()
+
+    def get_user_full_name__email_by_id(self, user_id):
+        """
+        Retrieve a user's full name by their ID
+
+        Args:
+            user_id (str): User's unique identifier
+
+        Returns:
+            str: Full name in the format "First Last", or None if not found
+        """
+        session = self.Session()
+        try:
+            user_model = session.query(UserModel).filter_by(user_id=user_id).first()
+            if user_model:
+                return f"{user_model.first_name} {user_model.last_name}", user_model.email
+            return None
+        except Exception as e:
+            raise e
+        finally:
+            session.close()
     
     def update_user_name(self, user_id, first_name, last_name):
         session = self.Session()

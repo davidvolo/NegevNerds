@@ -1452,6 +1452,14 @@ class NegevNerds:
         if succuess:
             repo = ProfilePictureRepository()
             return repo.delete_pic(user_id)
+    
+    def get_course_managers(self, course_id):
+        managers_id = self._course_facade.get_course_managers(course_id)
+        res = []
+        for manager_id in managers_id:
+            full_name, email = self._user_facade.get_user_name_email(manager_id)
+            res.append((full_name, email))
+        return res 
 
 # def edit_exam_year(self, course_id, year, semester, moed, new_year):
 #     """Editing exam's year """
