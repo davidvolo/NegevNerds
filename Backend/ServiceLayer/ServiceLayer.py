@@ -1257,6 +1257,9 @@ class ServiceLayer:
     def get_course_managers(self, course_id):
         return self.negev_nerds.get_course_managers(course_id)
 
+    def get_system_managers(self):
+        return self.negev_nerds.get_system_managers()
+
     # def remove_course(self,course_id):
     #     try:
     #         return self.negev_nerds.remove_course(course_id)
