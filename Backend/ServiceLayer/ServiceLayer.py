@@ -991,9 +991,12 @@ class ServiceLayer:
 
     def upload_full_exam_solution(self, course_id, year, semester, moed, solution, line_data):
         try:
+            print("start upload_full_exam_solution")
             self.negev_nerds.split_solution_PDF(course_id, year, semester, moed, solution, line_data)
+            print("end split_solution_PDF")
             result = self.negev_nerds.add_exam_solution(course_id, year, semester, moed, solution)
-
+            print("end add_exam_solution")
+            print("result of add exam solution", result)
             if result.get("status") == "success":
                 return json.dumps({
                     "status": "success",
@@ -1007,7 +1010,7 @@ class ServiceLayer:
                     "message": result.get("message", "An error occurred while uploading the file.")
                 })
         except Exception as e:
-            print(f"Error in serviceLayer.upload_full_exam_pdf: {str(e)}")
+            print(f"Error in serviceLayer.upload_full_exam_solution: {str(e)}")
             return json.dumps({
                 "status": "error",
                 "message": "An unexpected error occurred in the service layer.",
@@ -1017,15 +1020,18 @@ class ServiceLayer:
     def existFullExamSolution(self, course_id, year, semester, moed):
         try:
             result = self.negev_nerds.existFullExamSolution(course_id, year, semester, moed)
-            return json.dumps({"status": "success", "data": result})
+            print("exist full exam solution", result)
+            return {
+                "status": "success",
+                "data": result
+            }
         except Exception as e:
             print(f"Error in serviceLayer.existFullExamSolution: {str(e)}")
-            return json.dumps({
+            return {
                 "status": "error",
                 "data": "An unexpected error occurred in the service layer.",
                 "error": str(e)
-            })
-
+            }
 
 
     def uploadSolution(self, course_id, year, semester, moed,question_number, solution_file):

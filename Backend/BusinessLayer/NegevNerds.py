@@ -409,7 +409,7 @@ class NegevNerds:
 
 
     def existFullExamSolution(self, course_id, year, semester, moed):
-        return self.courseFacade.check_exam_full_solution(course_id, year, semester, moed)
+        return self.courseFacade.existFullExamSolution(course_id, year, semester, moed)
 
 
     def get_exam_solution_pdf_link(self, course_id, year, semester, moed):
@@ -427,6 +427,7 @@ class NegevNerds:
                 if solution.content_type != 'application/pdf':
                     raise ValueError("The uploaded file is not a valid PDF.")
                 solution_path = self._file_manager.save_exam_solution_file(course_id, year, semester, moed, solution)
+                print("new solution path", solution_path)
                 self.courseFacade.upload_full_exam_solution(course_id, year, semester, moed, solution_path)
                 return {"status": "success", "message": "File uploaded and saved successfully.", "link": solution_path}
         except Exception as e:

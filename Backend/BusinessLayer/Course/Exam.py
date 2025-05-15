@@ -145,6 +145,7 @@ class Exam:
         """
         Check if the full exam solution link is not None.
         """
+        print("link to solution ", self.link_to_solution)
         if self.link_to_solution is None:
             return False
         if self.link_to_solution == "":
@@ -162,7 +163,10 @@ class Exam:
     def upload_full_exam_solution(self, exam_solution_path):
         try:
             # Update the in-memory link property
+            print("exam_solution_path", exam_solution_path)
+            print("self.link_to_solution", self.link_to_solution)
             self.link_to_solution = exam_solution_path
+            print("self.link_to_solution", self.link_to_solution)
 
             # Update the record in the database
             exam_repo = ExamRepository()  # Assuming you have an ExamRepository for database operations

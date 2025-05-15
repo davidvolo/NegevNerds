@@ -508,18 +508,17 @@ def check_exist_full_solution():
                 "message": "Missing required parameters"
             }), 400
 
-        # בדיקה אם הקובץ קיים
-        if serviceLayer.check_exam_full_pdf(course_id, year, semester, moed):
+        response = serviceLayer.existFullExamSolution(course_id, year, semester, moed)
+        if response["status"] == "success":
             return jsonify({
                 "status": "success",
-                "data": True
+                 "data": response["data"]
             }), 200
         else:
             return jsonify({
-                "status": "success",
-                "data": False
-            }), 200
-
+                "status": "error",
+                "message": response.get("error", "Unknown error")
+            }), 500
     except Exception as e:
         print(f"Error in check_answer_for_question: {e}")
         return jsonify({
