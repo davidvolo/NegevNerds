@@ -1,24 +1,26 @@
+import io
 import json
 import unittest
 import os
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+from werkzeug.datastructures import FileStorage
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.NegevNerds import NegevNerds
 from Backend.DataLayer.Base import Base, delete_all_data
-from Backend.DataLayer.UserData.UserModel import UserModel
-from Backend.BusinessLayer.User.UserFacade import UserFacade
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
+from Backend.Tests.SystemTest.BaseTestCase import BaseTestCase
+from Backend.DataLayer.SystemManagers.SystemManagersModel import SystemManagersModel
 
 
-class TestNegevNerdsUserManagement(unittest.TestCase):
+class TestNegevNerdsUserManagement(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
         os.environ["APP_ENV"] = "test"
-        # מעבר לתיקיית ה־Backend (ניתן להתאים)
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
         db_path = os.path.join(base_dir, "test_NegevNerds.db")
@@ -37,48 +39,51 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.session = self.Session()
         delete_all_data(engine=self.engine, session=self.session)
         self.negev = NegevNerds(mkdir="test_directory")
+        self.user = self._complete_user_registration("admin@bgu.ac.il", "Pass1!", "Admin", "User")
 
     def tearDown(self):
         delete_all_data(engine=self.engine, session=self.session)
         self.session.close()  # סגירת session
 
-    from unittest.mock import patch
+    # def _complete_user_registration(self, email, password, first_name, last_name):
+    #     """
+    #     Performs the full user registration flow:
+    #     - Calls register (while mocking email sending),
+    #     - Calls register_authentication_part (simulating successful verification),
+    #     - Calls register_termOfUse_part (with encrypted password),
+    #     and returns the registered User object from UserFacade.
+    #     """
+    #     try:
+    #         with patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code') as mock_send_auth_code, \
+    #                 patch(
+    #                     'Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_register_auth_part:
+    #
+    #             mock_send_auth_code.return_value = None
+    #             mock_register_auth_part.return_value = {"message": "Verification successful"}
+    #
+    #             # Step 1: Register the user (basic information)
+    #             encrypted_password, _ = self.negev.register(email, password, password, first_name, last_name)
+    #
+    #             # Step 2: Simulate successful authentication code verification
+    #             self.negev.register_authentication_part(email, "123456")
+    #
+    #             # Step 3: Complete the registration by accepting the terms of use
+    #             self.negev.register_termOfUse_part(email, encrypted_password, first_name, last_name)
+    #
+    #             # Return the registered user object
+    #             return self.negev._user_facade.getUser_by_email(email)
+    #
+    #     except Exception as e:
+    #         self.fail("User registration failed unexpectedly: " + str(e))
+    #         return None
 
-    from unittest.mock import patch
+    def _mock_image_file(self, filename="profile.jpg", content=b"fake image content"):
+        stream = io.BytesIO(content)
+        return FileStorage(stream=stream, filename=filename, content_type='image/jpeg')
 
-    from unittest.mock import patch
-
-    def _complete_user_registration(self, email, password, first_name, last_name):
-        """
-        Performs the full user registration flow:
-        - Calls register (while mocking email sending),
-        - Calls register_authentication_part (simulating successful verification),
-        - Calls register_termOfUse_part (with encrypted password),
-        and returns the registered User object from UserFacade.
-        """
-        try:
-            with patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code') as mock_send_auth_code, \
-                    patch(
-                        'Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_register_auth_part:
-
-                mock_send_auth_code.return_value = None
-                mock_register_auth_part.return_value = {"message": "Verification successful"}
-
-                # Step 1: Register the user (basic information)
-                encrypted_password, _ = self.negev.register(email, password, password, first_name, last_name)
-
-                # Step 2: Simulate successful authentication code verification
-                self.negev.register_authentication_part(email, "123456")
-
-                # Step 3: Complete the registration by accepting the terms of use
-                self.negev.register_termOfUse_part(email, encrypted_password, first_name, last_name)
-
-                # Return the registered user object
-                return self.negev._user_facade.getUser_by_email(email)
-
-        except Exception as e:
-            self.fail("User registration failed unexpectedly: " + str(e))
-            return None
+    def _upload_dummy_profile_pic(self, user_id):
+        file = self._mock_image_file()
+        return self.negev.upload_profile_picture(user_id, file)
 
     # -------------- Registration Tests --------------
     @patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code')
@@ -113,7 +118,7 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIn("message", auth_response, "Authentication code registration step failed.")
 
         # Step 3: Acceptance of the terms of use - finalize the registration process.
-        term_response = self.negev.register_termOfUse_part(test_email, test_password, test_first_name, test_last_name)
+        term_response = self.negev.register_termOfUse_part(test_email, test_password, test_first_name, test_last_name, None)
         self.assertIsInstance(term_response, tuple, "Acceptance of the terms of use step failed.")
 
         found_user = self.negev._user_facade.getUser_by_email(test_email)
@@ -192,7 +197,8 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
             test_email,
             test_password,
             test_first_name,
-            test_last_name
+            test_last_name,
+            None
         )
         self.assertIsInstance(term_response, tuple, "Acceptance of the terms of use step failed.")
 
@@ -298,22 +304,27 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         mock_send_auth_code.return_value = None
         mock_register_auth_part.return_value = {"message": "Verification successful"}
 
-        # Step 1: Register the user completely using the helper
+        print("📥 Step 1: Starting user registration")
         registered_user = self._complete_user_registration(
             test_email, test_password, test_first_name, test_last_name
         )
+        print(f"✅ Registered user: {registered_user}")
 
         self.assertIsNotNone(registered_user, "User registration failed unexpectedly.")
-        user_id = registered_user.get_user_id() if hasattr(registered_user, "get_user_id") else registered_user.user_id
 
-        # Step 2: Logout
+        user_id = registered_user.get_user_id() if hasattr(registered_user, "get_user_id") else registered_user.user_id
+        print(f"👤 Registered user ID: {user_id}")
+
+        print("🚪 Step 2: Logging out...")
         logout_message = self.negev.logout(user_id)
+        print(f"🔁 Logout message: {logout_message}")
         self.assertIn("התנתקות", logout_message, "Logout should succeed.")
 
-        # Step 3: Attempt login with valid credentials
+        print("🔑 Step 3: Logging in...")
         first_name, last_name, logged_user_id, login_response = self.negev.login(test_email, test_password)
+        print(f"📛 Login result -> first: {first_name}, last: {last_name}, user_id: {logged_user_id}")
+        print(f"🧾 Full login response: {login_response}")
 
-        # Assertions
         self.assertIsNotNone(logged_user_id, "User ID should not be None after successful login.")
         self.assertEqual(first_name, test_first_name, "Returned first name does not match.")
         self.assertEqual(last_name, test_last_name, "Returned last name does not match.")
@@ -355,10 +366,17 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         self.assertIsNotNone(user, "Registration did not return a valid user.")
         self.assertNotIn("Error", reg_msg, "Registration returned an error message.")
 
-        # Simulate authentication and terms acceptance
+        # Simulate authentication and terms acceptance with dummy profile pic
         self.negev.register_authentication_part(email2, "123456")
+
+        dummy_image = FileStorage(
+            stream=io.BytesIO(b"fake image content"),
+            filename="dummy.jpg",
+            content_type="image/jpeg"
+        )
+
         user_id, term_msg = self.negev.register_termOfUse_part(
-            email2, correct_password, first_name, last_name
+            email2, correct_password, first_name, last_name, profile_picture_file=dummy_image
         )
         self.assertIsInstance(term_msg, dict, "Terms acceptance should return a dictionary message.")
 
@@ -371,8 +389,7 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
         error_message = login_response.get("message", "")
         self.assertTrue(
             "Incorrect email or password" in error_message or "Invalid salt" in error_message,
-            "Error message should indicate invalid credentials for wrong password."
-        )
+            "Error message should indicate invalid credentials for wrong password.")
 
     def test_logout_success(self):
         """
@@ -612,6 +629,200 @@ class TestNegevNerdsUserManagement(unittest.TestCase):
 
         self.assertEqual(data["status"], "error")
         self.assertIn("אירעה שגיאה בעדכון הסיסמה", data["message"])
+
+    def test_is_system_manager_in_memory(self):
+        """Verify system manager is recognized from _system_managers cache."""
+        user = self._complete_user_registration("admin@bgu.ac.il", "Pass1!", "System", "Manager")
+        self.negev._system_managers.add(user.user_id)  # הוספה ידנית לקאש
+        self.assertTrue(self.negev.is_system_manager(user.user_id))
+
+    def test_is_not_system_manager(self):
+        """Verify regular user is not detected as system manager."""
+        user = self._complete_user_registration("regular@bgu.ac.il", "Pass1!", "Not", "Admin")
+        self.assertFalse(self.negev.is_system_manager(user.user_id))
+
+    def test_update_user_name_success(self):
+        """Test: Successfully update user's name and propagate to comments."""
+        user = self._complete_user_registration("change@bgu.ac.il", "Pass1!", "ישן", "שם")
+
+        # Now update name
+        result = self.negev.update_user_name(user.user_id, "חדש", "שם")
+
+        # Check that the function returns a success indicator
+        self.assertIsNotNone(result)
+
+    def test_update_user_name_user_not_found(self):
+        """Test: Try to update non-existing user – should raise exception."""
+        non_existent_user_id = "ghost_user_id"
+        with self.assertRaises(Exception) as context:
+            self.negev.update_user_name(non_existent_user_id, "מזויף", "יוזר")
+        self.assertIn("איידי", str(context.exception), "Expected error about user ID")
+
+    def test_upload_profile_picture_success(self):
+        """Test successful upload and DB update of profile picture."""
+        user = self._complete_user_registration("profilepic@bgu.ac.il", "Pass1!", "Profile", "Pic")
+
+        image_file = self._mock_image_file()
+
+        result_path = self.negev.upload_profile_picture(user.user_id, image_file)
+
+        self.assertIsInstance(result_path, str)
+        self.assertTrue(result_path.endswith(".jpg") or result_path.endswith(".jpeg") or result_path.endswith(".png"))
+        self.assertTrue(os.path.exists(result_path), "Expected the image file to be saved.")
+
+    def test_upload_profile_picture_save_fails(self):
+        """Test failure when saving the image raises an exception."""
+        user = self._complete_user_registration("failupload@bgu.ac.il", "Pass1!", "Broken", "Uploader")
+        bad_file = None  # Simulate missing file
+
+        with self.assertRaises(Exception) as context:
+            self.negev.upload_profile_picture(user.user_id, bad_file)
+
+        self.assertIn("Failed to upload profile picture", str(context.exception))
+
+    def test_upload_profile_picture_db_update_fails(self):
+        """Test failure when DB update returns False."""
+        user = self._complete_user_registration("picfail@bgu.ac.il", "Pass1!", "DB", "Fail")
+        image_file = self._mock_image_file()
+
+        # Patch the DB update to simulate failure
+        from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
+        original_update = ProfilePictureRepository.update_profile_pic
+        ProfilePictureRepository.update_profile_pic = lambda *args, **kwargs: False
+
+        try:
+            result = self.negev.upload_profile_picture(user.user_id, image_file)
+            self.assertIsNone(result, "Expected None when DB update fails.")
+        finally:
+            ProfilePictureRepository.update_profile_pic = original_update  # restore
+
+        def test_get_profile_picture_path_success(self):
+            """Test: Successfully retrieve profile picture path after upload."""
+            user = self._complete_user_registration("picpath@bgu.ac.il", "Pass1!", "Path", "Tester")
+            image_file = self._mock_image_file()
+
+            saved_path = self.negev.upload_profile_picture(user.user_id, image_file)
+
+            result_path = self.negev.get_profile_picture_path(user.user_id)
+
+            self.assertEqual(result_path, saved_path)
+            self.assertTrue(
+                result_path.endswith(".jpg") or result_path.endswith(".jpeg") or result_path.endswith(".png"))
+
+        def test_get_profile_picture_path_user_not_found(self):
+            """Test: No profile picture for non-existent user ID returns None."""
+            non_existent_user_id = "ghost_user_999"
+            result = self.negev.get_profile_picture_path(non_existent_user_id)
+            self.assertIsNone(result, "Expected None for user with no profile picture")
+
+        def test_get_profile_picture_path_repo_failure(self):
+            """Test: Force repository failure and expect an exception."""
+            user = self._complete_user_registration("error@bgu.ac.il", "Pass1!", "Break", "Me")
+
+            from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
+            original_method = ProfilePictureRepository.get_path_by_user_id
+            ProfilePictureRepository.get_path_by_user_id = lambda *args, **kwargs: (_ for _ in ()).throw(
+                Exception("DB fail"))
+
+            try:
+                with self.assertRaises(Exception) as context:
+                    self.negev.get_profile_picture_path(user.user_id)
+
+                self.assertIn("Error retrieving profile picture path", str(context.exception))
+            finally:
+                ProfilePictureRepository.get_path_by_user_id = original_method  # restore
+
+    def test_delete_profile_picture_success(self):
+        """Test: Successfully delete profile picture file and DB record."""
+        user = self._complete_user_registration("deletepic@bgu.ac.il", "Pass1!", "Delete", "Pic")
+        path = self._upload_dummy_profile_pic(user.user_id)
+
+        self.assertTrue(os.path.exists(path), "Expected file to exist before deletion")
+
+        result = self.negev.delete_profile_picture(user.user_id)
+
+        self.assertTrue(result, "Expected delete_profile_picture to return True on success")
+        self.assertFalse(os.path.exists(path), "Expected file to be deleted")
+
+    def test_delete_profile_picture_file_not_found(self):
+        """Test: Attempting to delete when no file exists returns None (or similar)."""
+        user = self._complete_user_registration("nofile@bgu.ac.il", "Pass1!", "No", "File")
+
+        result = self.negev.delete_profile_picture(user.user_id)
+        self.assertIsNone(result, "Expected None or graceful handling when no file exists")
+
+    def test_delete_profile_picture_repo_failure(self):
+        """Test: DB deletion fails after file deletion — should raise or return gracefully."""
+        user = self._complete_user_registration("failrepo@bgu.ac.il", "Pass1!", "Fail", "Repo")
+        self._upload_dummy_profile_pic(user.user_id)
+
+        from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
+        original = ProfilePictureRepository.delete_pic
+        ProfilePictureRepository.delete_pic = lambda *args, **kwargs: (_ for _ in ()).throw(Exception("DB delete failed"))
+
+        try:
+            with self.assertRaises(Exception) as context:
+                self.negev.delete_profile_picture(user.user_id)
+            self.assertIn("DB delete failed", str(context.exception))
+        finally:
+            ProfilePictureRepository.delete_pic = original  # restore
+
+    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit")
+    def test_appoint_system_manager_success(self, mock_socket_emit):
+        """System Test: Successfully send nomination to an existing non-manager user."""
+
+        nominee = self._complete_user_registration("newuser@bgu.ac.il", "Pass1!", "Dana", "Nominee")
+
+        response_json = self.negev.appoint_system_manager(
+            nominee_email=nominee.email,
+            nominator_user_id=self.user.user_id
+        )
+
+        result = json.loads(response_json)
+        self.assertEqual(result["status"], "success")
+        self.assertIn("successfully", result["message"])
+
+    def test_appoint_system_manager_already_manager(self):
+        """System Test: User is already a system manager – should return error."""
+
+        nominee = self._complete_user_registration("existing@bgu.ac.il", "Pass1!", "Tom", "Manager")
+
+        # מוסיפים אותו ידנית למנהלים
+        system_repo = SystemManagersRepository()
+        system_repo.add_system_manager(nominee.user_id)
+
+        response_json = self.negev.appoint_system_manager(
+            nominee_email=nominee.email,
+            nominator_user_id=self.user.user_id
+        )
+
+        result = json.loads(response_json)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("כבר הינו מנהל מערכת", result["message"])
+
+    def test_appoint_system_manager_email_not_found(self):
+        """System Test: Email not registered in the system – expect error."""
+
+        response_json = self.negev.appoint_system_manager(
+            nominee_email="ghost@bgu.ac.il",
+            nominator_user_id=self.user.user_id
+        )
+
+        result = json.loads(response_json)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("לא קיים", result["message"])
+
+    def test_appoint_system_manager_invalid_email(self):
+        """System Test: Invalid email format – should return error."""
+
+        response_json = self.negev.appoint_system_manager(
+            nominee_email="not-an-email",
+            nominator_user_id=self.user.user_id
+        )
+
+        result = json.loads(response_json)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("אימייל חוקי", result["message"])
 
 
 if __name__ == '__main__':

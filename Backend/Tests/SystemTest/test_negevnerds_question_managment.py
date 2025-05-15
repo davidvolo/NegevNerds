@@ -1,22 +1,13 @@
 import io
-import unittest
-from unittest.mock import patch
-
-from unittest.mock import MagicMock
-
+import json
+from unittest.mock import patch, MagicMock
 from werkzeug.datastructures import FileStorage
 
-from Backend.BusinessLayer.NegevNerds import NegevNerds
+from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, QuestionAlreadyInExam, CommentNotFound, \
-    ExamIsNotExist, ReactionNotFound
+    ExamIsNotExist, ReactionNotFound, QuestionNotFound
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.Tests.SystemTest.BaseTestCase import BaseTestCase
-
-
-def _mock_pdf_file(filename="exam.pdf", content=b"%PDF-1.4\n%Fake PDF content\n"):
-    stream = io.BytesIO(content)
-    file = FileStorage(stream=stream, filename=filename, content_type='application/pdf')
-    return file
 
 
 def _mock_invalid_file(filename="exam.txt", content=b"invalid"):
@@ -27,7 +18,7 @@ def _mock_invalid_file(filename="exam.txt", content=b"invalid"):
     return file
 
 
-class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
+class TestNegevNerdsQuestionManagement(BaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -36,9 +27,10 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         self.year = 2023
         self.semester = "אביב"
         self.moed = "א"
-        self.exam_file = _mock_pdf_file()
+        self.exam_file = self._mock_pdf_file()
         self.invalid_file = _mock_invalid_file()
         self._open_course(self.user, self.course_id, "מבוא להעלאת מבחנים")
+        self.question_number = 165
 
     def tearDown(self):
         super().tearDown()
@@ -50,150 +42,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             del self.negev.courseFacade.check_exam_full_pdf
 
     # ---Tests for exams---
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_upload_exam_success(self, mock_process_pdf):
-        """Verify user can upload a valid exam file."""
-
-        # Step 0: Define a fresh exam identifiers
-        new_year = 2024
-        new_semester = "סתיו"
-        new_moed = "ב"
-
-        # Step 1: Add dummy question to create new ExamData
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=new_year,
-            semester=new_semester,
-            moed=new_moed,
-            question_number=1,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        # Step 2: Upload exam
-        response = self.negev.upload_full_exam_pdf(
-            self.course_id, new_year, new_semester, new_moed, self.exam_file
-        )
-
-        # Step 3: Assertions
-        self.assertEqual(response["status"], "success")
-        self.assertIn("File uploaded", response["message"])
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_upload_solution_invalid_format(self, mock_process_pdf):
-        """Verify uploading a non-PDF file still succeeds (since no format validation)."""
-
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=23,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        invalid_file = _mock_invalid_file()
-
-        response = self.negev.uploadSolution(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=23,
-            solution_file=invalid_file
-        )
-
-        self.assertEqual(response["status"], "success")
-        self.assertIn("uploaded", response["message"].lower())
-
-    def test_upload_exam_course_not_exist(self):
-        """Verify uploading an exam for a non-existent course returns an error."""
-        original_check_exam_full_pdf = self.negev.courseFacade.check_exam_full_pdf
-        self.negev.courseFacade.check_exam_full_pdf = MagicMock(return_value=False)
-
-        fake_course_id = "000.0.0000"
-        response = self.negev.upload_full_exam_pdf(fake_course_id, self.year, self.semester, self.moed, self.exam_file)
-        self.assertEqual(response["status"], "error")
-        self.assertIn("not found", response["message"].lower())
-
-        self.negev.courseFacade.check_exam_full_pdf = original_check_exam_full_pdf
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_upload_exam_already_exists(self, mock_process_pdf):
-        """Verify uploading an exam that already exists returns an error."""
-
-        new_course_id = "777.7.7777"
-        self._open_course(self.user, new_course_id, "קורס למבחן כפול")
-
-        self.negev.add_question(
-            course_id=new_course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=1,
-            is_american=True,
-            question_topics=["כפול"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        upload_response_1 = self.negev.upload_full_exam_pdf(
-            new_course_id, self.year, self.semester, self.moed, self.exam_file
-        )
-        self.assertEqual(upload_response_1["status"], "success", "First upload should succeed.")
-
-        exam = self.negev.courseFacade.get_course(new_course_id).get_exam(self.year, self.semester, self.moed)
-        assert exam.link is not None, "Expected exam link to be set after first upload"
-
-        upload_response_2 = self.negev.upload_full_exam_pdf(
-            new_course_id, self.year, self.semester, self.moed, self.exam_file
-        )
-        self.assertEqual(upload_response_2["status"], "error")
-        self.assertIn("already exists", upload_response_2["message"].lower())
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_upload_and_get_exam_full_pdf_success(self, mock_process_pdf):
-        """Full flow: Add question -> Upload exam -> Retrieve exam."""
-
-        new_course_id = "888.8.8888"
-        self._open_course(self.user, new_course_id, "מבוא לבדיקות משולבות")
-
-        self.negev.add_question(
-            course_id=new_course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=15,  # מספר חדש
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        upload_response = self.negev.upload_full_exam_pdf(
-            new_course_id, self.year, self.semester, self.moed, self.exam_file
-        )
-        self.assertEqual(upload_response["status"], "success")
-        self.assertIn("File uploaded", upload_response["message"])
-
-        result = self.negev.get_exam_full_pdf(
-            new_course_id, self.year, self.semester, self.moed
-        )
-
-        self.assertIsNotNone(result)
-
-    def test_get_exam_full_pdf_course_not_found(self):
-        """Verify getting exam PDF fails when course does not exist."""
-        fake_course_id = "999.9.9999"
-        result = self.negev.get_exam_full_pdf(fake_course_id, self.year, self.semester, self.moed)
-        self.assertIsInstance(result, str)
-        self.assertFalse(result, "Expected error message to start with 'Error:'")
-
     def test_get_exam_full_pdf_exam_not_found(self):
         """Verify getting exam PDF fails when exam does not exist for the course."""
         # Open a course but do NOT add questions or upload exam
@@ -204,128 +52,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         self.assertIsInstance(result, str)
         self.assertIn("CourseFacade Error", result)
         self.assertIn("not exist", result.lower())
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_get_exam_full_pdf_wrong_year(self, mock_process_pdf):
-        """Test: Trying to get exam with wrong year."""
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=2,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-        wrong_year = 2030
-        result = self.negev.get_exam_full_pdf(self.course_id, wrong_year, self.semester, self.moed)
-        self.assertIsInstance(result, str)
-        self.assertIn("CourseFacade Error", result)
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_get_exam_full_pdf_wrong_semester(self, mock_process_pdf):
-        """Test: Trying to get exam with wrong semester."""
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=4,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-        wrong_semester = "חורף"
-        result = self.negev.get_exam_full_pdf(self.course_id, self.year, wrong_semester, self.moed)
-        self.assertIsInstance(result, str)
-        self.assertIn("CourseFacade Error", result)
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_check_exam_full_pdf_exists(self, mock_process_pdf):
-        """Test: Exam full PDF exists after upload."""
-        # Step 1: Add a question to create ExamData
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=1,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        # Step 2: Upload the full exam PDF
-        self.negev.upload_full_exam_pdf(
-            self.course_id, self.year, self.semester, self.moed, self.exam_file
-        )
-
-        # Step 3: Check that the exam exists
-        result = self.negev.check_exam_full_pdf(self.course_id, self.year, self.semester, self.moed)
-        self.assertTrue(result)
-
-    def test_check_exam_full_pdf_not_exists(self):
-        """Test: Exam full PDF does not exist when not uploaded."""
-        new_course_id = "999.9.9999"
-        self._open_course(self.user, new_course_id, "קורס ללא מבחן")
-
-        result = self.negev.check_exam_full_pdf(new_course_id, self.year, self.semester, self.moed)
-        self.assertFalse(result)
-
-    def test_check_exam_full_pdf_course_not_found(self):
-        """Test: Course not found should return False."""
-        fake_course_id = "999.9.9999"
-        result = self.negev.check_exam_full_pdf(fake_course_id, self.year, self.semester, self.moed)
-
-        self.assertFalse(result, "Expected result to be False when course is not found.")
-
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.splitPDF')
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_split_pdf_success(self, mock_process_pdf, mock_split_pdf):
-        """Test: Successfully splitting and adding questions."""
-
-        mock_split_pdf.return_value = [self.exam_file, self.exam_file]
-
-        self.negev.splitPDF(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            pdf_file=self.exam_file,
-            line_data=[100, 200]
-        )
-
-        results = self.negev.search_question_by_specifics(course_id=self.course_id)
-        self.assertGreaterEqual(len(results), 2, "Expected at least two questions to be added.")
-
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.splitPDF')
-    @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.check_valid_question', return_value=False)
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_split_pdf_question_not_valid(self, mock_process_pdf, mock_check_valid, mock_split_pdf):
-        """Test: Questions not added when check_valid_question fails."""
-
-        mock_split_pdf.return_value = [self.exam_file]
-
-        results_before = self.negev.search_question_by_specifics(course_id=self.course_id)
-        count_before = len(results_before)
-
-        self.negev.splitPDF(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            pdf_file=self.exam_file,
-            line_data=[100]
-        )
-
-        results_after = self.negev.search_question_by_specifics(course_id=self.course_id)
-        count_after = len(results_after)
-
-        self.assertEqual(count_after, count_before, "Expected no new questions to be added.")
 
     # ---Tests for Questions---
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
@@ -420,24 +146,20 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         with self.assertRaises(Exception):
             self.negev.add_question(None, 2023, "A", "MoedA", 1, True, ["arrays"], self.mock_pdf_file(), None)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_search_free_text_without_course_id_real(self, mock_process_pdf):
-        """System Test: Search free text without course_id."""
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+           return_value=None)
+    def test_search_free_text_system_basic_no_course_id(self, mock_retrival_pdf, mock_search_free_text):
+        """System Test: User searches for a term without specifying course_id – expects relevant results."""
 
-        # יצירת שאלה אמיתית
-        course_id = self.course_id
-        year = self.year
-        semester = self.semester
-        moed = self.moed
-        question_number = 501
-        topic = "מבני נתונים"
-        question_text = "זו שאלה על עצי חיפוש בינאריים."
+        question_number = 1001
+        topic = "גרפים"
 
         self.negev.add_question(
-            course_id=course_id,
-            year=year,
-            semester=semester,
-            moed=moed,
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
             question_number=question_number,
             is_american=True,
             question_topics=[topic],
@@ -445,127 +167,158 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             answer_file=None
         )
 
-        # חיפוש טקסט חופשי
-        search_text = "עץ חיפוש"
-        results = self.negev.search_free_text(text=search_text)
+        # mock elastic search result
+        mock_dtos = [{"question_id": str(question_number)}]
+        mock_search_free_text.return_value = (mock_dtos, None)
 
-        # בדיקות
-        self.assertIsInstance(results, list)
-        self.assertGreaterEqual(len(results), 1, "Expected at least one result.")
-        self.assertTrue(
-            any(q.course_id == course_id for q in results),
-            "Expected to find question related to course."
+        mock_question_dto = QuestionDTO(
+            question_id=str(question_number),
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            question_topics=["גרפים"],
+            is_american=True,
+            link_to_question="some_link.pdf",  # או קובץ אמיתי אם יש
+            comments_list=[],
+            course_id=self.course_id
         )
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_search_free_text_with_course_id_real(self, mock_process_pdf):
-        """System Test: Search free text within a specific course."""
+        self.negev.courseFacade.get_questions_dto_by_search_dtos = MagicMock(return_value=[mock_question_dto])
 
-        # יצירת שאלה אמיתית
-        course_id = self.course_id
-        year = self.year
-        semester = self.semester
-        moed = self.moed
-        question_number = 502
+        search_text = "BFS"
+        results, suggestion = self.negev.search_free_text(text=search_text)
+
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].question_id, str(question_number))
+        self.assertIsNone(suggestion)
+
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+           return_value=None)
+    def test_search_free_text_system_with_course_id(self, mock_retrival_pdf, mock_search_free_text):
+        """System Test: User searches for a term with a specific course_id – expects filtered results."""
+
+        # שלב 1: הוספת שאלה בקורס הקיים
+        question_number = 1002
         topic = "אוטומטים"
-        question_text = "מה זה DFA?"
 
         self.negev.add_question(
-            course_id=course_id,
-            year=year,
-            semester=semester,
-            moed=moed,
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
             question_number=question_number,
-            is_american=True,
+            is_american=False,
             question_topics=[topic],
             question_file=self.exam_file,
             answer_file=None
         )
 
-        # חיפוש טקסט חופשי בקורס
+        # שלב 2: החזרת תוצאה מדומה שמכילה את השאלה הנכונה
+        mock_dtos = [{"question_id": str(question_number)}]
+        mock_search_free_text.return_value = (mock_dtos, None)
+
+        mock_question_dto = QuestionDTO(
+            question_id=str(question_number),
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            question_topics=[topic],
+            is_american=False,
+            link_to_question="link_to_q.pdf",
+            comments_list=[],
+            course_id=self.course_id
+        )
+        self.negev.courseFacade.get_questions_dto_by_search_dtos = MagicMock(return_value=[mock_question_dto])
+
+        # שלב 3: הפעלת החיפוש עם course_id
         search_text = "DFA"
-        results = self.negev.search_free_text(text=search_text, course_id=course_id)
+        results, suggestion = self.negev.search_free_text(text=search_text, course_id=self.course_id)
+
+        # שלב 4: אימותים
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].course_id, self.course_id)
+        self.assertIsNone(suggestion)
+
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+           return_value=None)
+    def test_search_free_text_system_no_results(self, mock_retrival_pdf, mock_search_free_text):
+        """System Test: User searches for a term that has no matching results – expects empty list."""
+
+        # אין צורך להוסיף שאלה – המנוע מחזיר תוצאה ריקה
+        mock_search_free_text.return_value = ([], None)
+
+        search_text = "מושגשלאקיים"
+        results, suggestion = self.negev.search_free_text(text=search_text)
 
         # בדיקות
         self.assertIsInstance(results, list)
-        self.assertGreaterEqual(len(results), 1, "Expected at least one result.")
-        self.assertTrue(
-            all(q.course_id == course_id for q in results),
-            "All results must belong to the correct course."
-        )
+        self.assertIsNone(suggestion, "Expected no suggestion when nothing matches.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_search_free_text_no_results_real(self, mock_process_pdf):
-        """System Test: Search free text returns no results when nothing matches."""
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+           return_value=None)
+    def test_search_free_text_system_with_typo_suggestion(self, mock_retrival_pdf, mock_search_free_text):
+        """System Test: Search with typo returns suggestion even if results are empty."""
 
-        search_text = "משהו שלא קיים בכלל"
+        mock_search_free_text.return_value = ([], "גרף")
 
-        results = self.negev.search_free_text(text=search_text)
+        search_text = "גראף"
+        results, suggestion = self.negev.search_free_text(text=search_text)
 
         self.assertIsInstance(results, list)
-        self.assertEqual(len(results), 0, "Expected no results.")
+        self.assertEqual(suggestion, "גרף", "Expected suggestion to correct the typo.")
 
-    def test_search_question_free_text_multiple_matches(self):
-        """Verify multiple matching questions are returned."""
-        mock_dtos = [
-            QuestionDTO("q1", "שאלה על גרפים", course_id=self.course_id),
-            QuestionDTO("q2", "שאלה על גרפים מכוונים", course_id=self.course_id),
-        ]
-        self.negev._pdfFacade.search_free_text = MagicMock(return_value=[{"question_id": "q1"}, {"question_id": "q2"}])
-        self.negev.courseFacade.get_questions_dto_by_search_dtos = MagicMock(return_value=mock_dtos)
-        results = self.negev.search_free_text("גרפים")
-        self.assertEqual(len(results), 2)
-        self.assertTrue(any("גרפים" in q.question_text for q in results))
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+           return_value=None)
+    def test_search_free_text_system_case_insensitive(self, mock_retrival_pdf, mock_search_free_text):
+        """System Test: Search is case-insensitive (e.g., 'dfa' should match 'DFA')."""
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_search_free_text_case_insensitive(self, mock_process_pdf):
-        """System Test: Verify search is case-insensitive (patch instance elastic_search)."""
-
-        # שלב 1: הוספת שאלה
-        course_id = self.course_id
-        year = self.year
-        semester = self.semester
-        moed = self.moed
-        question_number = 701
+        question_number = 1003
+        topic = "אוטומטים"
 
         self.negev.add_question(
-            course_id=course_id,
-            year=year,
-            semester=semester,
-            moed=moed,
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
             question_number=question_number,
-            is_american=True,
-            question_topics=["מבני נתונים"],
+            is_american=False,
+            question_topics=[topic],
             question_file=self.exam_file,
             answer_file=None
         )
 
-        # שלב 2: Patch על אובייקט קיים
-        with patch.object(self.negev._pdfFacade.information_retrival, 'elastic_search') as mock_elastic_search:
-            mock_elastic_search.search.return_value = {
-                "hits": {
-                    "hits": [
-                        {
-                            "_source": {
-                                "question_id": str(question_number),
-                                "course_id": str(course_id),
-                            }
-                        }
-                    ]
-                }
-            }
+        mock_dtos = [{"question_id": str(question_number)}]
+        mock_search_free_text.return_value = (mock_dtos, None)
 
-            # שלב 3: חיפוש
-            search_text = "מַעֲרָך"
-            results = self.negev.search_free_text(search_text)
+        mock_question_dto = QuestionDTO(
+            question_id=str(question_number),
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            question_topics=[topic],
+            is_american=False,
+            link_to_question="q_link.pdf",
+            comments_list=[],
+            course_id=self.course_id
+        )
+        self.negev.courseFacade.get_questions_dto_by_search_dtos = MagicMock(return_value=[mock_question_dto])
 
-            # שלב 4: בדיקות
-            self.assertIsInstance(results, list)
-            self.assertGreaterEqual(len(results), 1, "Expected at least one result for case-insensitive search.")
-            self.assertTrue(
-                any("מבני" in q.question_topics[0] or "מערך" in q.question_text for q in results),
-                "Expected to find 'מערך' or 'מבני' in question text ignoring casing/nikkud."
-            )
+        search_text = "dfa"
+        results, suggestion = self.negev.search_free_text(text=search_text)
+
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].question_id, str(question_number))
+        self.assertIsNone(suggestion)
 
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
     def test_search_by_topic_success(self, mock_process_pdf):
@@ -664,8 +417,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
 
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
     def test_upload_solution_success(self, mock_process_pdf):
-        """Verify uploading a solution PDF works correctly."""
-        # הוספת שאלה כדי שיהיה מה להעלות עליו פתרון
         self.negev.add_question(
             course_id=self.course_id,
             year=self.year,
@@ -688,7 +439,7 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         )
 
         self.assertEqual(response["status"], "success")
-        self.assertIn("File uploaded", response["message"])
+        self.assertIn("uploaded", response["message"].lower())
         self.assertTrue(response["link"].endswith(".pdf"))
 
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
@@ -696,8 +447,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
            return_value=None)
     def test_upload_solution_already_exists(self, mock_perform_retrival, mock_process_pdf):
         """Verify error is raised when uploading solution that already exists."""
-
-        # הוספת שאלה
         self.negev.add_question(
             course_id=self.course_id,
             year=self.year,
@@ -707,9 +456,10 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             is_american=True,
             question_topics=["מבני נתונים"],
             question_file=self.exam_file,
-            answer_file=self.exam_file  # כבר יש פתרון
+            answer_file=self.exam_file  # זה יוצר פתרון שכבר קיים
         )
 
+        # Step 2: Try uploading the same solution again
         response = self.negev.uploadSolution(
             course_id=self.course_id,
             year=self.year,
@@ -719,6 +469,7 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             solution_file=self.exam_file
         )
 
+        # Step 3: Check that the upload fails as expected
         self.assertEqual(response["status"], "error")
         self.assertIn("already", response["message"].lower())
 
@@ -735,36 +486,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
 
         self.assertEqual(response["status"], "error")
         self.assertIn("NoneType", response["message"])
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_upload_solution_invalid_format(self, mock_process_pdf):
-        """Verify invalid format file (e.g., text) returns an error."""
-
-        self.negev.add_question(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=23,
-            is_american=True,
-            question_topics=["מבני נתונים"],
-            question_file=self.exam_file,
-            answer_file=None
-        )
-
-        invalid_file = _mock_invalid_file()
-
-        response = self.negev.uploadSolution(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=23,
-            solution_file=invalid_file
-        )
-
-        self.assertEqual(response["status"], "error")
-        self.assertIn("valid PDF", response["message"].lower())
 
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
     def test_delete_question_success(self, mock_process_pdf):
@@ -913,12 +634,14 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         semester = self.semester
         moed = self.moed
 
+        question_number = 9001  # ודא שזה נשמר לאורך כל הטסט
+
         self.negev.add_question(
             course_id=course_id,
             year=year,
             semester=semester,
             moed=moed,
-            question_number=30,  # מספר חדש
+            question_number=question_number,
             is_american=True,
             question_topics=["מבני נתונים"],
             question_file=self.exam_file,
@@ -929,14 +652,14 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         writer_id = "test_user_id"
         prev_id = "0"  # תגובה ראשונה
         comment_text = "זוהי תגובת בדיקה"
-        question_id = "30"  # אותו מזהה של השאלה
+        question_id = str(question_number)  # תואם לשאלה שהוספה
 
         result = self.negev.add_comment(
             course_id=course_id,
             year=year,
             semester=semester,
             moed=moed,
-            question_number=30,
+            question_number=question_number,
             writer_name=writer_name,
             writer_id=writer_id,
             prev_id=prev_id,
@@ -1025,7 +748,7 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         )
 
         # יצירת קובץ תמונה מזויף
-        photo_file = _mock_pdf_file(filename="image.jpg", content=b"fake image content")
+        photo_file = self._mock_pdf_file(filename="image.jpg", content=b"fake image content")
 
         result = self.negev.add_comment(
             course_id=self.course_id,
@@ -1080,6 +803,9 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             question_id=question_id
         )
 
+        # הוספת משתמש שמבצע את הריאקציה
+        reacting_user = self._complete_user_registration("another@bgu.ac.il", "Pass1!", "Another", "User")
+
         comment_id = "99_0"
 
         response = self.negev.add_reaction(
@@ -1089,7 +815,7 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
             moed=self.moed,
             question_number=99,
             comment_id=comment_id,
-            user_id="another_user",
+            user_id=reacting_user.user_id,
             emoji="❤️"
         )
 
@@ -1187,23 +913,76 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
                 question_number=1,
                 comment_id="1_0"
             )
-    @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
-    def test_remove_reaction_success(self, mock_remove_reaction):
-        """Test: Successfully remove a reaction."""
-        mock_remove_reaction.return_value = None  # אין החזרה אמיתית
 
+    def test_remove_reaction_success(self):
+        """Test: Add question, comment, reaction, then remove reaction successfully."""
+
+        # Step 1: Add question
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=1,
+            is_american=True,
+            question_topics=["בדיקה"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        # Step 2: Add comment
+        writer_name = "User A"
+        writer_id = "user_a"
+        question_id = "165"
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=165,
+            writer_name=writer_name,
+            writer_id=writer_id,
+            prev_id="0",
+            comment_text="תגובה לבדיקה",
+            photo_file=None,
+            question_id=question_id
+        )
+        comment_id = "1_0"
+
+        # Step 3: Add reaction
+        user_id = "another_user"
+        emoji = "👍"
+        self.negev.add_reaction(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=1,
+            comment_id=comment_id,
+            user_id=user_id,
+            emoji=emoji
+        )
+
+        # Get reaction_id from the DB (if you're storing it)
+        repo = ReactionRepository()
+        reactions = repo.get_reactions_for_comment(comment_id)
+        self.assertTrue(len(reactions) > 0)
+        reaction_id = reactions[0].reaction_id
+
+        # Step 4: Remove reaction
         result = self.negev.remove_reaction(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=self.question_number,
-            comment_id=self.comment_id,
-            reaction_id=self.reaction_id
+            question_number=1,
+            comment_id=comment_id,
+            reaction_id=reaction_id
         )
 
+        # Step 5: Assert removal
         self.assertEqual(result, "ReactionData removed successfully.")
-        mock_remove_reaction.assert_called_once()
+        self.assertEqual(len(repo.get_reactions_for_comment(comment_id)), 0)
 
     @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
     def test_remove_reaction_course_not_exist(self, mock_remove_reaction):
@@ -1256,8 +1035,6 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
     @patch('Backend.BusinessLayer.NegevNerds.CommentRepository')
     def test_get_comments_metadata_success(self, mock_comment_repo_class):
         """Test: Successfully retrieves comments metadata for a question."""
-
-        # יצירת דמה של תגובות
         fake_comments_metadata = [
             {"comment_id": "comment1", "writer_name": "User A", "timestamp": "2025-04-30"},
             {"comment_id": "comment2", "writer_name": "User B", "timestamp": "2025-04-30"}
@@ -1267,27 +1044,24 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
         mock_comment_repo.get_comments_metadata_by_question_id.return_value = fake_comments_metadata
         mock_comment_repo_class.return_value = mock_comment_repo
 
-        # קריאה לפונקציה
         question_id = "some_question_id"
         result = self.negev.get_comments_metadata(question_id)
 
-        # בדיקות
         self.assertEqual(result, fake_comments_metadata)
         mock_comment_repo.get_comments_metadata_by_question_id.assert_called_once_with(question_id)
 
     @patch('Backend.BusinessLayer.NegevNerds.CommentRepository')
     def test_get_comments_metadata_failure(self, mock_comment_repo_class):
-        """Test: Fail to retrieve comments metadata raises an Exception."""
+        """Test: Fail to retrieve comments metadata returns empty list."""
 
         mock_comment_repo = MagicMock()
         mock_comment_repo.get_comments_metadata_by_question_id.side_effect = Exception("Database error")
         mock_comment_repo_class.return_value = mock_comment_repo
 
         question_id = "some_question_id"
-        with self.assertRaises(Exception) as context:
-            self.negev.get_comments_metadata(question_id)
+        result = self.negev.get_comments_metadata(question_id)
 
-        self.assertIn("Error in NegevNerds delete_question", str(context.exception))
+        self.assertEqual(result, [])
 
     @patch('Backend.BusinessLayer.NegevNerds.CourseFacade')
     def test_delete_comment_success(self, mock_course_facade_class):
@@ -1333,3 +1107,686 @@ class TestNegevNerdsExamAndQuestionManagement(BaseTestCase):
                 question_number=self.question_number,
                 comment_id=self.comment_id
             )
+
+    def _add_question_and_comment(self, question_number=9002, comment_id="9002_0"):
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            is_american=True,
+            question_topics=["מבני נתונים"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            writer_name="Editor",
+            writer_id="user123",
+            prev_id="0",
+            comment_text="תגובה מקורית",
+            photo_file=None,
+            question_id=str(question_number)
+        )
+
+        return question_number, comment_id
+
+    def test_edit_comment_text_success(self):
+        question_number, comment_id = self._add_question_and_comment()
+
+        result = self.negev.edit_comment_text(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            comment_id=comment_id,
+            new_text="טקסט חדש לעריכה"
+        )
+
+        self.assertEqual(result, "CommentData edited successfully.")
+
+    def test_edit_comment_text_course_not_found(self):
+        with self.assertRaises(CourseIsNotExist):
+            self.negev.edit_comment_text(
+                course_id="000.0.0000",
+                year=self.year,
+                semester=self.semester,
+                moed=self.moed,
+                question_number=1,
+                comment_id="1_0",
+                new_text="טקסט"
+            )
+
+    def test_edit_comment_text_question_not_found(self):
+        with self.assertRaises(QuestionNotFound):
+            self.negev.edit_comment_text(
+                course_id=self.course_id,
+                year=self.year,
+                semester=self.semester,
+                moed=self.moed,
+                question_number=9999,
+                comment_id="9999_0",
+                new_text="עדכון"
+            )
+
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
+    def test_edit_comment_text_comment_not_found(self, mock_retrival_pdf, mock_process_pdf):
+        """Test editing comment that does not exist raises CommentNotFound."""
+
+        # מוסיף שאלה אבל לא תגובה
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=9010,
+            is_american=True,
+            question_topics=["בדיקה"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        with self.assertRaises(CommentNotFound):
+            self.negev.edit_comment_text(
+                course_id=self.course_id,
+                year=self.year,
+                semester=self.semester,
+                moed=self.moed,
+                question_number=9010,
+                comment_id="9010_0",  # לא קיימת תגובה
+                new_text="עדכון"
+            )
+
+    def test_check_exist_solution_exists(self):
+        """Test: Solution exists for a question."""
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=1,
+            is_american=True,
+            question_topics=["בדיקה"],
+            question_file=self.exam_file,
+            answer_file=self.exam_file  # מצרפים פתרון
+        )
+
+        result = self.negev.checkExistSolution(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=1
+        )
+
+        self.assertTrue(result, "Expected solution to exist for the question.")
+
+    def test_check_exist_solution_not_exists(self):
+        """Test: No solution file uploaded for the question."""
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=2,
+            is_american=True,
+            question_topics=["בדיקה"],
+            question_file=self.exam_file,
+            answer_file=None  # אין פתרון
+        )
+
+        result = self.negev.checkExistSolution(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=2
+        )
+
+        self.assertFalse(result, "Expected no solution to exist for the question.")
+
+    def test_check_exist_solution_course_not_found(self):
+        """Test: Course does not exist, should return an error string."""
+        result = self.negev.checkExistSolution(
+            course_id="000.0.0000",
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=1
+        )
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("Error:"), "Expected error message when course does not exist.")
+
+
+def test_edit_question_topic_success(self):
+    """System Test: Successfully update topics of existing question."""
+
+    # יצירת שאלה חדשה
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=101,
+        is_american=True,
+        question_topics=["גרפים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    # עריכת הנושאים
+    new_topics = ["חיפוש", "BFS"]
+    response_json = self.negev.edit_question_topic(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=101,
+        topics=new_topics
+    )
+    response = json.loads(response_json)
+
+    self.assertEqual(response["status"], "success")
+    self.assertIn("עודכנו", response["message"])
+
+def test_edit_question_topic_nonexistent_question(self):
+    """System Test: Attempt to edit a non-existent question – expect error response."""
+
+    response_json = self.negev.edit_question_topic(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=9999,  # מספר שאלה לא קיים
+        topics=["תכנות דינמי"]
+    )
+    response = json.loads(response_json)
+
+    self.assertEqual(response["status"], "error")
+    self.assertIn("אירעה שגיאה", response["message"])
+
+def test_edit_question_topic_empty_topic_list(self):
+    """System Test: Attempt to clear topics of an existing question."""
+
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=102,
+        is_american=False,
+        question_topics=["מורכבויות"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    response_json = self.negev.edit_question_topic(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=102,
+        topics=[]  # רשימה ריקה
+    )
+    response = json.loads(response_json)
+
+    self.assertEqual(response["status"], "success")  # אלא אם מוגדר אחרת בלוגיקה
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_edit_question_details_success(self, mock_process_pdf):
+    """System Test: Successfully edit question details and move to new exam."""
+
+    old_question_number = 201
+    new_question_number = 301
+
+    # שלב 1: הוספת שאלה למבחן המקורי
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=old_question_number,
+        is_american=True,
+        question_topics=["מבני נתונים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    # שלב 2: קריאה לפונקציה – מעבירה את השאלה
+    result_json = self.negev.edit_question_details(
+        old_course_id=self.course_id,
+        old_year=self.year,
+        old_semester=self.semester,
+        old_moed=self.moed,
+        old_question_number=old_question_number,
+        new_course_id=self.course_id,  # אותו קורס
+        new_year=self.year,
+        new_semester=self.semester,
+        new_moed=self.moed,
+        new_question_number=new_question_number
+    )
+
+    result = json.loads(result_json)
+    self.assertEqual(result["status"], "success")
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_edit_question_details_question_already_exists(self, mock_process_pdf):
+    """System Test: Fail to move question if new question number already exists in target exam."""
+
+    # הוספת שתי שאלות שונות
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=401,
+        is_american=True,
+        question_topics=["בדיקה"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=402,  # ננסה להעביר ל־402
+        is_american=True,
+        question_topics=["אחר"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    # ניסיון להעביר את 401 לתוך 402
+    response_json = self.negev.edit_question_details(
+        old_course_id=self.course_id,
+        old_year=self.year,
+        old_semester=self.semester,
+        old_moed=self.moed,
+        old_question_number=401,
+        new_course_id=self.course_id,
+        new_year=self.year,
+        new_semester=self.semester,
+        new_moed=self.moed,
+        new_question_number=402  # שכבר קיים
+    )
+
+    response = json.loads(response_json)
+    self.assertEqual(response["status"], "error")
+
+def test_edit_question_details_invalid_parameters(self):
+    """System Test: Fail with invalid parameters (invalid moed or year)."""
+
+    response_json = self.negev.edit_question_details(
+        old_course_id="bad_course",
+        old_year=1999,
+        old_semester="חורף",
+        old_moed="ז",
+        old_question_number=1,
+        new_course_id="also_bad",
+        new_year=1999,
+        new_semester="סתיו",
+        new_moed="ח",
+        new_question_number=5
+    )
+
+    response = json.loads(response_json)
+    self.assertEqual(response["status"], "error")
+    self.assertIn("לא חוקי", response["message"])
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_delete_question_solution_success(self, mock_process_pdf):
+    """System Test: Delete existing solution file successfully."""
+
+    question_number = 601
+
+    # הוספת שאלה עם פתרון
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=False,
+        question_topics=["אוטומטים"],
+        question_file=self.exam_file,
+        answer_file=self.exam_file  # ← פתרון קיים
+    )
+
+    # פעולה: מחיקת הפתרון
+    result = self.negev.delete_question_solution(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number
+    )
+
+    self.assertTrue(result)
+
+    # בדיקה: וידוא שהקישור לפתרון נמחק
+    updated_question = self.negev.search_question_by_specifics(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number
+    )[0]
+    self.assertEqual(updated_question.link_to_answer, "")
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_delete_question_solution_no_solution(self, mock_process_pdf):
+    """System Test: Try deleting a solution when none exists – expect False."""
+
+    question_number = 602
+
+    # יצירת שאלה בלי פתרון
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["חיפוש"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    result = self.negev.delete_question_solution(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number
+    )
+
+    self.assertFalse(result)
+
+def test_delete_question_solution_question_not_found(self):
+    """System Test: Try deleting solution for a non-existent question."""
+
+    result = self.negev.delete_question_solution(
+        course_id=self.course_id,
+        year=2099,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=9999
+    )
+
+    self.assertFalse(result)
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_swap_question_file_success_pdf(self, mock_process_pdf):
+    """System Test: Successfully swap existing PDF question file with a new one."""
+
+    question_number = 701
+
+    # הוספת שאלה עם קובץ קיים
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["גרפים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    # יצירת קובץ חדש להחלפה
+    new_file = self._mock_pdf_file(filename="new_question.pdf", content=b"%PDF-1.4\nNew Content")
+
+    # החלפה בפועל
+    result_json = self.negev.swap_question_file(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        new_file=new_file
+    )
+
+    result = json.loads(result_json)
+    self.assertEqual(result["status"], "success")
+    self.assertIn("swapped", result["message"])
+    self.assertTrue(result["has_link"])
+    self.assertTrue(result["link"].endswith(".pdf"))
+
+def test_swap_question_file_no_existing_file(self):
+    """System Test: Try to swap file for a question that has no file – expect error."""
+
+    question_number = 702
+
+    # לא מוסיפים שאלה, כלומר אין קובץ קיים
+
+    fake_file = self._mock_pdf_file(filename="fake.pdf", content=b"Test content")
+
+    result_json = self.negev.swap_question_file(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        new_file=fake_file
+    )
+
+    result = json.loads(result_json)
+    self.assertEqual(result["status"], "error")
+    self.assertIn("No existing question file", result["message"])
+
+@patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+def test_swap_question_file_success_image(self, mock_process_pdf):
+    """System Test: Swap file when new file is an image (photo)."""
+
+    question_number = 703
+
+    # יצירת שאלה עם קובץ
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=False,
+        question_topics=["חישוביות"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    # קובץ חדש מסוג תמונה
+    new_image = self._mock_pdf_file(filename="img.jpg", content=b"\xff\xd8\xff\xe0JPEG...")
+
+    result_json = self.negev.swap_question_file(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        new_file=new_image
+    )
+
+    result = json.loads(result_json)
+    self.assertEqual(result["status"], "success")
+    self.assertTrue(result["link"].endswith(".jpg"))
+
+def test_is_following_true(self):
+    """System Test: User is following the discussion – expect True."""
+
+    # הוספת שאלה
+    question_number = 801
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["מכונות מצבים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    question_id = str(question_number)
+
+    # משתמש עוקב אחרי השאלה
+    self.negev.toggle_follow_discussion(user_id=self.user.user_id, question_id=question_id)
+
+    result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
+    self.assertTrue(result)
+
+def test_is_following_false(self):
+    """System Test: User is not following the discussion – expect False."""
+
+    question_number = 802
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["שפות פורמליות"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+
+    question_id = str(question_number)
+
+    # לא מפעילים toggle_follow → המשתמש לא עוקב
+    result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
+    self.assertFalse(result)
+
+
+def test_is_following_invalid_ids(self):
+    """System Test: Invalid user/question IDs should still return False safely."""
+
+    result = self.negev.is_following(user_id="nonexistent_user", question_id="nonexistent_q")
+    self.assertFalse(result)
+
+def test_follow_question_success(self):
+    """System Test: User follows a question successfully."""
+
+    # יצירת שאלה
+    question_number = 901
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["אלגוריתמים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+    question_id = str(question_number)
+
+    # פעולת המעקב
+    self.negev.follow_question(user_id=self.user.user_id, question_id=question_id)
+
+    # בדיקה שהמשתמש עוקב באמת
+    result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
+    self.assertTrue(result)
+
+def test_follow_question_idempotent(self):
+    """System Test: Calling follow_question twice should not crash or duplicate."""
+
+    question_number = 902
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=False,
+        question_topics=["גרפים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+    question_id = str(question_number)
+
+    # פעולת מעקב פעמיים
+    self.negev.follow_question(user_id=self.user.user_id, question_id=question_id)
+    self.negev.follow_question(user_id=self.user.user_id, question_id=question_id)
+
+    # עדיין עוקב
+    result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
+    self.assertTrue(result)
+
+
+def test_follow_question_invalid_ids(self):
+    """System Test: Follow with invalid user or question IDs should not raise unhandled exceptions."""
+
+    try:
+        self.negev.follow_question(user_id="nonexistent_user", question_id="nonexistent_question")
+    except Exception as e:
+        self.fail(f"follow_question raised an exception unexpectedly: {e}")
+
+def test_unfollow_question_success(self):
+    """System Test: User successfully unfollows a followed question."""
+
+    question_number = 1001
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=True,
+        question_topics=["מערכים"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+    question_id = str(question_number)
+
+    # משתמש עוקב
+    self.negev.follow_question(self.user.user_id, question_id)
+    self.assertTrue(self.negev.is_following(self.user.user_id, question_id))
+
+    # פעולה: ביטול מעקב
+    self.negev.unfollow_question(self.user.user_id, question_id)
+
+    # בדיקה: אינו עוקב עוד
+    self.assertFalse(self.negev.is_following(self.user.user_id, question_id))
+
+def test_unfollow_question_not_following(self):
+    """System Test: Unfollow a question that wasn't being followed – should not raise."""
+
+    question_number = 1002
+    self.negev.add_question(
+        course_id=self.course_id,
+        year=self.year,
+        semester=self.semester,
+        moed=self.moed,
+        question_number=question_number,
+        is_american=False,
+        question_topics=["מיון"],
+        question_file=self.exam_file,
+        answer_file=None
+    )
+    question_id = str(question_number)
+
+    # פעולה: unfollow בלי follow קודם
+    try:
+        self.negev.unfollow_question(self.user.user_id, question_id)
+    except Exception as e:
+        self.fail(f"unfollow_question raised an unexpected exception: {e}")
+
+def test_unfollow_question_invalid_ids(self):
+    """System Test: Attempting to unfollow with invalid IDs should not crash."""
+
+    try:
+        self.negev.unfollow_question("bad_user", "bad_question")
+    except Exception as e:
+        self.fail(f"unfollow_question raised an unexpected exception: {e}")

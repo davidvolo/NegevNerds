@@ -100,8 +100,6 @@ class NegevNerds:
     @property
     def system_managers(self):
         return self._system_managers
-    
-
 
     def is_system_manager(self, user_id):
         """Checks if the user is a system manager."""
@@ -407,10 +405,8 @@ class NegevNerds:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
 
-
     def existFullExamSolution(self, course_id, year, semester, moed):
         return self.courseFacade.existFullExamSolution(course_id, year, semester, moed)
-
 
     def get_exam_solution_pdf_link(self, course_id, year, semester, moed):
         try:
@@ -504,7 +500,7 @@ class NegevNerds:
                 else:
                     return {
                     "status": "error",
-                    "message": f"User {user_id} is not a course manager."
+                    "message": f"User {user_id} is not a system manager."
                 }
             except Exception as e:
                 return {
@@ -715,29 +711,10 @@ class NegevNerds:
     #     except Exception as e:
     #         raise Exception(f"Failed to remove reaction: {e}")
 
-    # def is_photo(self, file):
-    #     """
-    #     Check if the given file is a valid photo (JPEG, JPG, PNG).
-    #
-    #     :param file: The uploaded file object.
-    #     :return: True if the file is a valid photo, False otherwise.
-    #     """
-    #     if file:
-    #         # Get the MIME type of the file
-    #         mime_type, _ = mimetypes.guess_type(file.filename)
-    #         # Allowed photo MIME types
-    #         allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
-    #         return mime_type in allowed_photo_types
-    #     return False
-
-
-
     def search_free_text(self , text, course_id = None):
         search_dtos, suggestion= self._pdfFacade.search_free_text_from_course(text=text, course_id=course_id)
         ques_dtos = self.courseFacade.get_questions_dto_by_search_dtos(dtos=search_dtos)
         return ques_dtos, suggestion
-
-
 
     def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,  question_file, answer_file):
         """
@@ -1203,11 +1180,11 @@ class NegevNerds:
                         "status": "error",
                         "message": "אחד מן הפרמטרים לא חוקי"
                         })
-    
-    def mark_notification_as_seen(self,notification_id):
+
+    def mark_notification_as_seen(self, notification_id):
         notification_repo = NotificationRepository()
         return notification_repo.mark_as_seen(notification_id)
-    
+
     def appoint_system_manager(self,nominee_email, nominator_user_id):
         print(nominator_user_id)
         if self.userFacade.is_valid_email(nominee_email):
@@ -1246,8 +1223,7 @@ class NegevNerds:
                         "status": "error",
                         "message": " נא להקליד אימייל חוקי"
                         })
-        
-            
+
     def appoint_course_manager(self,nominee_email, nominator_user_id, course_id):
         if self.userFacade.is_valid_email(nominee_email):
             user_nominee = self.userFacade.getUser_by_email(nominee_email)
@@ -1284,48 +1260,67 @@ class NegevNerds:
                         "status": "error",
                         "message": " נא להקליד אימייל חוקי"
                         })
-        
-    def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
+
+    def remove_course_manager(self, remove_user_email, nominator_user_id, course_id):
         if self.userFacade.is_valid_email(remove_user_email):
             user_nominee = self.userFacade.getUser_by_email(remove_user_email)
             if user_nominee is not None:
                 user_nominator = self.userFacade.getUser_by_id(nominator_user_id)
-                if self._course_facade.is_course_manager(course_id,user_nominee.user_id):
-                    if self._course_facade.get_course(course_id).get_course_manager_count() > 1:
-                        self._course_facade.remove_manager_from_course(course_id,user_nominee.user_id)
+
+                is_manager = self._course_facade.is_course_manager(course_id, user_nominee.user_id)
+
+                if is_manager:
+                    manager_count = self._course_facade.get_course(course_id).get_course_manager_count()
+
+                    if manager_count > 1:
+                        self._course_facade.remove_manager_from_course(course_id, user_nominee.user_id)
                         course = self._course_facade.get_course(course_id)
-                        message = f"{user_nominator.get_first_name() + ' ' +user_nominator.get_last_name()} הסיר/ת אותך מתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id} "
-                        frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
+                        message = f"{user_nominator.get_first_name()} {user_nominator.get_last_name()} הסיר/ת אותך מתפקיד מנהל קורס, בקורס ״{course.name}״ {course_id}"
+                        frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
                         course_link = f"{frontend_base_url}/course/{course_id}"
-                        send_email = self._user_facade.should_send_notification(user_nominee.user_id, "RemoveCourseManager")
-                        self._notification_facade.send_notification(receiver_id=user_nominee.user_id, sender_id=nominator_user_id, message = message, isApproved=False,
-                                                                    link=course_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                        comment_to_comment=False, react_to_comment=False, remove_course_manager=True, send_email = send_email)
+                        send_email = self._user_facade.should_send_notification(user_nominee.user_id,
+                                                                                "RemoveCourseManager")
+
+                        self._notification_facade.send_notification(
+                            receiver_id=user_nominee.user_id,
+                            sender_id=nominator_user_id,
+                            message=message,
+                            isApproved=False,
+                            link=course_link,
+                            appoint_system_manager=False,
+                            appoint_course_manager=False,
+                            comment_to_following=False,
+                            comment_to_comment=False,
+                            react_to_comment=False,
+                            remove_course_manager=True,
+                            send_email=send_email
+                        )
+
                         return json.dumps({
-                        "status": "success",
-                        "message": "The removal request was sent successfully."
-                    })
+                            "status": "success",
+                            "message": "The removal request was sent successfully."
+                        })
+
                     else:
                         return json.dumps({
                             "status": "error",
                             "message": "משתמש זה הינו מנהל הקורס היחיד כרגע.\nנא למנות קודם כל מנהל קורס חדש"
-                            })
+                        })
                 else:
                     return json.dumps({
                         "status": "error",
                         "message": " משתמש זה אינו מנהל קורס"
-                        })
-                    
+                    })
             else:
-                 return json.dumps({
-                        "status": "error",
-                        "message": " אימייל זה לא קיים במערכת"
-                        })
+                return json.dumps({
+                    "status": "error",
+                    "message": " אימייל זה לא קיים במערכת"
+                })
         else:
             return json.dumps({
-                        "status": "error",
-                        "message": " נא להקליד אימייל חוקי"
-                        })
+                "status": "error",
+                "message": " נא להקליד אימייל חוקי"
+            })
         
     def disapprove_system_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()
@@ -1390,7 +1385,6 @@ class NegevNerds:
         "status": "success",
         "message": "הבקשה נדחתה בהצלחה"
             })
-
 
     def approve_course_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()

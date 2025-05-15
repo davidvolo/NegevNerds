@@ -132,21 +132,39 @@ class TestQuestion(unittest.TestCase):
 
     @patch("Backend.BusinessLayer.Course.Comment.Comment.create")
     def test_add_comment_success(self, mock_comment_create):
-        # Create a dummy comment with a writer_id attribute.
         dummy_comment = MagicMock()
         dummy_comment.writer_id = "writer1"
         mock_comment_create.return_value = dummy_comment
+
+        # קריאה לפונקציה בפועל
         result = self.question.add_comment(
             writer_name="John Doe",
             writer_id="writer1",
             prev_id=None,
             comment_text="Nice question",
             deleted=False,
-            edited=False
+            edited=False,
+            comment_id="cmt_001",
+            link_to_media="media/link.jpg"
         )
+
+        # Assert: לוודא שהתגובה התווספה לרשימת התגובות
         self.assertIn(dummy_comment, self.question.comments)
+
+        # Assert: לוודא שהתוצאה היא set עם ה־writer_id של התגובה
         self.assertEqual(result, {"writer1"})
-        mock_comment_create.assert_called_once()
+
+        # Assert: לוודא שה־create נקרא עם כל הערכים הנכונים
+        mock_comment_create.assert_called_once_with(
+            writer_name="John Doe",
+            writer_id="writer1",
+            prev_id=None,
+            comment_text="Nice question",
+            deleted=False,
+            edited=False,
+            comment_id="cmt_001",
+            link_to_media="media/link.jpg"
+        )
 
     def test_add_reaction_success(self):
         # Prepare a dummy comment with a matching comment_id.

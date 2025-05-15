@@ -116,7 +116,6 @@ class Course:
         Retrieves a specific exam by year, semester, and moed.
         Raises an exception if not found, unless raise_exception is False.
         """
-        #with self.exams_lock:
         # Convert semester and moed to Enum
         semester = Semester(semester)
         moed = Moed(moed)
@@ -132,8 +131,6 @@ class Course:
                 self.exams[year] = []  # Create a new list for this year if it doesn't exist
             self.exams[year].append(exam)
         return exam
-        # if raise_exception:
-        #     raise ExamIsNotExist(year, semester, moed)
 
     # This handles cases where the user didn't specify 'semester' or 'moed' in the search.
     def get_exams(self, year: int, semester=None, moed=None):
@@ -270,7 +267,7 @@ class Course:
         """
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
-            raise ExamIsNotExist(year,semester,moed)
+            raise ExamIsNotExist(year, semester, moed)
         return exam.link  # Check for the exam link
         #
         # return exam_pdf_link

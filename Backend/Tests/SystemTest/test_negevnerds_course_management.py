@@ -1,14 +1,19 @@
+import json
 import unittest
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from unittest.mock import patch
 
 from Backend.BusinessLayer.NegevNerds import NegevNerds
+from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist
 from Backend.DataLayer.Base import Base, delete_all_data
 from Backend.DataLayer.UserData.UserModel import UserModel
+from Backend.Tests.SystemTest.BaseTestCase import BaseTestCase
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 
 
-class TestNegevNerdsCourseManagement(unittest.TestCase):
+class TestNegevNerdsCourseManagement(BaseTestCase):
     """
     This class contains system tests for the course management functionality
     of the NegevNerds system. These include:
@@ -45,15 +50,6 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         self.session = self.Session()
         delete_all_data(engine=self.engine, session=self.session)
         self.negev = NegevNerds(mkdir="test_directory")
-
-    def _complete_user_registration(self, email, password, first_name, last_name):
-        """Helper: fully register a user and return the user object."""
-        try:
-            user, _ = self.negev.register(email, password, password, first_name, last_name)
-            self.negev.register_termOfUse_part(email, password, first_name, last_name)
-            return self.negev._user_facade.getUser_by_email(email)
-        except Exception as e:
-            self.fail("User registration failed unexpectedly: " + str(e))
 
     def _extract_course_ids(self, courses):
         """Helper: extract course IDs from various formats including DTOs."""
@@ -111,11 +107,19 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         self.assertTrue(is_manager)
 
     def test_remove_course_success(self):
-        """Verify course manager can remove a course they opened."""
-        user = self._complete_user_registration("owner@bgu.ac.il", "Pass1!", "Owner", "User")
+        """Verify system manager can remove a course."""
+        user = self._complete_user_registration("sysadmin@bgu.ac.il", "Pass1!", "מנהל", "מערכת")
         course_id = "202.1.1010"
+
         self._open_course(user, course_id, "קורס לבדיקה")
+
+        SystemManagersRepository().add_system_manager(user.user_id)
+
+        self.assertTrue(self.negev.is_system_manager(user.user_id), "User should be a system manager")
+
         response = self.negev.remove_course(course_id, user.user_id)
+        print(response)
+
         self.assertEqual(response["status"], "success")
         self.assertIn("removed successfully", response["message"])
 
@@ -125,7 +129,6 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         response = self.negev.remove_course("nonexistent_course", user.user_id)
 
         self.assertEqual(response["status"], "error")
-        self.assertIn("object has no attribute", response["message"])
 
     def test_register_to_course_success(self):
         """Verify a second user can register to an existing course."""
@@ -214,7 +217,7 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         is_manager = self.negev.courseFacade.is_course_manager(course_id, student.user_id)
         self.assertFalse(is_manager)
 
-    def test_get_course_topics(self):
+    def test_get_course_topics_success(self):
         """Verify that get_course_topics returns non-empty topics for an opened course."""
         user = self._complete_user_registration("topics@bgu.ac.il", "Pass1!", "Topic", "Tester")
         course_id = "888.1.1010"
@@ -223,6 +226,84 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         self.assertTrue(isinstance(topics, (list, set)), "Expected course topics to be a list or set.")
         topics_list = list(topics) if isinstance(topics, set) else topics
         self.assertGreater(len(topics_list), 0, "The course topics list should not be empty.")
+
+    def test_get_course_topics_course_not_found(self):
+        """Verify that get_course_topics returns None when course does not exist."""
+        fake_course_id = "000.0.0000"
+        topics = self.negev.get_course_topics(fake_course_id)
+        self.assertIsNone(topics, "Expected None when course does not exist.")
+
+    def test_update_course_topics_success(self):
+        """Verify successful update of course topics."""
+        user = self._complete_user_registration("success@bgu.ac.il", "Pass1!", "Topic", "User")
+        course_id = "101.1.1010"
+        self._open_course(user, course_id, "מערכות הפעלה")
+
+        response = self.negev.update_course_topics(course_id, added_topics=["תהליכים"], removed_topics=[])
+        parsed = json.loads(response)
+        self.assertEqual(parsed["status"], "success")
+        self.assertIn("עודכנו בהצלחה", parsed["message"])
+
+    def test_update_course_topics_success(self):
+        """Verify successful update of course topics."""
+        user = self._complete_user_registration("success@bgu.ac.il", "Pass1!", "Topic", "User")
+        course_id = "101.1.1010"
+        self._open_course(user, course_id, "מערכות הפעלה")
+
+        response = self.negev.update_course_topics(course_id, added_topics=["תהליכים"], removed_topics=[])
+        parsed = json.loads(response)
+        self.assertEqual(parsed["status"], "success")
+        self.assertIn("עודכנו בהצלחה", parsed["message"])
+
+    def test_update_course_topics_topic_already_exists(self):
+        """Verify error when trying to add a topic that already exists."""
+        user = self._complete_user_registration("exists@bgu.ac.il", "Pass1!", "Topic", "Exists")
+        course_id = "101.1.2020"
+        self._open_course(user, course_id, "חישוביות")
+
+        self.negev.update_course_topics(course_id, added_topics=["אוטומטים"], removed_topics=[])
+
+        response = self.negev.update_course_topics(course_id, added_topics=["אוטומטים"], removed_topics=[])
+        parsed = json.loads(response)
+        self.assertEqual(parsed["status"], "error")
+        self.assertIn("כבר קיים", parsed["message"])
+
+    def test_update_course_topics_topic_not_exist_for_removal(self):
+        """Verify error when trying to remove a topic that doesn't exist."""
+        user = self._complete_user_registration("notexist@bgu.ac.il", "Pass1!", "Topic", "Remove")
+        course_id = "101.1.3030"
+        self._open_course(user, course_id, "יסודות ההנדסה")
+
+        response = self.negev.update_course_topics(course_id, added_topics=[], removed_topics=["לא_קיים"])
+        parsed = json.loads(response)
+        self.assertEqual(parsed["status"], "error")
+        self.assertIn("כבר לא קיים", parsed["message"])
+
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf')
+    def test_update_course_topics_removal_blocked_due_to_question(self, mock_process_pdf, mock_retrival):
+        """Verify error when trying to remove a topic that is still in use by a question."""
+        user = self._complete_user_registration("removalock@bgu.ac.il", "Pass1!", "Topic", "Lock")
+        course_id = "888.3.8888"
+        self._open_course(user, course_id, "מבוא לאבטחת מידע")
+        self.negev._course_facade.add_course_topics(course_id, ["הצפנה"])
+
+        self.negev.add_question(
+            course_id=course_id,
+            year=2023,
+            semester="אביב",
+            moed="א",
+            question_number=1,
+            is_american=True,
+            question_topics=["הצפנה"],
+            question_file=self._mock_pdf_file(),
+            answer_file=None
+        )
+
+        response = self.negev.update_course_topics(course_id, [], ["הצפנה"])
+        parsed = json.loads(response)
+        self.assertEqual(parsed["status"], "error")
+        self.assertIn("משוייך לשאלה", parsed["message"])
 
     def test_get_all_courses(self):
         """Verify that get_all_courses returns all courses present in the system."""
@@ -236,6 +317,17 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         course_ids = self._extract_course_ids(all_courses)
         self.assertIn(course_id1, course_ids)
         self.assertIn(course_id2, course_ids)
+
+    def test_get_all_courses_does_not_include_unknown_course(self):
+        """Verify that get_all_courses does not include courses that were not created."""
+        user = self._complete_user_registration("failcourse@bgu.ac.il", "Pass1!", "No", "Course")
+        course_id = "777.7.7777"  # לא נפתח בפועל
+
+        # לא פותחים שום קורס
+        all_courses = self.negev.get_all_courses()
+        course_ids = self._extract_course_ids(all_courses)
+
+        self.assertNotIn(course_id, course_ids, "Course that was not opened should not appear.")
 
     def test_get_course(self):
         """Verify that get_course returns the correct course DTO for a given course ID."""
@@ -257,6 +349,12 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
 
         self.assertEqual(retrieved_id, course_id, "Returned course ID does not match requested ID.")
 
+    def test_get_course_not_found(self):
+        """Verify that get_course raises CourseIsNotExist when the course does not exist."""
+        fake_course_id = "365.9.9999"
+        with self.assertRaises(CourseIsNotExist):
+            self.negev.get_course(fake_course_id)
+
     def test_get_courses_by_name(self):
         """Verify that get_courses_by_name returns courses matching a given substring."""
         user = self._complete_user_registration("coursebyname@post.bgu.ac.il", "Pass1!", "קורס", "לפישם")
@@ -269,13 +367,88 @@ class TestNegevNerdsCourseManagement(unittest.TestCase):
         self.assertIn(course_id1, course_ids)
         self.assertIn(course_id2, course_ids)
 
+    def test_get_courses_by_name_no_match(self):
+        """Verify that get_courses_by_name returns an empty list when no courses match the given name."""
+        user = self._complete_user_registration("nomatch@post.bgu.ac.il", "Pass1!", "לא", "מותאם")
+        course_id = "404.4.4040"
+        self._open_course(user, course_id, "תורת הקומפילציה")
+
+        results = self.negev.get_courses_by_name("היסטוריה של יוון")
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 0, "Expected no matching courses to be returned.")
+
     def test_is_course_exists(self):
         """Verify that isCourseExists returns correct boolean for existing and non-existing courses."""
         user = self._complete_user_registration("exists@bgu.ac.il", "Pass1!", "Course", "Exists")
         course_id = "101.3.1010"
         self._open_course(user, course_id, "מבוא לפרויקטים")
         self.assertTrue(self.negev.isCourseExists(course_id), "Expected course to exist but it does not.")
-        self.assertFalse(self.negev.isCourseExists("999.9.9999"), "Expected non-existing course to return False.")
+        self.assertFalse(self.negev.isCourseExists("565.9.9999"), "Expected non-existing course to return False.")
+
+    @patch('Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit')
+    def test_remove_course_manager_success(self, mock_emit):
+        # רישום שני משתמשים
+        user1 = self._complete_user_registration("nominator@bgu.ac.il", "Pass1!", "מציע", "מנהל")
+        user2 = self._complete_user_registration("target@bgu.ac.il", "Pass1!", "מנהל", "להסרה")
+        course_id = "123.4.5678"
+        self._open_course(user1, course_id, "קורס טסט")
+
+        # שליחת בקשת מינוי למנהל קורס
+        appoint_response = self.negev.appoint_course_manager(user2.email, user1.user_id, course_id)
+        appoint_data = json.loads(appoint_response)
+        self.assertEqual(appoint_data["status"], "success", f"Appoint failed: {appoint_data}")
+
+        # שליפת ההתראה שנשלחה למועמד
+        notifications = self.negev.get_unapproved_notification_list(user2.user_id)
+        notif_data = json.loads(notifications)
+        notif_id = notif_data["notifications"][0]["notification_id"]
+
+        # אישור המינוי
+        approve_response = self.negev.approve_course_manager_appoint(notif_id, user2.user_id)
+        approve_data = json.loads(approve_response)
+        self.assertEqual(approve_data["status"], "success", f"Approval failed: {approve_data}")
+
+        # הסרה של המנהל החדש
+        response = self.negev.remove_course_manager(user2.email, user1.user_id, course_id)
+        data = json.loads(response)
+
+        self.assertEqual(data["status"], "success")
+        self.assertIn("removal request", data["message"])
+
+    def test_remove_course_manager_invalid_email(self):
+        user1 = self._complete_user_registration("nominator2@bgu.ac.il", "Pass1!", "בודק", "אימייל")
+        response = self.negev.remove_course_manager("invalid_email@", user1.user_id, "999.9.9999")
+        data = json.loads(response)
+        self.assertEqual(data["status"], "error")
+        self.assertIn("אימייל חוקי", data["message"])
+
+    def test_remove_course_manager_user_not_found(self):
+        user1 = self._complete_user_registration("nominator3@bgu.ac.il", "Pass1!", "בודק", "חיפוש")
+        response = self.negev.remove_course_manager("ghost@bgu.ac.il", user1.user_id, "999.9.9999")
+        data = json.loads(response)
+        self.assertEqual(data["status"], "error")
+        self.assertIn("לא קיים במערכת", data["message"])
+
+    def test_remove_course_manager_not_a_manager(self):
+        user1 = self._complete_user_registration("nominator4@bgu.ac.il", "Pass1!", "בודק", "הסרה")
+        user2 = self._complete_user_registration("regular@bgu.ac.il", "Pass1!", "סתם", "משתמש")
+        course_id = "444.4.4444"
+        self._open_course(user1, course_id, "קורס לבדיקה")
+
+        response = self.negev.remove_course_manager(user2.email, user1.user_id, course_id)
+        data = json.loads(response)
+        self.assertEqual(data["status"], "error")
+        self.assertIn("אינו מנהל קורס", data["message"])
+
+    def test_remove_only_course_manager(self):
+        user1 = self._complete_user_registration("lonely@bgu.ac.il", "Pass1!", "בודד", "מנהל")
+        course_id = "555.5.5555"
+        self._open_course(user1, course_id, "קורס עם מנהל אחד בלבד")
+
+        response = self.negev.remove_course_manager(user1.email, user1.user_id, course_id)
+        data = json.loads(response)
+        self.assertEqual(data["status"], "error")
+        self.assertIn("מנהל הקורס היחיד", data["message"])
 
 
 if __name__ == '__main__':
