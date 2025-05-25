@@ -2773,7 +2773,7 @@ def get_course_managers():
         return jsonify(success=False, message="Server error"), 500
 
 
-@course_controller.route('/api/course/get_course_managers', methods=['GET'])
+@course_controller.route('/api/course/get_system_managers', methods=['GET'])
 @cross_origin()
 @jwt_required()
 def get_system_managers():
