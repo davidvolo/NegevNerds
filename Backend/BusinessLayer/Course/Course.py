@@ -1,5 +1,7 @@
 import threading
 
+import numpy as np
+
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -9,7 +11,9 @@ from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseMana
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
-
+from sentence_transformers import SentenceTransformer, util
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 class Course:
     def __init__(self, course_id, name, course_topics=None):
@@ -541,6 +545,7 @@ class Course:
             raise QuestionNotFound
         question.edit_comment_text(comment_id, new_text)
 
+
     def remove_reaction(self, year, semester, moed, question_number, comment_id, reaction_id):
         """
         Add a reaction to specific question.
@@ -559,10 +564,48 @@ class Course:
         return folder_name, exams
 
     def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
+        if question_topics is None:
+            question_topics = self.find_question_topics_by_text(question_text)
+
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
-    
+
+    def find_question_topics_by_text(self,question_text):
+
+        # טען מודל תומך בעברית
+        model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+
+        # הפקת embedding
+        question_embedding = model.encode(question_text, convert_to_tensor=True)
+        topics_embeddings = model.encode(self.course_topics, convert_to_tensor=True)
+
+        # חישוב דמיון קוסיני
+        cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
+        scores_array = cosine_scores.cpu().numpy()
+
+        MIN_ABSOLUTE_THRESHOLD = 0.2
+        HIGH_ALL_RELEVANT_THRESHOLD = 0.7
+        GAP_FROM_MAX_SCORE = 0.25
+
+
+        if np.max(scores_array) < MIN_ABSOLUTE_THRESHOLD:
+            return []
+
+        if np.min(scores_array) >= HIGH_ALL_RELEVANT_THRESHOLD:
+            return list(self.course_topics)
+
+        dynamic_threshold = np.max(scores_array) - GAP_FROM_MAX_SCORE
+        final_threshold = max(dynamic_threshold, MIN_ABSOLUTE_THRESHOLD)
+
+        results = []
+        for topic, score in zip(self.course_topics, scores_array):
+            if score >= final_threshold:
+                results.append(topic)
+
+        return results
+
+
     def edit_question_topic(self, year, semester, moed, question_number, topics):
         question_topic_repo = CourseTopicsRepository()
         for topic in topics:
