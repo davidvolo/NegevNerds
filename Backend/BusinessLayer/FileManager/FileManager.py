@@ -157,7 +157,6 @@ class FileManager:
         except Exception as e:
             raise Exception(f"Failed to save exam file: {str(e)}")
 
-
     def save_exam_solution_file(self, course_id, year, semester, moed, pdf_file):
         """Saves the exam file in the course's year folder."""
         try:

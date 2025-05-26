@@ -3,8 +3,6 @@ from Backend.BusinessLayer.Analyzer.InformationRetrival import *
 from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 
 
-
-
 class AnalyzerFacade:
     _instance = None  # Class-level attribute to hold the single instance
 

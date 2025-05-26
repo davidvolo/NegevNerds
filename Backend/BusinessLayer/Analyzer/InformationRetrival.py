@@ -13,8 +13,6 @@ from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from elasticsearch import Elasticsearch
 
-
-
 # Load environment variables from .env file
 load_dotenv()
 

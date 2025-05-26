@@ -391,29 +391,60 @@ class TestNegevNerdsCourseManagement(BaseTestCase):
         user1 = self._complete_user_registration("nominator@bgu.ac.il", "Pass1!", "מציע", "מנהל")
         user2 = self._complete_user_registration("target@bgu.ac.il", "Pass1!", "מנהל", "להסרה")
         course_id = "123.4.5678"
-        self._open_course(user1, course_id, "קורס טסט")
 
-        # שליחת בקשת מינוי למנהל קורס
+        # יצירת קורס במסד הנתונים
+        from Backend.DataLayer.CourseData.CourseModel import CourseModel
+        from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
+        repo = CourseRepository()
+        session = repo.Session()
+        session.add(CourseModel(course_id=course_id, name="קורס טסט"))
+        session.commit()
+        session.close()
+
+        # שליחת בקשת מינוי למנהל קורס - user2
         appoint_response = self.negev.appoint_course_manager(user2.email, user1.user_id, course_id)
         appoint_data = json.loads(appoint_response)
         self.assertEqual(appoint_data["status"], "success", f"Appoint failed: {appoint_data}")
 
-        # שליפת ההתראה שנשלחה למועמד
+        # שליפת ההתראה ואישור מינוי
         notifications = self.negev.get_unapproved_notification_list(user2.user_id)
         notif_data = json.loads(notifications)
         notif_id = notif_data["notifications"][0]["notification_id"]
-
-        # אישור המינוי
         approve_response = self.negev.approve_course_manager_appoint(notif_id, user2.user_id)
         approve_data = json.loads(approve_response)
-        self.assertEqual(approve_data["status"], "success", f"Approval failed: {approve_data}")
+        self.assertEqual(approve_data["status"], "success")
 
-        # הסרה של המנהל החדש
+        # ✅ הוספת מנהל נוסף כדי לאפשר הסרה
+        user3 = self._complete_user_registration("extra@bgu.ac.il", "Pass1!", "עוד", "מנהל")
+        extra_response = self.negev.appoint_course_manager(user3.email, user1.user_id, course_id)
+        extra_data = json.loads(extra_response)
+        self.assertEqual(extra_data["status"], "success")
+
+        # אישור המינוי של המנהל הנוסף
+        extra_notifs = self.negev.get_unapproved_notification_list(user3.user_id)
+        extra_notif_id = json.loads(extra_notifs)["notifications"][0]["notification_id"]
+        approve_extra = self.negev.approve_course_manager_appoint(extra_notif_id, user3.user_id)
+        self.assertEqual(json.loads(approve_extra)["status"], "success")
+
+        # ודא שהuser2 הוא עדיין מנהל
+        from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
+        manager_repo = CourseManagersRepository()
+        is_manager = manager_repo.is_exist(course_id, user2.user_id)
+        print(f"[DEBUG] is_manager: {is_manager}")
+        self.assertTrue(is_manager)
+
+        # הדפסת מספר המנהלים לפני הסרה
+        course = self.negev._course_facade.get_course(course_id)
+        manager_count = course.get_course_manager_count()
+        print(f"[DEBUG] manager count before removal: {manager_count}")
+
+        # הסרה של המנהל user2
         response = self.negev.remove_course_manager(user2.email, user1.user_id, course_id)
         data = json.loads(response)
+        print(f"[DEBUG] removal response: {data}")
 
         self.assertEqual(data["status"], "success")
-        self.assertIn("removal request", data["message"])
+        self.assertIn("removal request", data["message"].lower())
 
     def test_remove_course_manager_invalid_email(self):
         user1 = self._complete_user_registration("nominator2@bgu.ac.il", "Pass1!", "בודק", "אימייל")

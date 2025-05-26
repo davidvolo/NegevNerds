@@ -129,7 +129,7 @@ class TestCourse(TestCase):
         self.assertEqual(self.course.syllabus, "Syllabus Content")
 
     def test_add_course_topic_success(self):
-        self.course.course_topics = []
+        self.course.course_topics = set()
         self.course.add_course_topic("new_topic")
         self.assertIn("new_topic", self.course.course_topics)
 
@@ -216,28 +216,33 @@ class TestCourse(TestCase):
 
     def test_add_comment(self):
         # Create an exam and add a comment
-        result = self.course.add_comment(year = 2025, semester="אביב", moed="א", question_number=1, writer_name="John Doe",writer_id= "writer1", prev_id="something", comment_text="Nice question")
+        result = self.course.add_comment(
+            year=2025,
+            semester="אביב",
+            moed="א",
+            question_number=1,
+            writer_name="John Doe",
+            writer_id="writer1",
+            prev_id="0",
+            comment_text="Nice question",
+            comment_id="c42",
+            link_to_media=""
+        )
         self.assertIn("writer1", result)
 
-
-
     def test_get_answer_path(self):
-
         # Test getting the answer path
         result = self.course.get_answer_path(2025,"אביב", "א", 1)
         self.assertEqual(result, "a path")
 
     def test_check_valid_question_exam_none(self):
         # Add a dummy exam
-
         # Check question availability when exam doesn't exist
         result, exam_id = self.course.checkQuestionAvailability(2025, Semester.SPRING, Moed.A, 1)
         self.assertFalse(result)
 
-
     def test_edit_exam_year(self):
         # Add a dummy exam
-
         # Edit the exam year
         self.assertEqual(len(self.course.get_exams_by_year(2025)), 2)
         self.course.edit_exam_year(2025, Semester.SPRING, Moed.A, 2030)
@@ -260,23 +265,18 @@ class TestCourse(TestCase):
 
     def test_get_question_id(self):
         # Create a real exam
-
-
         result = self.course.get_question_id(2025, "אביב", "א", 1)
         self.assertTrue("question" in result)
 
     def test_get_question_id_and_path(self):
         # Create a real exam
-
-
         result , id = self.course.get_question_id_and_path(2025, "אביב", "א", 1)
         self.assertEqual(result, "a path")
         self.assertTrue("question" in  id )
 
-
     def test_delete_comment(self):
         # Create a real exam and question
-        self.question.add_comment("writer", "writer_id", "prev", "comment_des", False,False)
+        self.question.add_comment("c1", "writer", "writer_id", "prev", "comment_des", False, False, "")
         self.assertEqual(len(self.question.comments), 1)
         self.course.delete_comment(2025, "אביב","א", 1, self.question.comments[0].comment_id)
         self.assertEqual(len(self.question.comments), 1)
@@ -286,7 +286,7 @@ class TestCourse(TestCase):
     def test_edit_comment_text(self):
         # Create a real exam and question
 
-        self.question.add_comment("writer", "writer_id", "prev", "comment_des", False,False)
+        self.question.add_comment("c1", "writer", "writer_id", "prev", "comment_des", False, False, "")
         comment_id = self.question.comments[0].comment_id
         self.course.edit_comment_text(2025, "אביב", "א", 1, comment_id, "Updated text")
         self.assertEqual(self.question.comments[0].edited, True)
@@ -306,7 +306,7 @@ class TestCourse(TestCase):
     def test_edit_question_topic(self):
         # Create a real exam and edit the question topic
 
-
+        self.course.add_course_topic("new_topic")
         result = self.course.edit_question_topic(2025, "אביב", "א", 1, ["new_topic"])
         self.assertEqual(result, True)
 

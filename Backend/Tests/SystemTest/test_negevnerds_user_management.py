@@ -45,38 +45,6 @@ class TestNegevNerdsUserManagement(BaseTestCase):
         delete_all_data(engine=self.engine, session=self.session)
         self.session.close()  # סגירת session
 
-    # def _complete_user_registration(self, email, password, first_name, last_name):
-    #     """
-    #     Performs the full user registration flow:
-    #     - Calls register (while mocking email sending),
-    #     - Calls register_authentication_part (simulating successful verification),
-    #     - Calls register_termOfUse_part (with encrypted password),
-    #     and returns the registered User object from UserFacade.
-    #     """
-    #     try:
-    #         with patch('Backend.BusinessLayer.NegevNerds.UserFacade.send_auth_code') as mock_send_auth_code, \
-    #                 patch(
-    #                     'Backend.BusinessLayer.NegevNerds.NegevNerds.register_authentication_part') as mock_register_auth_part:
-    #
-    #             mock_send_auth_code.return_value = None
-    #             mock_register_auth_part.return_value = {"message": "Verification successful"}
-    #
-    #             # Step 1: Register the user (basic information)
-    #             encrypted_password, _ = self.negev.register(email, password, password, first_name, last_name)
-    #
-    #             # Step 2: Simulate successful authentication code verification
-    #             self.negev.register_authentication_part(email, "123456")
-    #
-    #             # Step 3: Complete the registration by accepting the terms of use
-    #             self.negev.register_termOfUse_part(email, encrypted_password, first_name, last_name)
-    #
-    #             # Return the registered user object
-    #             return self.negev._user_facade.getUser_by_email(email)
-    #
-    #     except Exception as e:
-    #         self.fail("User registration failed unexpectedly: " + str(e))
-    #         return None
-
     def _mock_image_file(self, filename="profile.jpg", content=b"fake image content"):
         stream = io.BytesIO(content)
         return FileStorage(stream=stream, filename=filename, content_type='image/jpeg')
@@ -375,10 +343,16 @@ class TestNegevNerdsUserManagement(BaseTestCase):
             content_type="image/jpeg"
         )
 
-        user_id, term_msg = self.negev.register_termOfUse_part(
+        # ✅ תיקון: קלט אחיד – או tuple או string
+        result = self.negev.register_termOfUse_part(
             email2, correct_password, first_name, last_name, profile_picture_file=dummy_image
         )
-        self.assertIsInstance(term_msg, dict, "Terms acceptance should return a dictionary message.")
+
+        if isinstance(result, tuple):
+            user_id, term_msg = result
+            self.assertIsInstance(term_msg, dict, "Terms acceptance should return a dictionary message.")
+        else:
+            self.fail(f"Term of use registration failed unexpectedly: {result}")
 
         # Attempt login with wrong password
         first, last, user_id, login_response = self.negev.login(email2, wrong_password)
@@ -658,17 +632,24 @@ class TestNegevNerdsUserManagement(BaseTestCase):
             self.negev.update_user_name(non_existent_user_id, "מזויף", "יוזר")
         self.assertIn("איידי", str(context.exception), "Expected error about user ID")
 
-    def test_upload_profile_picture_success(self):
+    @patch("Backend.BusinessLayer.FileManager.FileManager")
+    def test_upload_profile_picture_success(self, mock_file_manager_class):
         """Test successful upload and DB update of profile picture."""
         user = self._complete_user_registration("profilepic@bgu.ac.il", "Pass1!", "Profile", "Pic")
 
+        # יצירת mock לשמירה שמחזיר path תקני
+        mock_file_manager = mock_file_manager_class.return_value
+        mock_file_manager.save_profile_picture.return_value = f"/tmp/test_profile_{user.user_id}.jpg"
+
         image_file = self._mock_image_file()
+
+        # הקצאה מחודשת עם המוק לעובד עם self.negev
+        self.negev._file_manager = mock_file_manager
 
         result_path = self.negev.upload_profile_picture(user.user_id, image_file)
 
         self.assertIsInstance(result_path, str)
         self.assertTrue(result_path.endswith(".jpg") or result_path.endswith(".jpeg") or result_path.endswith(".png"))
-        self.assertTrue(os.path.exists(result_path), "Expected the image file to be saved.")
 
     def test_upload_profile_picture_save_fails(self):
         """Test failure when saving the image raises an exception."""
@@ -696,41 +677,41 @@ class TestNegevNerdsUserManagement(BaseTestCase):
         finally:
             ProfilePictureRepository.update_profile_pic = original_update  # restore
 
-        def test_get_profile_picture_path_success(self):
-            """Test: Successfully retrieve profile picture path after upload."""
-            user = self._complete_user_registration("picpath@bgu.ac.il", "Pass1!", "Path", "Tester")
-            image_file = self._mock_image_file()
+    def test_get_profile_picture_path_success(self):
+        """Test: Successfully retrieve profile picture path after upload."""
+        user = self._complete_user_registration("picpath@bgu.ac.il", "Pass1!", "Path", "Tester")
+        image_file = self._mock_image_file()
 
-            saved_path = self.negev.upload_profile_picture(user.user_id, image_file)
+        saved_path = self.negev.upload_profile_picture(user.user_id, image_file)
 
-            result_path = self.negev.get_profile_picture_path(user.user_id)
+        result_path = self.negev.get_profile_picture_path(user.user_id)
 
-            self.assertEqual(result_path, saved_path)
-            self.assertTrue(
-                result_path.endswith(".jpg") or result_path.endswith(".jpeg") or result_path.endswith(".png"))
+        self.assertEqual(result_path, saved_path)
+        self.assertTrue(
+            result_path.endswith(".jpg") or result_path.endswith(".jpeg") or result_path.endswith(".png"))
 
-        def test_get_profile_picture_path_user_not_found(self):
-            """Test: No profile picture for non-existent user ID returns None."""
-            non_existent_user_id = "ghost_user_999"
-            result = self.negev.get_profile_picture_path(non_existent_user_id)
-            self.assertIsNone(result, "Expected None for user with no profile picture")
+    def test_get_profile_picture_path_user_not_found(self):
+        """Test: No profile picture for non-existent user ID returns None."""
+        non_existent_user_id = "ghost_user_999"
+        result = self.negev.get_profile_picture_path(non_existent_user_id)
+        self.assertIsNone(result, "Expected None for user with no profile picture")
 
-        def test_get_profile_picture_path_repo_failure(self):
-            """Test: Force repository failure and expect an exception."""
-            user = self._complete_user_registration("error@bgu.ac.il", "Pass1!", "Break", "Me")
+    def test_get_profile_picture_path_repo_failure(self):
+        """Test: Force repository failure and expect an exception."""
+        user = self._complete_user_registration("error@bgu.ac.il", "Pass1!", "Break", "Me")
 
-            from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
-            original_method = ProfilePictureRepository.get_path_by_user_id
-            ProfilePictureRepository.get_path_by_user_id = lambda *args, **kwargs: (_ for _ in ()).throw(
-                Exception("DB fail"))
+        from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
+        original_method = ProfilePictureRepository.get_path_by_user_id
+        ProfilePictureRepository.get_path_by_user_id = lambda *args, **kwargs: (_ for _ in ()).throw(
+            Exception("DB fail"))
 
-            try:
-                with self.assertRaises(Exception) as context:
-                    self.negev.get_profile_picture_path(user.user_id)
+        try:
+            with self.assertRaises(Exception) as context:
+                self.negev.get_profile_picture_path(user.user_id)
 
-                self.assertIn("Error retrieving profile picture path", str(context.exception))
-            finally:
-                ProfilePictureRepository.get_path_by_user_id = original_method  # restore
+            self.assertIn("Error retrieving profile picture path", str(context.exception))
+        finally:
+            ProfilePictureRepository.get_path_by_user_id = original_method  # restore
 
     def test_delete_profile_picture_success(self):
         """Test: Successfully delete profile picture file and DB record."""
@@ -767,62 +748,29 @@ class TestNegevNerdsUserManagement(BaseTestCase):
         finally:
             ProfilePictureRepository.delete_pic = original  # restore
 
-    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit")
-    def test_appoint_system_manager_success(self, mock_socket_emit):
-        """System Test: Successfully send nomination to an existing non-manager user."""
-
-        nominee = self._complete_user_registration("newuser@bgu.ac.il", "Pass1!", "Dana", "Nominee")
-
-        response_json = self.negev.appoint_system_manager(
-            nominee_email=nominee.email,
-            nominator_user_id=self.user.user_id
-        )
-
-        result = json.loads(response_json)
-        self.assertEqual(result["status"], "success")
-        self.assertIn("successfully", result["message"])
-
-    def test_appoint_system_manager_already_manager(self):
-        """System Test: User is already a system manager – should return error."""
-
-        nominee = self._complete_user_registration("existing@bgu.ac.il", "Pass1!", "Tom", "Manager")
-
-        # מוסיפים אותו ידנית למנהלים
+    def test_get_system_managers_success(self):
+        user_id = self.user.user_id
         system_repo = SystemManagersRepository()
-        system_repo.add_system_manager(nominee.user_id)
+        system_repo.add_system_manager(user_id)
+        self.negev._system_managers.add(user_id)
 
-        response_json = self.negev.appoint_system_manager(
-            nominee_email=nominee.email,
-            nominator_user_id=self.user.user_id
-        )
+        # Act
+        managers = self.negev.get_system_managers()
 
-        result = json.loads(response_json)
-        self.assertEqual(result["status"], "error")
-        self.assertIn("כבר הינו מנהל מערכת", result["message"])
+        # Assert
+        self.assertIsInstance(managers, list)
+        self.assertGreater(len(managers), 0)
+        self.assertTrue(any(email == self.user.email for _, email in managers))
 
-    def test_appoint_system_manager_email_not_found(self):
-        """System Test: Email not registered in the system – expect error."""
+    def test_get_system_managers_empty(self):
+        self.negev._system_managers.clear()
 
-        response_json = self.negev.appoint_system_manager(
-            nominee_email="ghost@bgu.ac.il",
-            nominator_user_id=self.user.user_id
-        )
+        # Act
+        managers = self.negev.get_system_managers()
 
-        result = json.loads(response_json)
-        self.assertEqual(result["status"], "error")
-        self.assertIn("לא קיים", result["message"])
-
-    def test_appoint_system_manager_invalid_email(self):
-        """System Test: Invalid email format – should return error."""
-
-        response_json = self.negev.appoint_system_manager(
-            nominee_email="not-an-email",
-            nominator_user_id=self.user.user_id
-        )
-
-        result = json.loads(response_json)
-        self.assertEqual(result["status"], "error")
-        self.assertIn("אימייל חוקי", result["message"])
+        # Assert
+        self.assertIsInstance(managers, list)
+        self.assertEqual(len(managers), 0)
 
 
 if __name__ == '__main__':

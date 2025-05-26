@@ -131,7 +131,7 @@ class Question:
         with self.comments_lock:
             comment = Comment.create(comment_id=comment_id,
                                      writer_name=writer_name,
-                                     writer_id = writer_id,
+                                     writer_id=writer_id,
                                      date=datetime.now(),
                                      prev_id=prev_id,
                                      comment_text=comment_text,

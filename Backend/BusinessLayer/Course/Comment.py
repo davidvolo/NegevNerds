@@ -28,7 +28,8 @@ class Comment:
         self.reactions_lock = threading.Lock()
 
     @classmethod
-    def create(cls, comment_id, writer_name,writer_id, date, prev_id, comment_text, deleted, edited, link_to_media, question_id):
+    def create(cls, comment_id, writer_name, writer_id, date, prev_id, comment_text, deleted, edited, link_to_media,
+               question_id):
         """
         Class method to create a new comment and save to database
         Returns:
@@ -38,7 +39,7 @@ class Comment:
         comment = cls(
             comment_id=comment_id,
             writer_name=writer_name,
-            writer_id = writer_id,
+            writer_id=writer_id,
             date=date,
             prev_id=prev_id,
             comment_text=comment_text,
