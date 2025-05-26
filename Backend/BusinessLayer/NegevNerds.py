@@ -39,59 +39,80 @@ import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
 class NegevNerds:
 
     _instance = None
     _lock = threading.Lock()
-
+    _initialized = False # Class-level flag for initialization status
 
     def __new__(cls, mkdir):
         if cls._instance is None:
-            with cls._lock:  # Ensure thread-safe instance creation
-                if cls._instance is None:  # Double-checked locking
+            with cls._lock:
+                # Double-checked locking to ensure only one thread creates the instance
+                if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
-                    print(f"Resolved base directory for NegevNerds: {resolved_dir}")
-                    #Initialize critical attributes in __new__
-                    # cls._instance._user_facade = UserFacade()
-                    # cls._instance._course_facade = CourseFacade()
-                    # cls._instance._pdfFacade = AnalyzerFacade()
-                    # cls._instance._file_manager = FileManager(resolved_dir)
-                    # cls._instance._system_managers = []
-                    # cls._instance._initialized = True
-                    # cls._instance._notification_facade = NotificationFacade()
         return cls._instance
 
     def __init__(self, mkdir):
-        # Prevent reinitialization
-        if not hasattr(self, '_initialized'):
-            resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
+        # Only initialize if it hasn't been initialized before for this instance
+        if not self._initialized:
+            with self._lock: # Optional: Add lock here if init operations are sensitive to race conditions on first run
+                if not self._initialized: # Double-check after acquiring lock
+                    print("Initializing NegevNerds instance attributes...")
+                    # Resolve directory path once
+                    resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
+                    print(f"Resolved base directory for NegevNerds: {resolved_dir}")
 
-            self._user_facade = UserFacade()
-            self._course_facade = CourseFacade()
-            self._pdfFacade = AnalyzerFacade()
-            self._file_manager = FileManager(resolved_dir)
-            # self._system_managers = []
-            self._initialized = True
-            self._notification_facade = NotificationFacade()
-            self.open_course_lock = threading.Lock()
-            self.add_question_lock = threading.Lock()
-            self.upload_exam_lock = threading.Lock()
-            self.upload_question_solution_lock = threading.Lock()
-            self._system_managers = set()
-            SystemManagers_repo =SystemManagersRepository()
-            print("initilaze system managers")
-            self._system_managers = SystemManagers_repo.get_all_system_manager_ids()
+                    # Initialize all facades and managers
+                    self._user_facade = UserFacade()
+                    self._course_facade = CourseFacade()
+                    self._pdfFacade = AnalyzerFacade()
+                    self._file_manager = FileManager(resolved_dir)
+                    self._notification_facade = NotificationFacade()
+
+                    # Initialize locks
+                    self.open_course_lock = threading.Lock()
+                    self.add_question_lock = threading.Lock()
+                    self.upload_exam_lock = threading.Lock()
+                    self.upload_question_solution_lock = threading.Lock()
+
+                    # Initialize system managers
+                    system_managers_repo = SystemManagersRepository()
+                    print("Fetching system managers...")
+                    self._system_managers = system_managers_repo.get_all_system_manager_ids()
+                    print(f"Initialized system managers: {self._system_managers}")
+
+                    # Mark as initialized
+                    self._initialized = True
+                    print("NegevNerds instance initialization complete.")
+        else:
+            print("NegevNerds instance already initialized, skipping re-initialization.")
+
 
     # Getter methods for accessing the facades and file manager
     @property
     def userFacade(self):
         return self._user_facade
 
+    @userFacade.setter
+    def userFacade(self, value):
+        """Sets the UserFacade instance."""
+        # You might want to add type checking or validation here
+        if not isinstance(value, UserFacade):
+             raise TypeError("userFacade must be an instance of UserFacade")
+        self._user_facade = value
+
     @property
     def courseFacade(self):
         return self._course_facade
+
+    @courseFacade.setter
+    def courseFacade(self, value):
+        """Sets the CourseFacade instance."""
+        # You might want to add type checking or validation here
+        if not isinstance(value, CourseFacade):
+            raise TypeError("courseFacade must be an instance of CourseFacade")
+        self._course_facade = value
 
     @property
     def fileManager(self):

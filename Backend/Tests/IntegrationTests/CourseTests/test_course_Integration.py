@@ -228,7 +228,7 @@ class TestCourse(TestCase):
             comment_id="c42",
             link_to_media=""
         )
-        self.assertIn("writer1", result)
+        self.assertEqual("0", result)
 
     def test_get_answer_path(self):
         # Test getting the answer path
@@ -276,7 +276,7 @@ class TestCourse(TestCase):
 
     def test_delete_comment(self):
         # Create a real exam and question
-        self.question.add_comment("c1", "writer", "writer_id", "prev", "comment_des", False, False, "")
+        self.question.add_comment("c1", "writer", "writer_id", "0", "comment_des", False, False, "")
         self.assertEqual(len(self.question.comments), 1)
         self.course.delete_comment(2025, "אביב","א", 1, self.question.comments[0].comment_id)
         self.assertEqual(len(self.question.comments), 1)
@@ -286,7 +286,7 @@ class TestCourse(TestCase):
     def test_edit_comment_text(self):
         # Create a real exam and question
 
-        self.question.add_comment("c1", "writer", "writer_id", "prev", "comment_des", False, False, "")
+        self.question.add_comment("c1", "writer", "writer_id", "0", "comment_des", False, False, "")
         comment_id = self.question.comments[0].comment_id
         self.course.edit_comment_text(2025, "אביב", "א", 1, comment_id, "Updated text")
         self.assertEqual(self.question.comments[0].edited, True)

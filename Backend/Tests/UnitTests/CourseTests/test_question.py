@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 from datetime import datetime
 
 from Backend.BusinessLayer.Course.enums import Moed, Semester
@@ -140,7 +140,7 @@ class TestQuestion(unittest.TestCase):
         result = self.question.add_comment(
             writer_name="John Doe",
             writer_id="writer1",
-            prev_id=None,
+            prev_id="0",
             comment_text="Nice question",
             deleted=False,
             edited=False,
@@ -152,18 +152,20 @@ class TestQuestion(unittest.TestCase):
         self.assertIn(dummy_comment, self.question.comments)
 
         # Assert: לוודא שהתוצאה היא set עם ה־writer_id של התגובה
-        self.assertEqual(result, {"writer1"})
+        self.assertEqual(result, '0')
 
         # Assert: לוודא שה־create נקרא עם כל הערכים הנכונים
         mock_comment_create.assert_called_once_with(
             writer_name="John Doe",
             writer_id="writer1",
-            prev_id=None,
+            prev_id="0",
             comment_text="Nice question",
             deleted=False,
             edited=False,
             comment_id="cmt_001",
-            link_to_media="media/link.jpg"
+            link_to_media="media/link.jpg",
+            date=ANY,
+            question_id="q1"
         )
 
     def test_add_reaction_success(self):

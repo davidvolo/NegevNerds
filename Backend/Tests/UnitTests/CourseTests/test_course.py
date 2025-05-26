@@ -10,6 +10,14 @@ from Backend.BusinessLayer.Util.Exceptions import (
     UserIsNotRegisterToCourse
 )
 from Backend.BusinessLayer.Course.Course import Course
+from Backend.DataLayer.UserData.UserRepository import UserRepository
+from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
+from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
+from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
+from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
+from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository import NotificationsSettingRepository
+
+
 
 
 class TestCourse(unittest.TestCase):
@@ -356,9 +364,9 @@ class TestCourse(unittest.TestCase):
         dummy_question.add_comment.return_value = {"writer1"}
         dummy_exam.get_question.return_value = dummy_question
         self.course.get_exam = MagicMock(return_value=dummy_exam)
-        result = self.course.add_comment(2025, "SPRING", "A", 1, "John Doe", "comment_id", "writer1", "id_writer1", None
+        result = self.course.add_comment(2025, "SPRING", "A", 1, "comment_id", "John Doe" , "writer1", "0"
                                          ,"Nice question", "")
-        dummy_question.add_comment.assert_called_once_with("John Doe", "writer1", None, "Nice question", False, False)
+        dummy_question.add_comment.assert_called_once_with("comment_id", "John Doe", "writer1", "0", "Nice question", False, False, '')
         self.assertEqual(result, {"writer1"})
 
     def test_get_question_path(self):
@@ -444,11 +452,18 @@ class TestCourse(unittest.TestCase):
         dummy_exam.add_question.assert_called_once_with(1, True, ["topic1"], "q.pdf", "a.pdf", "question text")
         self.assertEqual(result, "q_id_new")
 
-    def test_edit_question_topic(self):
+    @patch("Backend.DataLayer.CourseTopics.CourseTopicsRepository.CourseTopicsRepository")
+    def test_edit_question_topic(self, mock_repo_cls):
+        mock_repo = MagicMock()
+        mock_repo.is_exist.return_value = True
+        mock_repo_cls.return_value = mock_repo
+
         dummy_exam = MagicMock()
         dummy_exam.edit_question_topic.return_value = "edited_topic"
         self.course.get_exam = MagicMock(return_value=dummy_exam)
+
         result = self.course.edit_question_topic(2025, "SPRING", "A", 1, ["new_topic"])
+
         dummy_exam.edit_question_topic.assert_called_once_with(1, ["new_topic"])
         self.assertEqual(result, "edited_topic")
 

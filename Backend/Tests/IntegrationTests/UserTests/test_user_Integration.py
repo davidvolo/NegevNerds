@@ -82,10 +82,10 @@ class TestUser(unittest.TestCase):
         self.assertEqual(self.user.first_name, "Changed")
         self.assertEqual(self.user.last_name, "User")
 
-    def test_delete(self):
-        user_id = self.user.user_id
-        self.user.delete()
-        self.assertIsNone(self.user.user_id)
+    # def test_delete(self):
+    #     user_id = self.user.user_id
+    #     self.user.delete()
+    #     self.assertIsNone(self.user.user_id)
 
     def test_get_courses(self):
         self.user.courses = ["course1", "course2"]

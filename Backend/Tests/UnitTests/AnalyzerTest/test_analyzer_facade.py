@@ -73,22 +73,17 @@ class TestAnalyzerFacade(unittest.TestCase):
         text = "free text search"
         course_id = "123.4.5678"
         expected_result = ["result1", "result2"]
-        self.facade.information_retrival.search_free_text_from_course.return_value = expected_result
+
+        # mock את השיטה הקיימת במידע הקיים (בדוק שם נכון)
+        self.facade.information_retrival.search_free_text = MagicMock(return_value=expected_result)
 
         result = self.facade.search_free_text_from_course(text, course_id)
 
-        self.facade.information_retrival.search_free_text_from_course.assert_called_once_with(text, course_id)
+        self.facade.information_retrival.search_free_text.assert_called_once_with(
+            query=text, course_id=course_id
+        )
         self.assertEqual(result, expected_result)
 
-    def test_search_free_text_from_course(self):
-        text = "free text"
-        course_id = "c1"
-        expected_result = ["resultA"]
-        self.facade.information_retrival.search_free_text_with_course.return_value = expected_result
-
-        result = self.facade.search_free_text_from_course(text, course_id)
-        self.facade.information_retrival.search_free_text_with_course.assert_called_once_with(text=text, course_id=course_id)
-        self.assertEqual(result, expected_result)
 
 
 if __name__ == "__main__":
