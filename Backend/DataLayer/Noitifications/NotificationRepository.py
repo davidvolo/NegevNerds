@@ -131,7 +131,7 @@ class NotificationRepository:
         try:
             notification_model = session.query(NotificationModel).filter_by(notification_id=notification_id).first()
             if not notification_model:
-                raise ValueError(f"No notification found with ID {notification_id}")
+                raise Exception(f"No notification found with ID {notification_id}")
 
             notification_model.IsApproved = True  # Update the status
             session.commit()
@@ -156,7 +156,7 @@ class NotificationRepository:
         try:
             notification_model = session.query(NotificationModel).filter_by(notification_id=notification_id).first()
             if not notification_model:
-                raise ValueError(f"No notification found with ID {notification_id}")
+                raise Exception(f"No notification found with ID {notification_id}")
             # _ = notification_model.sender_user_id
             notification_model.IsApproved = True  # Update the status
             session.commit()

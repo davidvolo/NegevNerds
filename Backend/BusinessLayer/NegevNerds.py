@@ -396,7 +396,9 @@ class NegevNerds:
 
             with self.upload_exam_lock:
                 if self._course_facade.check_exam_full_pdf(course_id=course_id, year=year , semester=semester, moed=moed):
-                    raise Exceptions.ExamAlreadyExists
+                    course = self._course_facade.get_course(course_id)
+                    exam_id = course.get_exam(year, semester, moed).id
+                    raise Exceptions.ExamAlreadyExists(exam_id)
                 if pdf_file.content_type != 'application/pdf':
                     raise ValueError("The uploaded file is not a valid PDF.")
                 exam_path = self._file_manager.save_exam_file(course_id, year, semester, moed, pdf_file)
@@ -419,18 +421,26 @@ class NegevNerds:
     def add_exam_solution(self, course_id, year, semester, moed, solution):
         try:
             with self.upload_exam_lock:
-                if self._course_facade.existFullExamSolution(course_id=course_id, year=year , semester=semester, moed=moed):
+                print(f"[DEBUG] Checking file type: {solution.content_type}")
+                print(f"[DEBUG] Semester={semester} ({type(semester)}), Moed={moed} ({type(moed)})")
+
+                if self._course_facade.existFullExamSolution(course_id, year, semester, moed):
                     raise Exceptions.ExamAlreadyExists
+
                 if solution.content_type != 'application/pdf':
                     raise ValueError("The uploaded file is not a valid PDF.")
+
                 solution_path = self._file_manager.save_exam_solution_file(course_id, year, semester, moed, solution)
-                print("new solution path", solution_path)
                 self.courseFacade.upload_full_exam_solution(course_id, year, semester, moed, solution_path)
-                return {"status": "success", "message": "File uploaded and saved successfully.", "link": solution_path}
+
+                return {
+                    "status": "success",
+                    "message": "File uploaded and saved successfully.",
+                    "link": solution_path
+                }
         except Exception as e:
             print(f"Error in NegevNerds.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
-
 
     def uploadSolution(self, course_id, year, semester, moed, question_number, solution_file):
         """add solution to question"""
@@ -438,7 +448,7 @@ class NegevNerds:
             try:
                 print("uploadSolution 1", flush=True)
                 if self._course_facade.checkExistSolution(course_id=course_id, year=year , semester=semester, moed=moed,question_number=question_number):
-                    raise Exceptions.CourseAlreadyExists
+                    raise Exceptions.CourseAlreadyExists(course_id)
                 answer_path = ""
                 print("uploadSolution 2", flush=True)
                 if solution_file is not None:
@@ -934,7 +944,6 @@ class NegevNerds:
             print(f"[FATAL] Could not fetch comments metadata: {e}")
             return []
 
-
         except Exception as e:
             raise Exception(f"Error in NegevNerds get_comments_metadata: {str(e)}")
 
@@ -978,18 +987,17 @@ class NegevNerds:
             print(f"Error occurred: {str(e)}")
             raise Exception(f"Failed to search questions: {e}")
 
-    def get_user_last_notifications(self, user_id, number_of_notifications):
-        """Search for questions based on the provided specifics for the course."""
-        # try:
-        pass
-        #TODO
-
-            # Fetch questions based on the specifics from the course
-        #notifications = self._notification_facade.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
-        #return notifications
-        # except Exception as e:
-        #     print(f"Error occurred: {str(e)}")
-        #     raise Exception(f"Failed to search questions: {e}")
+    # def get_user_last_notifications(self, user_id, number_of_notifications):
+    #     """Search for questions based on the provided specifics for the course."""
+    #     # try:
+    #     pass
+    #
+    #         Fetch questions based on the specifics from the course
+    #     notifications = self._notification_facade.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
+    #     return notifications
+    #     except Exception as e:
+    #         print(f"Error occurred: {str(e)}")
+    #         raise Exception(f"Failed to search questions: {e}")
 
     def handleDownloadAllExamsZip(self, course_id):
         """Download a zip file of the examsof the specific course."""
@@ -1041,7 +1049,7 @@ class NegevNerds:
         
     def delete_question_solution(self, course_id,year, semester, moed, question_number):
         solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
-        if solution_path is not None:
+        if solution_path is not "":
             self.fileManager.delete_file(solution_path)
             question_repo = QuestionRepository()
             question_repo.uploadSolution(question_id, "")
@@ -1143,44 +1151,55 @@ class NegevNerds:
                 "message": str(e)
             })
 
-    def edit_question_details(self,old_course_id, old_year, old_semester, old_moed, old_question_number,
-            new_course_id, new_year, new_semester, new_moed, new_question_number):
-        if self.courseFacade.valid_question_parameters(new_course_id,new_year, new_semester, new_moed, new_question_number):
-            res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id,new_year, new_semester, new_moed, new_question_number)
+    def edit_question_details(self, old_course_id, old_year, old_semester, old_moed, old_question_number, new_course_id,
+                              new_year, new_semester, new_moed, new_question_number):
+        try:
+            self.courseFacade.valid_question_parameters(new_course_id, new_year, new_semester, new_moed,
+                                                        new_question_number)
+
+            res, exam_id = self._course_facade.checkQuestionAvailability(new_course_id, new_year, new_semester,
+                                                                         new_moed, new_question_number)
             parsed_result = json.loads(res)
             if parsed_result.get("status") == "success":
-                question_old_path = self._course_facade.get_question_path(old_course_id, old_year, old_semester, old_moed, old_question_number)
-                question_new_path = self.fileManager.move_question_file(question_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
-                solution_old_path = self._course_facade.get_answer_path(old_course_id, old_year, old_semester, old_moed, old_question_number)
+                question_old_path = self._course_facade.get_question_path(old_course_id, old_year, old_semester,
+                                                                          old_moed, old_question_number)
+                question_new_path = self.fileManager.move_question_file(question_old_path, new_course_id, new_year,
+                                                                        new_semester, new_moed, new_question_number)
+                solution_old_path = self._course_facade.get_answer_path(old_course_id, old_year, old_semester, old_moed,
+                                                                        old_question_number)
                 solution_new_path = ""
                 if solution_old_path != "":
-                    solution_new_path = self.fileManager.move_solution_file(solution_old_path,  new_course_id, new_year, new_semester, new_moed, new_question_number)
-                res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
-                                                        new_year, new_semester, new_moed, new_question_number, exam_id,question_new_path, solution_new_path)
+                    solution_new_path = self.fileManager.move_solution_file(solution_old_path, new_course_id, new_year,
+                                                                            new_semester, new_moed, new_question_number)
+                res = self._course_facade.edit_question_details(old_course_id, old_year, old_semester, old_moed,
+                                                                old_question_number,
+                                                                new_year, new_semester, new_moed, new_question_number,
+                                                                exam_id, question_new_path, solution_new_path)
                 if res:
                     same_exams = self.checkSameExams(old_course_id, old_year, old_semester, old_moed,
-                        new_course_id, new_year, new_semester, new_moed)
+                                                     new_course_id, new_year, new_semester, new_moed)
                     if not same_exams:
-                        questions_left, exam_id = self._course_facade.checkQuestionLeft(old_course_id, old_year, old_semester, old_moed)
+                        questions_left, exam_id = self._course_facade.checkQuestionLeft(old_course_id, old_year,
+                                                                                        old_semester, old_moed)
                         if not questions_left:
                             self.delete_exam(exam_id, old_course_id, old_year, old_semester, old_moed)
 
                     return json.dumps({
-                    "status": "success",
-                    "message": "אירעה שגיאה בעדכון נושאי השאלה"
+                        "status": "success",
+                        "message": "אירעה שגיאה בעדכון נושאי השאלה"
                     })
                 else:
                     return json.dumps({
                         "status": "error",
                         "message": "אירעה שגיאה בעדכון נושאי השאלה"
-                        })
+                    })
             else:
                 return res
-        else:
+        except Exception as e:
             return json.dumps({
-                        "status": "error",
-                        "message": "אחד מן הפרמטרים לא חוקי"
-                        })
+                "status": "error",
+                "message": f"Error: {str(e)}"
+            })
 
     def mark_notification_as_seen(self, notification_id):
         notification_repo = NotificationRepository()
@@ -1322,26 +1341,45 @@ class NegevNerds:
                 "status": "error",
                 "message": " נא להקליד אימייל חוקי"
             })
-        
+
     def disapprove_system_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()
-        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        try:
+            reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        except Exception as e:
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
         if not reciever_id:
             return json.dumps({
                 "status": "error",
                 "message": "Notification not found"
             })
-        # reciever_id = notification.sender_user_id
+
         user_sender = self.userFacade.getUser_by_id(sender_id)
-        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} סירב/ה להצעה שלך להתמנות לתפקיד מנהל מערכת "
-        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
-                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+        message = f"{user_sender.get_first_name()} {user_sender.get_last_name()} סירב/ה להצעה שלך להתמנות לתפקיד מנהל מערכת"
+
+        self._notification_facade.send_notification(
+            receiver_id=reciever_id,
+            sender_id=sender_id,
+            message=message,
+            isApproved=False,
+            link="",
+            appoint_system_manager=False,
+            appoint_course_manager=False,
+            comment_to_following=False,
+            comment_to_comment=False,
+            react_to_comment=False,
+            remove_course_manager=False
+        )
+
         return json.dumps({
-        "status": "success",
-        "message": "הבקשה נדחתה בהצלחה"
-            })
-    
+            "status": "success",
+            "message": "הבקשה נדחתה בהצלחה"
+        })
+
     def approve_system_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()
         reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
@@ -1459,7 +1497,7 @@ class NegevNerds:
     
     def get_system_managers(self):
         res = []
-        for id in self._system_managers():
+        for id in self._system_managers:
             full_name, email = self._user_facade.get_user_name_email(id)
             res.append((full_name, email))
         return res

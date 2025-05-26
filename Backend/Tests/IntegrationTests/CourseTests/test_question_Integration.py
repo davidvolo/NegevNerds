@@ -80,12 +80,14 @@ class TestQuestion(unittest.TestCase):
         self.question = self.exam.get_question(2)
 
         result = self.question.add_comment(
+            comment_id="123445",
             writer_name="Alice",
             writer_id="alice123",
             prev_id="2",
             comment_text="Looks good",
             deleted=False,
-            edited=False
+            edited=False,
+            link_to_media=""
         )
         self.comment = self.question.comments[0]
 
@@ -137,12 +139,14 @@ class TestQuestion(unittest.TestCase):
     def test_add_comment_success(self):
 
         result = self.question.add_comment(
+            comment_id="c2",
             writer_name="Alice",
             writer_id="alice123",
             prev_id="prev",
             comment_text="Looks good",
             deleted=False,
-            edited=False
+            edited=False,
+            link_to_media=""
         )
         self.comment = self.question.comments[1]
         self.assertEqual(len(self.question.comments), 2)

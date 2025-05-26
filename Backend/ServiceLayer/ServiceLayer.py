@@ -1,8 +1,6 @@
 import json
 import threading
 
-from Backend.BusinessLayer.Course import enums
-from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.DataLayer.SystemManagers.SystemManagersRepository import SystemManagersRepository
 from Backend.BusinessLayer import NegevNerds
 
@@ -28,7 +26,7 @@ class ServiceLayer:
                 negev_nerds = NegevNerds.NegevNerds("../")
             self.negev_nerds = negev_nerds
             self._initialized = True
-            
+
     def register(self, email, password, password_confirm, first_name, last_name):
         try:
             password, result = self.negev_nerds.register(email, password, password_confirm, first_name, last_name)
@@ -69,7 +67,7 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-    
+
     def register_authentication_part(self, email, auth_code):
         """Handle user authentication code part in the registration and return JSON."""
         try:
@@ -89,18 +87,19 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
+
     def register_termOfUse_part(self, email, password, first_name, last_name, profile_picture_file):
-        """Handle user acception of the term of use in the registration and return JSON."""
+        """Handle user acceptation of the term of use in the registration and return JSON."""
         try:
-            userid ,result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name, profile_picture_file)
+            userid, result = self.negev_nerds.register_termOfUse_part(email, password, first_name, last_name,
+                                                                      profile_picture_file)
 
             if "Error" in result:
                 return json.dumps({
                     "status": "error",
                     "message": result,
                     "user_id": userid
-            
+
                 })
             return json.dumps({
                 "status": "success",
@@ -116,9 +115,9 @@ class ServiceLayer:
 
     def login(self, email, password):
         try:
-            user_firstName, user_lastName, user_id, result = self.negev_nerds.login(email, password)
+            user_first_name, user_last_name, user_id, result = self.negev_nerds.login(email, password)
 
-            if result.get("status") == "error" or user_firstName is None or user_id is None:
+            if result.get("status") == "error" or user_first_name is None or user_id is None:
                 return json.dumps({
                     "status": "error",
                     "message": result["message"],
@@ -129,8 +128,8 @@ class ServiceLayer:
                 "status": "success",
                 "message": result["message"],
                 "user_id": user_id,
-                "first_name": user_firstName,
-                "last_name": user_lastName
+                "first_name": user_first_name,
+                "last_name": user_last_name
             })
 
         except Exception as e:
@@ -211,7 +210,7 @@ class ServiceLayer:
     def open_course(self, user_id, course_id, course_name, syllabus_content_pdf):
         """Handle course creation and save syllabus, return JSON response."""
         try:
-            result = self.negev_nerds.open_course(user_id, course_id, course_name, syllabus_content_pdf )
+            result = self.negev_nerds.open_course(user_id, course_id, course_name, syllabus_content_pdf)
 
             if "Error" in result:
                 return json.dumps({
@@ -267,10 +266,10 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def search_free_text(self, text, course_id =None):
+    def search_free_text(self, text, course_id=None):
         """Handle user logout and return JSON."""
         try:
-            result , first_suggestion = self.negev_nerds.search_free_text(text=text, course_id=course_id)
+            result, first_suggestion = self.negev_nerds.search_free_text(text=text, course_id=course_id)
 
             questions_dict = [question.to_dict() for question in result]
 
@@ -342,7 +341,7 @@ class ServiceLayer:
     #     """Search for exams by course ID and optionally filter by year, semester, and moed. Return JSON."""
     #     try:
     #         # Call the business layer method with the provided arguments
-    #         result = self.negev_nerds.search_all_course_exmas(course_id)
+    #         result = self.negev_nerds.search_all_course_exams(course_id)
     #
     #         # Check if any exams are found
     #         if not result:
@@ -470,19 +469,16 @@ class ServiceLayer:
     #             "message": str(e)
     #         })
 
-    def add_comment(self, course_id, year, semester, moed, question_number,
-                     writer_name,
-                     writer_id
-                     , prev_id,
-                     comment_text, photo_file, question_id):
+    def add_comment(self, course_id, year, semester, moed, question_number, writer_name, writer_id, prev_id,
+                    comment_text, photo_file, question_id):
         """
         Handles adding a comment to a question discussion.
         :return: JSON response indicating success or failure.
         """
         try:
 
-            result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number,
-                                                  writer_name,writer_id, prev_id, comment_text, photo_file, question_id)
+            result = self.negev_nerds.add_comment(course_id, year, semester, moed, question_number, writer_name,
+                                                  writer_id, prev_id, comment_text, photo_file, question_id)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -493,10 +489,10 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def get_unapproved_notification_list(self,user_id):
+    def get_unapproved_notification_list(self, user_id):
         return self.negev_nerds.get_unapproved_notification_list(user_id)
 
-    def mark_notification_as_seen(self,notification_id):
+    def mark_notification_as_seen(self, notification_id):
         return self.negev_nerds.mark_notification_as_seen(notification_id)
 
     def add_reaction(self, course_id, year, semester, moed, question_number, comment_id, user_id, emoji):
@@ -505,8 +501,8 @@ class ServiceLayer:
         :return: JSON response indicating success or failure.
         """
         try:
-            result = self.negev_nerds.add_reaction(course_id, year, semester, moed, question_number,
-                                                  comment_id, user_id, emoji)
+            result = self.negev_nerds.add_reaction(course_id, year, semester, moed, question_number, comment_id,
+                                                   user_id, emoji)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -516,7 +512,7 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
+
     def get_comments_metadata(self, question_id):
         """
         Fetch metadata for all comments of a question.
@@ -542,8 +538,8 @@ class ServiceLayer:
         """
         try:
 
-            result = self.negev_nerds.remove_reaction(course_id, year, semester, moed, question_number,
-                                                  comment_id, reaction_id)
+            result = self.negev_nerds.remove_reaction(course_id, year, semester, moed, question_number, comment_id,
+                                                      reaction_id)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -554,18 +550,15 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def add_question(self, course_id, year, semester, moed, question_number, is_american,
-                     question_topics
-                     ,question_file,
-                     answer_file = None):
+    def add_question(self, course_id, year, semester, moed, question_number, is_american, question_topics,
+                     question_file, answer_file=None):
         """
         Handles adding a question to an exam.
         :return: JSON response indicating success or failure.
         """
         try:
-            
-            result = self.negev_nerds.add_question(course_id, year, semester, moed, question_number
-                                                   ,is_american,question_topics, question_file,answer_file )
+            result = self.negev_nerds.add_question(course_id, year, semester, moed, question_number, is_american,
+                                                   question_topics, question_file, answer_file)
             return json.dumps({
                 "status": "success",
                 "message": result
@@ -576,42 +569,24 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    # def upload_answer(self, course_id, year, semester, moed, questionNumber, pdf_answer):
-    #     """
-    #     Handles uploading an answer to an existing question.
-    #     :return: JSON response indicating success or failure.
-    #     """
-    #     try:
-    #
-    #         result = self.negev_nerds.upload_answer(course_id, year, semester, moed, questionNumber, pdf_answer)
-    #         return json.dumps({
-    #             "status": "success",
-    #             "message": result
-    #         })
-    #     except Exception as e:
-    #         return json.dumps({
-    #             "status": "error",
-    #             "message": str(e)
-    #         })
-
-    def get_comment_media_link(self, course_id, year, semester, moed, questionNumber, comment_id):
+    def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
         try:
-            return self.negev_nerds.get_comment_media_link(course_id, year, semester, moed, questionNumber, comment_id)
+            return self.negev_nerds.get_comment_media_link(course_id, year, semester, moed, question_number, comment_id)
         except Exception as e:
             return json.dumps({
                 "status": "error",
                 "message": str(e)
             })
 
-    def get_question_path(self, course_id, year, semester, moed, questionNumber):
+    def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
-            return self.negev_nerds.get_question_path(course_id, year, semester, moed, questionNumber)
+            return self.negev_nerds.get_question_path(course_id, year, semester, moed, question_number)
         except Exception as e:
             return json.dumps({
                 "status": "error",
                 "message": str(e)
             })
-    
+
     def is_user_manager(self, course_id, user_id):
         """Service layer to check if the user is a course manager."""
         try:
@@ -619,9 +594,10 @@ class ServiceLayer:
         except Exception as e:
             raise Exception(f"Service layer error in is_user_manager: {str(e)}")
 
-    def get_answer_path(self, course_id, year, semester, moed, questionNumber):
+    def get_answer_path(self, course_id, year, semester, moed, question_number):
+        """for question"""
         try:
-            return self.negev_nerds.get_answer_path(course_id, year, semester, moed, questionNumber)
+            return self.negev_nerds.get_answer_path(course_id, year, semester, moed, question_number)
         except Exception as e:
             return json.dumps({
                 "status": "error",
@@ -645,7 +621,7 @@ class ServiceLayer:
                 "status": "error",
                 "message": str(e)
             })
-        
+
     def delete_comment(self, course_id, year, semester, moed, question_number, comment_id):
         """
         Deletes a specific comment from the question and its related data.
@@ -729,7 +705,7 @@ class ServiceLayer:
             return json.dumps({
                 "status": "success",
                 "data": list(result)
-            }, ensure_ascii= False)
+            }, ensure_ascii=False)
         except Exception as e:
             return json.dumps({
                 "status": "error",
@@ -790,46 +766,40 @@ class ServiceLayer:
                 "message": str(e)
             })
 
-    def get_user_notifications(self, user_id):
-        """Fetches all courses and returns them in JSON format."""
-        try:
-            # Call the business layer to get the course
-            notifications = self.negev_nerds.get_user_notifications(user_id=user_id)
-
-            notifications_dict = [notifications.to_dict() for notification in notifications]
-            # Return the result as a dictionary, serialized to JSON
-            return json.dumps({
-                "status": "success",
-                "data": notifications_dict
-            })
-        except Exception as e:
-            # Return an error response as a JSON string
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
-
-    def get_user_last_notifications(self, user_id, number_of_notifications):
-        """Fetches all courses and returns them in JSON format."""
-        try:
-            # Call the business layer to get the course
-            notifications = self.negev_nerds.get_user_last_notifications(user_id=user_id, number_of_notifications=number_of_notifications)
-
-            notifications_dict = [notifications.to_dict() for notification in notifications]
-            # Return the result as a dictionary, serialized to JSON
-            return json.dumps({
-                "status": "success",
-                "data": notifications_dict
-            })
-        except Exception as e:
-            # Return an error response as a JSON string
-            return json.dumps({
-                "status": "error",
-                "message": str(e)
-            })
+    # def get_user_notifications(self, user_id):
+    #     """Fetches all courses and returns them in JSON format."""
+    #     try:
+    #         # Call the business layer to get the course
+    #         notifications = self.negev_nerds.get_user_notifications(user_id=user_id)
+    #
+    #         notifications_dict = [notifications.to_dict() for notification in notifications]
+    #         # Return the result as a dictionary, serialized to JSON
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": notifications_dict
+    #         })
+    #     except Exception as e:
+    #         # Return an error response as a JSON string
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
 
     def check_exam_full_pdf(self, course_id, year, semester, moed):
-        
+        """
+        Checks if a full exam PDF exists for the given course and exam details.
+
+        Args:
+            course_id (str): Course identifier.
+            year (int): Exam year.
+            semester (str): Semester ("A"/"B"/"C").
+            moed (str): Exam session.
+
+        Returns:
+            str: JSON with status, message, and has_link (True/False).
+
+        On error, returns a JSON with status "error" and the exception message.
+        """
         try:
             # Call the Negev Nerds business logic to check for the exam
             result = self.negev_nerds.check_exam_full_pdf(course_id, year, semester, moed)
@@ -871,12 +841,12 @@ class ServiceLayer:
     #             "message": "An unexpected error occurred.",
     #             "error": str(e)
     #         })
-        
-    def ExistSolution(self, course_id, year, semester, moed,question_number):
-        
+
+    def ExistSolution(self, course_id, year, semester, moed, question_number):
+        """for question"""
         try:
             # Call the Negev Nerds business logic to check for the exam
-            result = self.negev_nerds.checkExistSolution(course_id, year, semester, moed,question_number)
+            result = self.negev_nerds.checkExistSolution(course_id, year, semester, moed, question_number)
 
             # Parse the result from the Negev Nerds logic
             return json.dumps({
@@ -884,7 +854,7 @@ class ServiceLayer:
                 "message": "Operation successful.",
                 "has_link": result
                 # "link": result.get("link", None)
-                })
+            })
             # else:
             #     # Handle known failures returned by Negev Nerds
             #     return json.dumps({
@@ -900,7 +870,7 @@ class ServiceLayer:
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             })
-        
+
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file, line_data):
         try:
             self.negev_nerds.splitPDF(course_id, year, semester, moed, pdf_file, line_data)
@@ -970,10 +940,10 @@ class ServiceLayer:
                 "error": str(e)
             }
 
-
-    def uploadSolution(self, course_id, year, semester, moed,question_number, solution_file):
+    def uploadSolution(self, course_id, year, semester, moed, question_number, solution_file):
+        """for question"""
         try:
-            result = self.negev_nerds.uploadSolution(course_id, year, semester, moed,question_number, solution_file)
+            result = self.negev_nerds.uploadSolution(course_id, year, semester, moed, question_number, solution_file)
 
             if result.get("status") == "success":
                 return json.dumps({
@@ -997,11 +967,11 @@ class ServiceLayer:
 
     def get_exam_pdf_link(self, course_id, year, semester, moed):
         try:
-            result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)    
+            result = self.negev_nerds.get_exam_pdf_link(course_id, year, semester, moed)
             # if result.get("status") == "success":
             return json.dumps({
                 "success": True,
-                "has_link": result!="",
+                "has_link": result != "",
                 "message": "Operation successful.",
                 "link": result  # Link will be used only if needed
             })
@@ -1039,8 +1009,8 @@ class ServiceLayer:
 
     def handleDownloadAllExamsZip(self, course_id):
         try:
-            folderName, exams = self.negev_nerds.handleDownloadAllExamsZip(course_id)
-            return folderName, exams
+            folder_name, exams = self.negev_nerds.handleDownloadAllExamsZip(course_id)
+            return folder_name, exams
         except Exception as e:
             print(f"Error in get_exam_pdf_link: {str(e)}")
             return json.dumps({
@@ -1048,7 +1018,7 @@ class ServiceLayer:
                 "message": "An unexpected error occurred.",
                 "error": str(e)
             })
-    
+
     def forgot_password(self, email):
         try:
             result = self.negev_nerds.forgot_password(email)
@@ -1084,8 +1054,8 @@ class ServiceLayer:
                 "message": "שגיאה בעדכון הסיסמה.",
                 "error": str(e)
             })
-    
-    def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
+
+    def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
         try:
             result = self.negev_nerds.edit_question_topic(course_id, year, semester, moed, question_number, topics)
             return result  # JSON string
@@ -1100,92 +1070,92 @@ class ServiceLayer:
             self, old_course_id, old_year, old_semester, old_moed, old_question_number,
             new_course_id, new_year, new_semester, new_moed, new_question_number):
         try:
-            return self.negev_nerds.edit_question_details(old_course_id, old_year, old_semester, old_moed, old_question_number,
-            new_course_id, new_year, new_semester, new_moed, new_question_number)
-            
+            return self.negev_nerds.edit_question_details(old_course_id, old_year, old_semester, old_moed,
+                                                          old_question_number, new_course_id, new_year, new_semester,
+                                                          new_moed, new_question_number)
         except Exception as e:
-                    return json.dumps({
-            "status": "error",
-            "message": str(e)
-        })
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
 
-    def delete_question_solution(self, course_id,year, semester, moed, question_number):
-        return self.negev_nerds.delete_question_solution(course_id,year, semester, moed, question_number)
+    def delete_question_solution(self, course_id, year, semester, moed, question_number):
+        return self.negev_nerds.delete_question_solution(course_id, year, semester, moed, question_number)
 
-    def swap_question_file(self, course_id, year, semester, moed,question_number, new_file):
+    def swap_question_file(self, course_id, year, semester, moed, question_number, new_file):
         try:
-            return self.negev_nerds.swap_question_file(course_id, year, semester, moed,question_number, new_file)
-            
+            return self.negev_nerds.swap_question_file(course_id, year, semester, moed, question_number, new_file)
+
         except Exception as e:
-                    return json.dumps({
-            "status": "error",
-            "message": str(e)
-        })
-    
-    def update_course_topics(self,course_id, added_topics, removed_topics):
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
+    def update_course_topics(self, course_id, added_topics, removed_topics):
         try:
             return self.negev_nerds.update_course_topics(course_id, added_topics, removed_topics)
-            
+
         except Exception as e:
-                    return json.dumps({
-            "status": "error",
-            "message": str(e)
-        })
-    
+            return json.dumps({
+                "status": "error",
+                "message": str(e)
+            })
+
     def is_following(self, user_id, question_id):
         try:
             return self.negev_nerds.is_following(user_id, question_id)
         except Exception as e:
             raise e  # Let the controller handle the error
-    
+
     def follow_question(self, user_id, question_id):
         self.negev_nerds.follow_question(user_id, question_id)
 
     def unfollow_question(self, user_id, question_id):
         self.negev_nerds.unfollow_question(user_id, question_id)
-    
-    def appoint_system_manager(self,nominee_email, nominator_user_id):
+
+    def appoint_system_manager(self, nominee_email, nominator_user_id):
         return self.negev_nerds.appoint_system_manager(nominee_email, nominator_user_id)
 
-    def disapprove_system_manager_appoint(self, notification_id,user_id):
-        return self.negev_nerds.disapprove_system_manager_appoint(notification_id,user_id)
-    
-    def approve_system_manager_appoint(self, notification_id,user_id):
-        return self.negev_nerds.approve_system_manager_appoint(notification_id,user_id)
+    def disapprove_system_manager_appoint(self, notification_id, user_id):
+        return self.negev_nerds.disapprove_system_manager_appoint(notification_id, user_id)
 
-    def appoint_course_manager(self,nominee_email, nominator_user_id, course_id):
+    def approve_system_manager_appoint(self, notification_id, user_id):
+        return self.negev_nerds.approve_system_manager_appoint(notification_id, user_id)
+
+    def appoint_course_manager(self, nominee_email, nominator_user_id, course_id):
         return self.negev_nerds.appoint_course_manager(nominee_email, nominator_user_id, course_id)
 
-    def disapprove_course_manager_appoint(self, notification_id,user_id):
-        return self.negev_nerds.disapprove_course_manager_appoint(notification_id,user_id)
-    
-    def approve_course_manager_appoint(self, notification_id,user_id):
-        return self.negev_nerds.approve_course_manager_appoint(notification_id,user_id)
-    
-    def is_system_manager(self,user_id ):
+    def disapprove_course_manager_appoint(self, notification_id, user_id):
+        return self.negev_nerds.disapprove_course_manager_appoint(notification_id, user_id)
+
+    def approve_course_manager_appoint(self, notification_id, user_id):
+        return self.negev_nerds.approve_course_manager_appoint(notification_id, user_id)
+
+    def is_system_manager(self, user_id):
         return self.negev_nerds.is_system_manager(user_id)
-    
-    def remove_course_manager(self,remove_user_email, nominator_user_id, course_id):
+
+    def remove_course_manager(self, remove_user_email, nominator_user_id, course_id):
         return self.negev_nerds.remove_course_manager(remove_user_email, nominator_user_id, course_id)
-    
-    def get_notification_settings(self,user_id):
+
+    def get_notification_settings(self, user_id):
         return self.negev_nerds.get_notification_settings(user_id)
-    
+
     def update_notification_settings(self, user_id, settings_dict):
         return self.negev_nerds.update_notification_settings(user_id, settings_dict)
-    
-    def update_user_name(self,user_id, first_name, last_name):
+
+    def update_user_name(self, user_id, first_name, last_name):
         return self.negev_nerds.update_user_name(user_id, first_name, last_name)
 
     def upload_profile_picture(self, user_id, file):
         return self.negev_nerds.upload_profile_picture(user_id, file)
 
-    def get_profile_picture_path(self,user_id):
+    def get_profile_picture_path(self, user_id):
         return self.negev_nerds.get_profile_picture_path(user_id)
-    
+
     def delete_profile_picture(self, user_id):
         return self.negev_nerds.delete_profile_picture(user_id)
-    
+
     def get_course_managers(self, course_id):
         return self.negev_nerds.get_course_managers(course_id)
 
@@ -1207,15 +1177,16 @@ class ServiceLayer:
             users = init_data.get("users", [])
             courses = init_data.get("courses", [])
 
-            usersId = []
+            users_id = []
             repo = SystemManagersRepository()
             # Register users
             for i in range(len(users)):
-                curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'], users[i]['first_name'], users[i]['last_name'])
-                usersId.append(curr_user_id)
+                curr_user_id, _ = self.registerWithoutAuth(users[i]['email'], users[i]['password'],
+                                                           users[i]['first_name'], users[i]['last_name'])
+                users_id.append(curr_user_id)
                 print(f"Registering user {users[i]['email']}: {curr_user_id}")
-                res = self.login(users[i]['email'],users[i]['password'])
-                print("logIn " ,res)
+                res = self.login(users[i]['email'], users[i]['password'])
+                print("logIn ", res)
                 res = self.logout(users[i]['email'])
                 print("logOut ", res)
 
@@ -1223,34 +1194,35 @@ class ServiceLayer:
             for i in range(len(courses)):
                 # Create the course
                 course = courses[i]
-                response = self.open_course(usersId[i], course['courseId'], course['name'], course['syllabus_content_pdf'])
+                response = self.open_course(users_id[i], course['courseId'], course['name'],
+                                            course['syllabus_content_pdf'])
                 print(f"Creating course {course['name']}: {response}")
 
-            res = self.register_to_course(courses[1]["courseId"], usersId[0])
+            res = self.register_to_course(courses[1]["courseId"], users_id[0])
             print(f"register {users[0]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.register_to_course(courses[0]["courseId"], usersId[1])
+            res = self.register_to_course(courses[0]["courseId"], users_id[1])
             print(f"register {users[1]['first_name']} to course  {courses[0]['name']}: {res}")
 
-            res = self.register_to_course(courses[0]["courseId"], usersId[3])
+            res = self.register_to_course(courses[0]["courseId"], users_id[3])
             print(f"register {users[3]['first_name']} to course  {courses[0]['name']}: {res}")
 
-            res = self.register_to_course(courses[1]["courseId"], usersId[2])
+            res = self.register_to_course(courses[1]["courseId"], users_id[2])
             print(f"register {users[2]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.register_to_course(courses[1]["courseId"], usersId[3])
+            res = self.register_to_course(courses[1]["courseId"], users_id[3])
             print(f"register {users[3]['first_name']} to course  {courses[1]['name']}: {res}")
 
-            res = self.register_to_course(courses[2]["courseId"], usersId[0])
+            res = self.register_to_course(courses[2]["courseId"], users_id[0])
             print(f"register {users[0]['first_name']} to course  {courses[2]['name']}: {res}")
 
-            res = self.register_to_course(courses[2]["courseId"], usersId[1])
+            res = self.register_to_course(courses[2]["courseId"], users_id[1])
             print(f"register {users[1]['first_name']} to course  {courses[2]['name']}: {res}")
 
-            res = self.register_to_course(courses[2]["courseId"], usersId[2])
+            res = self.register_to_course(courses[2]["courseId"], users_id[2])
             print(f"register {users[2]['first_name']} to course  {courses[2]['name']}: {res}")
 
-            res = self.register_to_course(courses[2]["courseId"], usersId[3])
+            res = self.register_to_course(courses[2]["courseId"], users_id[3])
             print(f"register {users[3]['first_name']} to course  {courses[2]['name']}: {res}")
             # res = self.add_question(courses[0]["courseId"], 2023, "קיץ", "ב", 3,
             #                         False, ["math", "algebra"],"ex2.pdf",None)
@@ -1267,3 +1239,41 @@ class ServiceLayer:
             print("Error: Failed to parse the initialization file.")
         except Exception as e:
             print(f"An unexpected error occurred during initialization: {e}")
+
+    # def upload_answer(self, course_id, year, semester, moed, questionNumber, pdf_answer):
+    #     """
+    #     Handles uploading an answer to an existing question.
+    #     :return: JSON response indicating success or failure.
+    #     """
+    #     try:
+    #
+    #         result = self.negev_nerds.upload_answer(course_id, year, semester, moed, questionNumber, pdf_answer)
+    #         return json.dumps({
+    #             "status": "success",
+    #             "message": result
+    #         })
+    #     except Exception as e:
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })
+
+    # def get_user_last_notifications(self, user_id, number_of_notifications):
+    #     """Fetches all courses and returns them in JSON format."""
+    #     try:
+    #         # Call the business layer to get the course
+    #         notifications = self.negev_nerds.get_user_last_notifications(user_id=user_id,
+    #         number_of_notifications=number_of_notifications)
+    #
+    #         notifications_dict = [notifications.to_dict() for notification in notifications]
+    #         # Return the result as a dictionary, serialized to JSON
+    #         return json.dumps({
+    #             "status": "success",
+    #             "data": notifications_dict
+    #         })
+    #     except Exception as e:
+    #         # Return an error response as a JSON string
+    #         return json.dumps({
+    #             "status": "error",
+    #             "message": str(e)
+    #         })

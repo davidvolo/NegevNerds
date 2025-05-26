@@ -159,8 +159,7 @@ class CourseFacade:
             return course.get_question_id(year, semester, moed, question_number)
         else:
             raise CourseIsNotExist(course_id)
-        
-    
+
     def get_question_id_and_path(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id=course_id)
         if course is not None:
@@ -384,32 +383,30 @@ class CourseFacade:
 
     def is_valid_course_id(self,course_id):
         return bool(re.match(r'^\d{3}\.\d\.\d{4}$', course_id))
-    
+
     def valid_question_parameters(self, course_id, year, semester, moed, question_number):
         """Validates question parameters to ensure they are correct and relevant."""
         if not self.is_valid_course_id(course_id):
             logging.error(f"{course_id} is not a valid course_id.")
-            raise ValueError(f"Invalid course_id: {course_id}")
-        moeds = ['א','ב','ג','ד']
-        semesters =['סתיו','אביב','קיץ']
-        if moed not in moeds:
-            logging.error(f"{Moed} is not a valid Moed.")
-            raise ValueError(f"Invalid Moed: {moed}")
-        if semester not in semesters:
+            raise Exception(f"Invalid course_id: {course_id}")
+
+        moed_value = moed.value if isinstance(moed, Moed) else moed
+        semester_value = semester.value if isinstance(semester, Semester) else semester
+
+        moeds = ['א', 'ב', 'ג', 'ד']
+        semesters = ['סתיו', 'אביב', 'קיץ']
+
+        if moed_value not in moeds:
+            logging.error(f"{moed} is not a valid Moed.")
+            raise ValueError(f"Invalid Moed: {moed_value}")
+        if semester_value not in semesters:
             logging.error(f"{semester} is not a valid Semester.")
-            raise ValueError(f"Invalid Semester: {semester}")
-        # Validate year
-        current_year = datetime.now().year
-        if year < 1960 or year > current_year:
-            logging.error(f"{year} is not a valid year. Must be between 1960 and {current_year}.")
-            raise ValueError(f"Invalid year: {year}. Year must be between 1960 and {current_year}.")            
+            raise ValueError(f"Invalid Semester: {semester_value}")
 
-        # Validate question number
-        if question_number <= 0:
-            logging.error(f"{question_number} is not a question number. Must be Positive.")
-            raise ValueError(f"Invalid question number: {question_number}")
-
-        return True
+        if not isinstance(year, int):
+            raise ValueError("Year must be an integer.")
+        if not isinstance(question_number, int):
+            raise ValueError("Question number must be an integer.")
 
     def check_valid_question(self, course_id, year, semester, moed, question_number):
         # Step 1: Validate parameters
@@ -419,8 +416,6 @@ class CourseFacade:
 
         # Step 2: Get the course
         course = self.get_course(course_id=course_id)
-        #if not course:
-        #    raise ValueError(f"CourseData with ID {course_id} does not exist.")
 
         # Step 3: Delegate further validation to the course
         return course.check_valid_question(year=year, semester=semester, moed=moed, question_number=question_number)
@@ -595,7 +590,7 @@ class CourseFacade:
         course = self.get_course(course_id)
         exam = course.get_exam(year, semester, moed)
         question = exam.get_question(question_number)
-        question.remove_topic_from_question(topic)
+        question.remove_question_topic(topic)
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         course = self.get_course(course_id)
@@ -656,7 +651,7 @@ class CourseFacade:
     def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
         course = self.get_course(course_id)
         if course is not None:
-            return course.edit_question_topic( year, semester, moed, question_number, topics)
+            return course.edit_question_topic(year, semester, moed, question_number, topics)
         else :
             raise CourseIsNotExist(course_id)
     

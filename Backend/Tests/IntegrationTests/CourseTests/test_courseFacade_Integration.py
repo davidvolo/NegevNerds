@@ -43,7 +43,6 @@ class TestCourseFacade(TestCase):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))  # העלאה של 3 רמות לתיקיית ה-Backend
         db_path = os.path.join(base_dir, "test_NegevNerds.db")  # יצירת הנתיב המוחלט לקובץ ה-DB
 
-
         engine = create_engine(f"sqlite:///{db_path}")
         cls.Session = sessionmaker(bind=engine)
         cls.session = cls.Session()
@@ -51,18 +50,16 @@ class TestCourseFacade(TestCase):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
 
-
     @classmethod
     def tearDownClass(cls):
         Base.metadata.drop_all(cls.engine)
-
 
     def setUp(self):
         delete_all_data(engine=self.engine, session=self.session)
         self.session = self.Session()
         self.facade = CourseFacade()
 
-        self.course = Course(course_id="123.4.5678", name="Test Course", course_topics={"Math", "CS"})
+        self.course = Course(course_id="123.4.5678", name="Test Course", course_topics={"Math", "CS", "new_topic"})
         self.facade.courses["123.4.5678"] = self.course
         self.course_id = "123.4.5678"
 
@@ -113,8 +110,6 @@ class TestCourseFacade(TestCase):
         self.assertEqual(result[0].question_id, question_id)
         self.assertEqual(result[0].question_number, 1)
 
-
-
     def test_remove_student_from_course(self):
         # Add a student to the course
         self.facade.open_course("1.123.1234", "new course", [])
@@ -157,8 +152,6 @@ class TestCourseFacade(TestCase):
         self.assertTrue(result)
 
     def test_open_course_possibility_invalid_id(self):
-
-
         # Try to open a course with an invalid ID format, and assert that it raises an exception
         with self.assertRaises(InvalidCourseIdFormat):
             self.facade.open_course_possibility("invalid_id", "valid name")
@@ -191,11 +184,8 @@ class TestCourseFacade(TestCase):
 
         result = self.facade.get_question_id(self.course.course_id, 2025, "אביב", "א", 1)
 
-
         # Assert that the result from the facade matches the expected result
         self.assertEqual(result, question_id)
-
-
 
     def test_get_all_courses(self):
         # Directly retrieve all courses from the repository
@@ -241,20 +231,16 @@ class TestCourseFacade(TestCase):
         self.assertEqual(result, result_from_course)
 
     def test_check_valid_question(self):
-        # Directly call the method without mocking
-        result = self.facade.check_valid_question(self.course.course_id, 2025, "אביב", "א", 1, "text")
+        result = self.facade.check_valid_question(self.course.course_id, 2025, "אביב", "א", 1)
 
-        # Assuming the real get_course method inside the facade returns a valid course object
         course = self.facade.get_course(self.course.course_id)
         result_from_course = course.check_valid_question(
             year=2025,
-            semester=Semester("אביב"),  # Assuming Semester is a valid class
-            moed=Moed("א"),  # Assuming Moed is a valid class
+            semester=Semester("אביב"),
+            moed=Moed("א"),
             question_number=1,
-            question_text="text"
         )
 
-        # Assert that the result from the facade matches the expected result
         self.assertEqual(result, result_from_course)
 
     def test_add_question(self):
@@ -340,7 +326,6 @@ class TestCourseFacade(TestCase):
 
         # Assuming the real get_course method inside the facade returns a valid course object
 
-
         # Assert that the result from the facade matches the expected result
         self.assertEqual(len(question.question_topics), 1)
         self.assertFalse("Math" in question.question_topics)
@@ -390,12 +375,7 @@ class TestCourseFacade(TestCase):
         # Assert that the result from the facade matches the expected result
         self.assertEqual(result, result_from_course)
 
-
-
-
     def test_edit_question_topic(self):
-        # Directly call the method without mocking
-
         self.course.add_exam(2025, Semester.SPRING, Moed.A, "")
 
         question_id = self.course.add_question(
@@ -404,18 +384,17 @@ class TestCourseFacade(TestCase):
             moed=Moed.A,
             question_number=1,
             is_american=True,
-            question_topics={"Math", "Physics"},
+            question_topics={"Math"},
             pdf__question_path="",
             pdf__answer_path=" ",
             question_text="2+2="
         )
-        question = self.course.get_questions_by_specific(2025, Semester.SPRING, Moed.A,1)
 
-        self.assertEqual(question[0].question_topics, {"Math", "Physics"})
+        question = self.course.get_questions_by_specific(2025, Semester.SPRING, Moed.A, 1)
+        self.assertEqual(question[0].question_topics, {"Math"})
 
-        self.facade.edit_question_topic(self.course_id, 2025, "אביב", "א", 1, ["new_topic"])
+        self.course.add_course_topic("Physics")
+        self.facade.edit_question_topic(self.course_id, 2025, "אביב", "א", 1, ["Physics"])
 
-        question = self.course.get_questions_by_specific(2025, Semester.SPRING, Moed.A,1)
-        # Assert that the result from the facade matches the expected result
-        self.assertEqual(question[0].question_topics, {"new_topic"})
-
+        question = self.course.get_questions_by_specific(2025, Semester.SPRING, Moed.A, 1)
+        self.assertEqual(question[0].question_topics, {"Physics"})

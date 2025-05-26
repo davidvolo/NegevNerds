@@ -50,7 +50,6 @@ class TestComment(TestCase):
     def tearDownClass(cls):
         Base.metadata.drop_all(cls.engine)
 
-
     def setUp(self):
         delete_all_data(engine=self.engine, session=self.session)
         self.session = self.Session()
@@ -64,7 +63,10 @@ class TestComment(TestCase):
         self.writer_name = "John Doe"
         self.writer_id = "u1"
         self.date = datetime(2025, 4, 2)
-        self.prev_id = "None"
+
+        # 🛠️ במקום "None" (מחרוזת), נשתמש בערך "0" שמסמל שאין תגובה קודמת
+        self.prev_id = "0"
+
         self.comment_text = "This is a test comment."
         self.deleted = False
         self.edited = False
@@ -82,21 +84,23 @@ class TestComment(TestCase):
             pdf__answer_path=" ",
             question_text="2+2="
         )
-        self.comment_id = self.course.add_comment(2025, semester=Semester.SPRING, moed= Moed.A, question_number=1,writer_name= self.writer_name, writer_id= self.writer_id,prev_id=self.prev_id, comment_text= self.comment_text )
-        # יצירת מופע לבדיקה
-        # self.comment = Comment(
-        #     comment_id=self.comment_id,
-        #     writer_name=self.writer_name,
-        #     writer_id=self.writer_id,
-        #     date=self.date,
-        #     prev_id=self.prev_id,
-        #     comment_text=self.comment_text,
-        #     deleted=self.deleted,
-        #     edited=self.edited
-        # )
-        self.exam = self.course.get_exam(2025, Semester.SPRING,Moed.A)
-        self.question= self.exam.get_question(1)
-        self.comment= self.question.comments[0]
+
+        self.comment_id = self.course.add_comment(
+            year=2025,
+            semester=Semester.SPRING,
+            moed=Moed.A,
+            question_number=1,
+            writer_name=self.writer_name,
+            writer_id=self.writer_id,
+            prev_id=self.prev_id,
+            comment_text=self.comment_text,
+            comment_id=self.comment_id,
+            link_to_media=""
+        )
+
+        self.exam = self.course.get_exam(2025, Semester.SPRING, Moed.A)
+        self.question = self.exam.get_question(1)
+        self.comment = self.question.comments[0]
 
     def test_to_dto(self):
         # Convert the comment to a DTO and verify the content

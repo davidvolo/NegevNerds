@@ -234,7 +234,7 @@ class Course:
 
             exam = self.get_exam(year, semester, moed, raise_exception=False)
             if exam is None:
-                exam_id = self.generate_exam_id(year=year,semester=semester.value,moed=moed.value)
+                exam_id = self.generate_exam_id(year=year,semester=semester.value, moed=moed.value)
                 exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
                 if exam is not None:
                     if year not in self.exams:
@@ -322,7 +322,6 @@ class Course:
             raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
         return exam.link_to_solution
 
-
     def existFullExamSolution(self, year, semester, moed):
         """
         Checks if the full exam solution PDF exists and returns the result.
@@ -364,11 +363,11 @@ class Course:
             return False
         return question.id, question_details, question.link_to_question, question.link_to_answer
 
-    def upload_full_exam_pdf(self, year, semester, moed, solution_path):
+    def upload_full_exam_pdf(self, year, semester, moed, exam_path):
         exam = self.get_exam(year, semester, moed)
         if not exam:
             raise Exception(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
-        return exam.upload_full_exam_pdf(solution_path)
+        return exam.upload_full_exam_pdf(exam_path)
 
     def upload_full_exam_solution(self, year, semester, moed, solution_path):
         exam = self.get_exam(year, semester, moed)
@@ -507,7 +506,7 @@ class Course:
         if exam is not None:
             return exam.get_question_id_and_path(question_number)
         else:
-            raise ExamIsNotExist
+            raise ExamIsNotExist(year, semester, moed)
         
     def add_reaction(self, year, semester, moed, question_number, comment_id, user_id, emoji):
         """
@@ -530,7 +529,7 @@ class Course:
             raise ExamIsNotExist
         question = exam.get_question(question_number)
         if question is None:
-            raise QuestionNotFound
+            raise QuestionNotFound(question.id)
         question.delete_comment(comment_id)
 
     def edit_comment_text(self, year, semester, moed, question_number, comment_id, new_text):
@@ -615,7 +614,7 @@ class Course:
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)
         else :
-            raise ExamIsNotExist(year,semester,moed)
+            raise ExamIsNotExist(year, semester, moed)
     
     def checkQuestionAvailability(self,new_year, new_semester, new_moed, new_question_number):
         exam = self.get_exam(new_year, new_semester, new_moed)

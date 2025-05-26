@@ -128,7 +128,7 @@ class TestCourse(unittest.TestCase):
     @patch("Backend.DataLayer.CourseTopics.CourseTopicsRepository.CourseTopicsRepository.add_Topic_to_course")
     def test_add_course_topic_success(self, mock_add_topic):
         # For add_course_topic, override course_topics with a list
-        self.course.course_topics = []
+        self.course.course_topics = set()
         self.course.add_course_topic("new_topic")
         self.assertIn("new_topic", self.course.course_topics)
         mock_add_topic.assert_called_once_with(course_id=self.course_id, topic="new_topic")
@@ -356,7 +356,8 @@ class TestCourse(unittest.TestCase):
         dummy_question.add_comment.return_value = {"writer1"}
         dummy_exam.get_question.return_value = dummy_question
         self.course.get_exam = MagicMock(return_value=dummy_exam)
-        result = self.course.add_comment(2025, "SPRING", "A", 1, "John Doe", "writer1", None, "Nice question")
+        result = self.course.add_comment(2025, "SPRING", "A", 1, "John Doe", "comment_id", "writer1", "id_writer1", None
+                                         ,"Nice question", "")
         dummy_question.add_comment.assert_called_once_with("John Doe", "writer1", None, "Nice question", False, False)
         self.assertEqual(result, {"writer1"})
 

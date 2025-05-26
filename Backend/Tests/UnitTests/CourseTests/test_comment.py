@@ -24,7 +24,8 @@ class TestComment(unittest.TestCase):
             prev_id=self.prev_id,
             comment_text=self.comment_text,
             deleted=self.deleted,
-            edited=self.edited
+            edited=self.edited,
+            link_to_media=""
         )
 
     @patch("Backend.DataLayer.CommentData.CommentRepository.CommentRepository.add_comment")

@@ -192,7 +192,7 @@ class TestInformationRetrival(unittest.TestCase):
     def test_search_free_text_with_course(self):
         # Simulate repository returning question IDs.
         self.ir.words_repository.get_questions_id_by_word_and_course.side_effect = lambda word, cid: [f"{word}_id"] if word=="hello" else []
-        result = self.ir.search_free_text_with_course("hello world", "c1")
+        result = self.ir.search_free_text("hello world", "c1")
         # For "hello", we expect "hello_id" to be returned.
         self.assertEqual(result, ["hello_id"])
 
