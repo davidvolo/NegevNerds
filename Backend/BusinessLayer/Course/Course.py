@@ -1,5 +1,7 @@
 import threading
 
+import numpy as np
+
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -543,6 +545,7 @@ class Course:
             raise QuestionNotFound
         question.edit_comment_text(comment_id, new_text)
 
+
     def remove_reaction(self, year, semester, moed, question_number, comment_id, reaction_id):
         """
         Add a reaction to specific question.
@@ -579,14 +582,27 @@ class Course:
 
         # חישוב דמיון קוסיני
         cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
+        scores_array = cosine_scores.cpu().numpy()
 
-        # הצגה עם threshold חכם
-        threshold = 0.3  # אתה יכול להתאים אותו לפי הצורך
+        MIN_ABSOLUTE_THRESHOLD = 0.2
+        HIGH_ALL_RELEVANT_THRESHOLD = 0.7
+        GAP_FROM_MAX_SCORE = 0.25
+
+
+        if np.max(scores_array) < MIN_ABSOLUTE_THRESHOLD:
+            return []
+
+        if np.min(scores_array) >= HIGH_ALL_RELEVANT_THRESHOLD:
+            return list(self.course_topics)
+
+        dynamic_threshold = np.max(scores_array) - GAP_FROM_MAX_SCORE
+        final_threshold = max(dynamic_threshold, MIN_ABSOLUTE_THRESHOLD)
+
         results = []
-
-        for topic, score in zip(self.course_topics, cosine_scores):
-            if score >= threshold:
+        for topic, score in zip(self.course_topics, scores_array):
+            if score >= final_threshold:
                 results.append(topic)
+
         return results
 
 
