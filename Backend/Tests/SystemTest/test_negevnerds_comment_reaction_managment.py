@@ -3,6 +3,8 @@ import json
 from unittest.mock import patch, MagicMock
 from werkzeug.datastructures import FileStorage
 
+from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
+from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, QuestionAlreadyInExam, CommentNotFound, \
     ExamIsNotExist, ReactionNotFound, QuestionNotFound
@@ -32,6 +34,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
         self._open_course(self.user, self.course_id, "מבוא להעלאת מבחנים")
         self.question_number = 165
 
+
     def tearDown(self):
         super().tearDown()
 
@@ -40,6 +43,11 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         if isinstance(self.negev.courseFacade.check_exam_full_pdf, MagicMock):
             del self.negev.courseFacade.check_exam_full_pdf
+
+        self.negev.courseFacade = CourseFacade()
+        self.negev.userFacade = UserFacade()
+
+
 
     # ---Tests for Discussions---
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
@@ -412,8 +420,8 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 semester=self.semester,
                 moed=self.moed,
                 question_number=self.question_number,
-                comment_id=self.comment_id,
-                reaction_id=self.reaction_id
+                comment_id="some_comment_id",
+                reaction_id="some_reaction_id"
             )
 
     @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
@@ -429,7 +437,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 moed=self.moed,
                 question_number=self.question_number,
                 comment_id="invalid_comment",
-                reaction_id=self.reaction_id
+                reaction_id="some_reaction_id"
             )
 
     @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')

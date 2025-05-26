@@ -143,8 +143,8 @@ class Question:
                 self.comments.append(comment)
                 if prev_id != "0":
                     comment_repo = CommentRepository()
-                    comment =comment_repo.get_comment_by_id(prev_id)
-                    return comment.writer_id   
+                    comment = comment_repo.get_comment_by_id(prev_id)
+                    return comment.writer_id
                 else:
                     return "0"         
             else:

@@ -1,5 +1,6 @@
 import os
 import unittest
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from Backend.DataLayer.Base import Base, delete_all_data
@@ -30,13 +31,17 @@ class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.session = self.Session()
-        delete_all_data(engine=self.engine, session=self.session)
         os.environ["APP_ENV"] = "test"  # שימוש בדאטהבייס טסט
+        delete_all_data(engine=self.engine, session=self.session)
         self.negev = NegevNerds(mkdir="test_directory")
 
     def tearDown(self):
         # מחיקת דאטה אחרי כל טסט
         delete_all_data(engine=self.engine, session=self.session)
+        # try:
+        #     Base.metadata.drop_all(bind=self.engine)
+        # except Exception:
+        #     pass
         self.session.close()
 
     def _encrypt_password(self, password: str) -> str:

@@ -79,17 +79,19 @@ class TestQuestion(unittest.TestCase):
         self.exam = self.course.get_exam(2025, Semester.SPRING, Moed.A)
         self.question = self.exam.get_question(2)
 
-        result = self.question.add_comment(
+        self.question.add_comment(
             comment_id="123445",
             writer_name="Alice",
             writer_id="alice123",
-            prev_id="2",
+            prev_id="0",
             comment_text="Looks good",
             deleted=False,
             edited=False,
             link_to_media=""
         )
+
         self.comment = self.question.comments[0]
+        self.prev_id = self.question.comments[0].comment_id
 
     def test_to_dto(self):
 
@@ -142,7 +144,7 @@ class TestQuestion(unittest.TestCase):
             comment_id="c2",
             writer_name="Alice",
             writer_id="alice123",
-            prev_id="prev",
+            prev_id=self.prev_id,
             comment_text="Looks good",
             deleted=False,
             edited=False,
@@ -150,7 +152,7 @@ class TestQuestion(unittest.TestCase):
         )
         self.comment = self.question.comments[1]
         self.assertEqual(len(self.question.comments), 2)
-        self.assertEqual(result, {"alice123"})
+        self.assertEqual(result, "alice123")
         self.assertEqual(self.question.comments[1].writer_id, "alice123")
 
     def test_add_reaction_success(self):

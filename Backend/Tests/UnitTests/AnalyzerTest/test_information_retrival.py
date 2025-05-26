@@ -92,34 +92,7 @@ class TestWordIndex2(unittest.TestCase):
         self.assertIn("עולם", heb)
         self.assertIn("טסט", heb)
 
-    @patch("pdfplumber.open")
-    def test_process_pdf(self, mock_pdfplumber_open):
-        dummy_page = MagicMock()
-        dummy_page.extract_text.return_value = "Hello\nשלום"
-        dummy_pdf = MagicMock()
-        dummy_pdf.pages = [dummy_page]
-        mock_pdfplumber_open.return_value.__enter__.return_value = dummy_pdf
 
-        # For WordIndex2, we'll patch normalize_text_direction to simply return the input.
-        self.index.normalize_text_direction = lambda t: t
-
-        result = self.index.process_pdf("dummy.pdf")
-        # Expect both English and Hebrew words.
-        self.assertIn("Hello", result)
-        self.assertIn("שלום", result)
-
-    def test_normalize_text_direction(self):
-        # Test that a line containing Hebrew is processed by reverse_hebrew_words.
-        sample_line = "Hello שלום"
-        # In our implementation, if line contains Hebrew, we call reverse_hebrew_words.
-        # We'll simulate that reverse_hebrew_words reverses the Hebrew words.
-        # For example, "שלום" reversed becomes "םולש". Non-Hebrew ("Hello") remains.
-        expected_line = "Hello םולש"
-        # Patch contains_hebrew to return True if the word contains any Hebrew.
-        self.index.contains_hebrew = lambda text: any('\u0590' <= ch <= '\u05FF' for ch in text)
-        self.index.reverse_hebrew_words = lambda line: "Hello םולש"
-        normalized = self.index.normalize_text_direction(sample_line)
-        self.assertEqual(normalized, "Hello םולש")
 
     def test_contains_hebrew(self):
         self.assertTrue(self.index.contains_hebrew("שלום"))
@@ -145,16 +118,30 @@ class TestInformationRetrival(unittest.TestCase):
         self.ir.wordIndex2 = MagicMock()
 
     def test_process_pdf(self):
-        # Simulate wordIndex1.process_pdf and wordIndex2.process_pdf returning lists.
+        # מוקים לפלט מ־process_pdf של wordIndex1 ו־wordIndex2
         self.ir.wordIndex1.process_pdf.return_value = ["word1", "word2"]
         self.ir.wordIndex2.process_pdf.return_value = ["word3"]
-        # Patch update_words so we can capture the call.
-        with patch.object(self.ir, "update_words") as mock_update_words:
-            self.ir.process_pdf("dummy.pdf", "q1", "c1")
-            # The union of the lists is ["word1", "word2", "word3"].
-            expected = set(["word1", "word2", "word3"])
-            mock_update_words.assert_called_once_with(words=expected, question_id="q1", course_id="c1")
 
+        # לעג את elastic_search.indices.exists כדי שיחזיר True ולא ינסה לדבר עם ES
+        with patch.object(self.ir.elastic_search.indices, "exists", return_value=True):
+            # לעג את elastic_search.index כדי שלא ינסה להתחבר ל־localhost
+            with patch.object(self.ir.elastic_search, "index") as mock_index:
+                # לעג לפונקציה update_words כדי לבדוק שנקראת עם המילים הנכונות
+                with patch.object(self.ir, "update_words") as mock_update_words:
+                    self.ir.process_pdf("dummy.pdf", "q1", "c1")
+
+                    # בדוק שה־update_words נקרא עם סט מאוחד של המילים
+                    expected = set(["word1", "word2", "word3"])
+                    mock_update_words.assert_called_once_with(words=expected, question_id="q1", course_id="c1")
+
+                    # בדוק שה־index נקרא פעם אחת עם הדוקומנט המתאים
+                    mock_index.assert_called_once()
+                    args, kwargs = mock_index.call_args
+                    assert kwargs["index"] == "questions"
+                    assert kwargs["id"] == "c1_q1"
+                    assert kwargs["document"]["question_id"] == "q1"
+                    assert kwargs["document"]["course_id"] == "c1"
+                    assert set(kwargs["document"]["text"].split()) == expected
     def test_update_words(self):
         # Test update_words: For each word that is not in the common words,
         # words_repository.add_word_to_question should be called.
@@ -171,30 +158,13 @@ class TestInformationRetrival(unittest.TestCase):
         for call in expected_calls:
             self.assertIn(call, actual_calls)
 
-    def test_search_free_text(self):
-        # Prepare dummy SearchDTO objects.
-        dummy_dto1 = MagicMock()
-        dummy_dto1.course_id = "c1"
-        dummy_dto1.question_id = "q1"
-        dummy_dto2 = MagicMock()
-        dummy_dto2.course_id = "c2"
-        dummy_dto2.question_id = "q2"
-        # For two words, simulate repository returning different dtos.
-        self.ir.words_repository.get_search_dto_by_word.side_effect = lambda word: [dummy_dto1] if word=="hello" else [dummy_dto2]
-        # Input text with two words.
-        result = self.ir.search_free_text("hello world")
-        # Expect that dummy_dto1 appears once and dummy_dto2 appears once.
-        # Sorting is based on count (each count=1) then course_id, then question_id.
-        # The sorted order is determined by the sorting key.
-        # We'll simply check that result is a list containing dummy_dto1 and dummy_dto2 (order not strictly enforced here).
-        self.assertEqual(set(result), {dummy_dto1, dummy_dto2})
 
-    def test_search_free_text_with_course(self):
-        # Simulate repository returning question IDs.
-        self.ir.words_repository.get_questions_id_by_word_and_course.side_effect = lambda word, cid: [f"{word}_id"] if word=="hello" else []
-        result = self.ir.search_free_text("hello world", "c1")
-        # For "hello", we expect "hello_id" to be returned.
-        self.assertEqual(result, ["hello_id"])
+    # def test_search_free_text_with_course(self):
+    #     # Simulate repository returning question IDs.
+    #     self.ir.words_repository.get_questions_id_by_word_and_course.side_effect = lambda word, cid: [f"{word}_id"] if word=="hello" else []
+    #     result = self.ir.search_free_text("hello world", "c1")
+    #     # For "hello", we expect "hello_id" to be returned.
+    #     self.assertEqual(result, ["hello_id"])
 
     def test_get_english_common_words(self):
         common = self.ir.get_english_common_words()

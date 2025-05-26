@@ -5,6 +5,9 @@ from Backend.BusinessLayer.Util.Exceptions import (
     UserIsNotRegisterToCourse
 )
 from Backend.BusinessLayer.Course.Course import Course  # if needed
+
+from Backend.DataLayer.UserData.UserModel import UserModel
+from Backend.DataLayer.SystemManagers.SystemManagersModel import SystemManagersModel
 from Backend.DataLayer.UserData.UserRepository import UserRepository
 from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
 from Backend.BusinessLayer.User.User import User  # adjust if the class is located here

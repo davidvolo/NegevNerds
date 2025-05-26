@@ -239,7 +239,7 @@ class TestCourseFacade(unittest.TestCase):
     def test_remove_topic_from_question(self):
         dummy_exam = MagicMock()
         dummy_question = MagicMock()
-        dummy_question.remove_topic_from_question = MagicMock()
+        dummy_question.remove_question_topic = MagicMock()
         # להניח ש-get_question מקבלת את מספר השאלה כארגומנט:
         dummy_exam.get_question.return_value = dummy_question
         # ודא ש-get_course מחזיר את הקורס הנכון, שיש לו get_exam מוגדר:
@@ -248,7 +248,7 @@ class TestCourseFacade(unittest.TestCase):
 
         # קריאה למתודה. וודא שהפרמטרים תואמים למימוש.
         self.facade.remove_topic_from_question(self.course_id, 2025, "אביב", "א", 1, "topic_to_remove")
-        dummy_question.remove_topic_from_question.assert_called_once_with("topic_to_remove")
+        dummy_question.remove_question_topic.assert_called_once_with("topic_to_remove")
 
     def test_search_question_by_specifics(self):
         dummy_exam = MagicMock()

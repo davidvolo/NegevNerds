@@ -11,7 +11,7 @@ class TestComment(unittest.TestCase):
         self.writer_name = "John Doe"
         self.writer_id = "u1"
         self.date = datetime(2025, 4, 2)
-        self.prev_id = None
+        self.prev_id = "0"
         self.comment_text = "This is a test comment."
         self.deleted = False
         self.edited = False
@@ -41,7 +41,8 @@ class TestComment(unittest.TestCase):
             comment_text=self.comment_text,
             deleted=self.deleted,
             edited=self.edited,
-            question_id=question_id
+            question_id=question_id,
+            link_to_media=""
         )
         # בדיקה ש־add_comment נקראה עם הפרמטרים הנכונים
         mock_add_comment.assert_called_once_with(new_comment, question_id)
