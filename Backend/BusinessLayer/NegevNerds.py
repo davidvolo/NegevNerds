@@ -370,8 +370,9 @@ class NegevNerds:
         question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
         for curr_question in question_files:
             try:
+
                 if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
-                    self.add_question(course_id, year, semester, moed, question_number, False, [], curr_question, None)
+                    self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
             except Exception as e:
                 print(e)
             question_number = question_number+1

@@ -9,7 +9,9 @@ from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseMana
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
-
+from sentence_transformers import SentenceTransformer, util
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 class Course:
     def __init__(self, course_id, name, course_topics=None):
@@ -559,10 +561,35 @@ class Course:
         return folder_name, exams
 
     def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
+        if question_topics is None:
+            question_topics = self.find_question_topics_by_text(question_text)
+
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
-    
+
+    def find_question_topics_by_text(self,question_text):
+
+        # טען מודל תומך בעברית
+        model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+
+        # הפקת embedding
+        question_embedding = model.encode(question_text, convert_to_tensor=True)
+        topics_embeddings = model.encode(self.course_topics, convert_to_tensor=True)
+
+        # חישוב דמיון קוסיני
+        cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
+
+        # הצגה עם threshold חכם
+        threshold = 0.3  # אתה יכול להתאים אותו לפי הצורך
+        results = []
+
+        for topic, score in zip(self.course_topics, cosine_scores):
+            if score >= threshold:
+                results.append(topic)
+        return results
+
+
     def edit_question_topic(self, year, semester, moed, question_number, topics):
         question_topic_repo = CourseTopicsRepository()
         for topic in topics:
