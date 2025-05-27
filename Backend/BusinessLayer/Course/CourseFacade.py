@@ -9,6 +9,7 @@ from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
+import traceback
 from datetime import datetime
 
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
@@ -433,6 +434,7 @@ class CourseFacade:
             return course.add_question(year, semester, moed, question_number, is_american, question_topics,
                                        pdf_question_path, pdf_answer_path, question_text)
         except Exception as e:
+            traceback.print_exc()
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
     

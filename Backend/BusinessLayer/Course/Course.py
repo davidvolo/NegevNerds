@@ -566,6 +566,7 @@ class Course:
         if question_topics is None:
             question_topics = self.find_question_topics_by_text(question_text)
 
+
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
@@ -574,16 +575,20 @@ class Course:
 
         # טען מודל תומך בעברית
         model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-
+        topics_list = list(self.course_topics)
         # הפקת embedding
         question_embedding = model.encode(question_text, convert_to_tensor=True)
-        topics_embeddings = model.encode(self.course_topics, convert_to_tensor=True)
+        topics_embeddings = model.encode(topics_list, convert_to_tensor=True)
 
         # חישוב דמיון קוסיני
         cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
         scores_array = cosine_scores.cpu().numpy()
+        print("Cosine Scores:", cosine_scores)
+        print("Topics embeddings:", topics_embeddings)
+        print("Question Embedding:", question_embedding)
+        print("Scores Array:", scores_array)
 
-        MIN_ABSOLUTE_THRESHOLD = 0.2
+        MIN_ABSOLUTE_THRESHOLD = 0.4
         HIGH_ALL_RELEVANT_THRESHOLD = 0.7
         GAP_FROM_MAX_SCORE = 0.25
 
@@ -592,13 +597,13 @@ class Course:
             return []
 
         if np.min(scores_array) >= HIGH_ALL_RELEVANT_THRESHOLD:
-            return list(self.course_topics)
+            return topics_list
 
         dynamic_threshold = np.max(scores_array) - GAP_FROM_MAX_SCORE
         final_threshold = max(dynamic_threshold, MIN_ABSOLUTE_THRESHOLD)
 
         results = []
-        for topic, score in zip(self.course_topics, scores_array):
+        for topic, score in zip(topics_list, scores_array):
             if score >= final_threshold:
                 results.append(topic)
 

@@ -1070,7 +1070,7 @@ class NegevNerds:
         
     def delete_question_solution(self, course_id,year, semester, moed, question_number):
         solution_path, question_id = self._course_facade.get_question_id_and_path(course_id,year, semester, moed, question_number)
-        if solution_path is not "":
+        if solution_path != "":
             self.fileManager.delete_file(solution_path)
             question_repo = QuestionRepository()
             question_repo.uploadSolution(question_id, "")
