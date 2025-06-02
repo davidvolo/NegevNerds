@@ -113,7 +113,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
         return comment_id, comment_writer.user_id
 
     # ---Tests for Discussions---
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     def test_add_comment_success(self, mock_send_notification, mock_process_pdf):
         """Test: Add a comment successfully to a question discussion."""
@@ -156,7 +156,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertEqual(result, "CommentData added successfully.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     def test_add_comment_course_not_found(self, mock_send_notification, mock_process_pdf):
         """Test: Attempt to add comment to non-existent course should fail."""
@@ -184,7 +184,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertIn("Failed to add comment", str(context.exception))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     def test_add_comment_question_not_found(self, mock_send_notification, mock_process_pdf):
         """Test: Attempt to add comment to non-existent question should fail."""
@@ -215,7 +215,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertIn("Failed to add comment", str(context.exception))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     def test_add_comment_with_photo_success(self, mock_send_notification, mock_process_pdf):
         """Test: Successfully add a comment with a photo."""
@@ -253,7 +253,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
         self.assertEqual(result, "CommentData added successfully.")
 
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.User.UserFacade.UserFacade.should_send_notification', return_value=True)
     def test_add_reaction_success(self, mock_should_send_notification, mock_process_pdf, mock_send_notification):
         """Test: Add reaction to a comment successfully."""
@@ -370,8 +370,8 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 emoji="😂"
             )
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf')
     def test_get_comment_media_link_success(self, mock_ir, mock_pdf):
         writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
         self.negev._user_facade.users_byId[writer.user_id] = writer
@@ -453,7 +453,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 comment_id="fake_id"
             )
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch.object(UserFacade, "should_send_notification", return_value=False)
     @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit", return_value=None)
     def test_remove_reaction_success(self, mock_emit, mock_should_send_notification, mock_process_pdf):
@@ -600,7 +600,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertEqual(result, [])
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_delete_comment_success(self, mock_ir):
         """Test: Deleting an existing comment should succeed."""
 
@@ -671,7 +671,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertEqual(result, "CommentData deleted successfully.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_delete_comment_not_found(self, mock_ir):
         """Test: Deleting non-existing comment raises CommentNotFound."""
 
@@ -729,9 +729,9 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         return question_number, comment_id
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
-    def test_edit_comment_text_success(self, mock_retrival_pdf, mock_process_pdf):
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf')
+    def test_edit_comment_text_success(self, mock_retrieval_pdf, mock_process_pdf):
         """Test editing an existing comment's text works as expected."""
 
         writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
@@ -784,9 +784,9 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertEqual(result, "CommentData edited successfully.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
-    def test_edit_comment_text_not_found(self, mock_retrival_pdf, mock_process_pdf):
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf')
+    def test_edit_comment_text_not_found(self, mock_retrieval_pdf, mock_process_pdf):
         """Test editing a non-existing comment raises CommentNotFound."""
 
         self.negev.add_question(

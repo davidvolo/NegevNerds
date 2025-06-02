@@ -265,9 +265,9 @@ class TestNegevNerdsCourseManagement(BaseTestCase):
         self.assertEqual(parsed["status"], "error")
         self.assertIn("כבר לא קיים", parsed["message"])
 
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf')
-    def test_update_course_topics_removal_blocked_due_to_question(self, mock_process_pdf, mock_retrival):
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf')
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf')
+    def test_update_course_topics_removal_blocked_due_to_question(self, mock_process_pdf, mock_retrieval):
         """Verify error when trying to remove a topic that is still in use by a question."""
         user = self._complete_user_registration("removalock@bgu.ac.il", "Pass1!", "Topic", "Lock")
         course_id = "888.3.8888"

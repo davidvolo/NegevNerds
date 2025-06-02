@@ -8,6 +8,7 @@ from Backend.BusinessLayer.Analyzer.SyllabusAnalyzer import SyllabusAnalyzer
 from Backend.BusinessLayer.Analyzer.InformationRetrieval import InformationRetrieval
 from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 
+
 class TestAnalyzerFacade(unittest.TestCase):
     def setUp(self):
         # Create a new instance of AnalyzerFacade
@@ -46,7 +47,7 @@ class TestAnalyzerFacade(unittest.TestCase):
         self.facade.course_syllabus.extract_syllabus_topic_total.assert_called_once_with(pdf_path)
         self.assertEqual(result, expected_topics)
 
-    def test_perform_information_retrival_question_pdf(self):
+    def test_perform_information_retrieval_question_pdf(self):
         pdf_question_path = "dummy_question.pdf"
         question_id = "q1"
         course_id = "c1"
@@ -58,7 +59,7 @@ class TestAnalyzerFacade(unittest.TestCase):
             pdf_file_path=pdf_question_path, question_id=question_id, course_id=course_id
         )
 
-    def test_perform_information_retrival_question_photo(self):
+    def test_perform_information_retrieval_question_photo(self):
         text = "dummy photo text"
         question_id = "q1"
         course_id = "c1"
@@ -83,7 +84,6 @@ class TestAnalyzerFacade(unittest.TestCase):
             query=text, course_id=course_id
         )
         self.assertEqual(result, expected_result)
-
 
 
 if __name__ == "__main__":

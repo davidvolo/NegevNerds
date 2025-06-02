@@ -42,7 +42,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
             del self.negev.courseFacade.check_exam_full_pdf
 
     # ---Tests for Questions---
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_search_by_topic_success(self, mock_process_pdf):
         """Test: Search by existing topic returns questions."""
         topic = "מבני נתונים"
@@ -63,14 +63,14 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIsInstance(results, list)
         self.assertGreaterEqual(len(results), 1, "Expected at least one question with the topic.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_search_by_topic_no_results(self, mock_process_pdf):
         """Test: Search by non-existing topic returns empty list."""
         results = self.negev.search_by_topic(self.course_id, "נושא שלא קיים בכלל")
         self.assertIsInstance(results, list)
         self.assertEqual(len(results), 0, "Expected no questions with non-existing topic.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_search_by_topic_course_not_exist(self, mock_process_pdf):
         """Test: Course does not exist raises Exception."""
         with self.assertRaises(Exception) as context:
@@ -79,9 +79,10 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIn("Error while searching by topic", str(context.exception))
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_search_free_text_system_basic_no_course_id(self, mock_retrival_pdf, mock_search_free_text):
+    def InformationRetrieval_test_search_free_text_system_basic_no_course_id(self, mock_retrieval_pdf,
+                                                                             mock_search_free_text):
         """System Test: User searches for a term without specifying course_id – expects relevant results."""
 
         question_number = 1001
@@ -127,9 +128,9 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIsNone(suggestion)
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_search_free_text_system_with_course_id(self, mock_retrival_pdf, mock_search_free_text):
+    def test_search_free_text_system_with_course_id(self, mock_retrieval_pdf, mock_search_free_text):
         """System Test: User searches for a term with a specific course_id – expects filtered results."""
 
         # שלב 1: הוספת שאלה בקורס הקיים
@@ -177,9 +178,9 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIsNone(suggestion)
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_search_free_text_system_no_results(self, mock_retrival_pdf, mock_search_free_text):
+    def test_search_free_text_system_no_results(self, mock_retrieval_pdf, mock_search_free_text):
         """System Test: User searches for a term that has no matching results – expects empty list."""
 
         # אין צורך להוסיף שאלה – המנוע מחזיר תוצאה ריקה
@@ -193,9 +194,9 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIsNone(suggestion, "Expected no suggestion when nothing matches.")
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_search_free_text_system_with_typo_suggestion(self, mock_retrival_pdf, mock_search_free_text):
+    def test_search_free_text_system_with_typo_suggestion(self, mock_retrieval_pdf, mock_search_free_text):
         """System Test: Search with typo returns suggestion even if results are empty."""
 
         mock_search_free_text.return_value = ([], "גרף")
@@ -207,9 +208,9 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(suggestion, "גרף", "Expected suggestion to correct the typo.")
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.search_free_text_from_course')
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_search_free_text_system_case_insensitive(self, mock_retrival_pdf, mock_search_free_text):
+    def test_search_free_text_system_case_insensitive(self, mock_retrieval_pdf, mock_search_free_text):
         """System Test: Search is case-insensitive (e.g., 'dfa' should match 'DFA')."""
 
         question_number = 1003
@@ -252,7 +253,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(results[0].question_id, str(question_number))
         self.assertIsNone(suggestion)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_search_by_specifics_full_match(self, mock_process_pdf):
         """Test Case 1: Search with all details returns specific question."""
 
@@ -299,7 +300,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         )
         self.assertGreaterEqual(len(result), 2)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_add_question_success_pdf_only(self, mock_process_pdf):
         """Test: Add a question successfully with only a PDF file (no answer)."""
 
@@ -320,7 +321,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertEqual(result, "Question added successfully.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_add_question_with_solution_success(self, mock_process_pdf):
         """Successfully add a question with a solution file."""
 
@@ -338,7 +339,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertEqual(result, "Question added successfully.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_add_question_course_not_exist(self, mock_process_pdf):
         """Test: Fail to add question when the course does not exist."""
         fake_course_id = "000.0.0000"
@@ -357,7 +358,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
             )
         self.assertIn("Failed to add question", str(context.exception))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_add_question_already_exists(self, mock_process_pdf):
         """Try to add a duplicate question and expect an error."""
 
@@ -391,10 +392,9 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         with self.assertRaises(Exception):
             self.negev.add_question(None, 2023, "A", "MoedA", 1, True, ["arrays"], self.mock_pdf_file(), None)
 
-    import io
     from unittest.mock import patch
 
-    @patch("Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf", return_value=None)
+    @patch("Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf", return_value=None)
     def test_get_question_path_success(self, mock_process_pdf):
         try:
             self.negev.courseFacade.open_course(self.course_id, "מבוא לבינה", ["נושאים"])
@@ -438,7 +438,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
             )
         self.assertIn("Failed to get path", str(context.exception))
 
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
     def test_get_link_to_answer_success(self, mock_info_retrieval):
         """Test: Get answer file link for existing question."""
@@ -492,7 +492,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
                 question_number=self.question_number
             )
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('elasticsearch.Elasticsearch.delete', return_value=None)
     def test_delete_question_success(self, mock_delete_elastic, mock_process_pdf):
         """Test: Successfully delete an existing question."""
@@ -541,7 +541,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         question_after = question_repo.get_question_by_number(exam_id=exam_id, question_number=100)
         self.assertIsNone(question_after, "Expected the question to be deleted from database.")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_check_exist_solution_exists(self, mock_process_pdf):
         """Test: Solution exists for a question."""
         self.negev.add_question(
@@ -567,7 +567,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertFalse(result, "suppose to be false")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_upload_solution_success(self, mock_process_pdf):
         self.negev.add_question(
             course_id=self.course_id,
@@ -594,10 +594,10 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertIn("uploaded", response["message"].lower())
         self.assertTrue(response["link"].endswith(".pdf"))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
-    def test_upload_solution_already_exists(self, mock_perform_retrival, mock_process_pdf):
+    def test_upload_solution_already_exists(self, mock_perform_retrieval, mock_process_pdf):
         """Verify error is raised when uploading solution that already exists."""
         self.negev.add_question(
             course_id=self.course_id,
@@ -639,7 +639,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(response["status"], "error")
         self.assertIn("NoneType", response["message"])
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_edit_question_topic_success(self, mock_process_pdf):
         """System Test: Successfully update topics of existing question."""
 
@@ -699,7 +699,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(response["status"], "error")
         self.assertIn("אירעה שגיאה", response["message"])
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_edit_question_topic_empty_topic_list(self, mock_process_pdf):
         """System Test: Attempt to clear topics of an existing question."""
 
@@ -727,7 +727,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertEqual(response["status"], "success")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_edit_question_details_success(self, mock_process_pdf):
         """System Test: Successfully edit question details and move to new exam."""
 
@@ -764,7 +764,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         result = json.loads(result_json)
         self.assertEqual(result["status"], "success")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_edit_question_details_question_already_exists(self, mock_process_pdf):
         """System Test: Fail to move question if new question number already exists in target exam."""
 
@@ -829,7 +829,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(response["status"], "error")
         self.assertIn("Invalid", response["message"])
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_delete_question_solution_success(self, mock_process_pdf):
         """System Test: Delete existing solution file successfully."""
         question_number = 601
@@ -856,7 +856,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertTrue(result)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_delete_question_solution_no_solution(self, mock_process_pdf):
         """System Test: Try deleting a solution when none exists – expect False."""
 
@@ -895,7 +895,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
                 question_number=9999
             )
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_swap_question_file_success_pdf(self, mock_process_pdf):
         """System Test: Successfully swap existing PDF question file with a new one."""
 
@@ -933,7 +933,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertTrue(result["has_link"])
         self.assertTrue(result["link"].endswith(".pdf"))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_swap_question_file_success_image(self, mock_process_pdf):
         """System Test: Swap file when new file is an image (photo)."""
 
@@ -968,7 +968,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         self.assertEqual(result["status"], "success")
         self.assertTrue(result["link"].endswith(".jpg"))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_is_following_true(self, mock_process_pdf):
         """System Test: User is following the discussion – expect True."""
         question_number = 801
@@ -990,7 +990,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
         self.assertTrue(result)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_is_following_false(self, mock_process_pdf):
         """System Test: User is not following the discussion – expect False."""
         question_number = 802
@@ -1018,7 +1018,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         result = self.negev.is_following(user_id="nonexistent_user", question_id="nonexistent_q")
         self.assertFalse(result)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_follow_question_success(self, mock_process_pdf):
         """System Test: User follows a question successfully."""
         question_number = 901
@@ -1042,7 +1042,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         result = self.negev.is_following(user_id=self.user.user_id, question_id=question_id)
         self.assertTrue(result)
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_follow_question_idempotent(self, mock_process_pdf):
         """System Test: Calling follow_question twice should not crash or duplicate."""
         question_number = 902
@@ -1075,7 +1075,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
         except Exception as e:
             self.fail(f"follow_question raised an exception unexpectedly: {e}")
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_unfollow_question_success(self, mock_process_pdf):
         """System Test: User successfully unfollows a followed question."""
         question_number = 43
@@ -1099,7 +1099,7 @@ class TestNegevNerdsQuestionManagement(BaseTestCase):
 
         self.assertFalse(self.negev.is_following(self.user.user_id, question_id))
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_unfollow_question_not_following(self, mock_process_pdf):
         """System Test: Unfollow a question that wasn't being followed – should not raise."""
 
