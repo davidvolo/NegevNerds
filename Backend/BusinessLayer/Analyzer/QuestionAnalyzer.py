@@ -1,6 +1,4 @@
 import io
-from collections import defaultdict
-
 import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
@@ -8,9 +6,6 @@ from werkzeug.datastructures import FileStorage
 
 
 class QuestionAnalyzer:
-    import fitz  # PyMuPDF
-    import io
-    from collections import defaultdict
 
     def splitPDF(self, pdf_file, lines):
         PDF_RENDERED_WIDTH = 900  # Same as your frontend canvas width
@@ -102,7 +97,6 @@ class QuestionAnalyzer:
         doc.close()
         return result_files
 
-
     # def splitPDF(self, pdf_file, lines):
     #     PDF_RENDERED_WIDTH = 900  # Same as your frontend canvas width
     #     print(lines)
@@ -166,7 +160,7 @@ class QuestionAnalyzer:
     #     doc.close()
     #     return result_files
 
-    def extract_text_from_pdf_file(self,file_obj):
+    def extract_text_from_pdf_file(self, file_obj):
         try:
             # Open the PDF from the file-like object
             document = fitz.open(stream=file_obj.read(), filetype="pdf")
@@ -182,7 +176,7 @@ class QuestionAnalyzer:
         """
         Extracts text from an image using Tesseract OCR for Hebrew and English.
 
-        :param image_path: Path to the image file
+        :param image_file: Path to the image file
         :return: Extracted text as a string
         """
         try:
@@ -197,10 +191,6 @@ class QuestionAnalyzer:
         except Exception as e:
             print(f"Error occurred: {e}")
             return None
-
-
-
-
 
 # if __name__ == "__main__":
 #     image_path = "../../../photo2.jpg"  # Replace with your image path

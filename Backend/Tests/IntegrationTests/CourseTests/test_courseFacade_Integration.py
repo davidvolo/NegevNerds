@@ -1,21 +1,10 @@
 import os
-import unittest
 from typing import List
-from unittest.mock import patch
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-
-# Adjust these imports according to your project structure.
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Course.Course import Course
-from Backend.BusinessLayer.Course.Question import Question
-from Backend.BusinessLayer.Course.Question import Question
 from Backend.BusinessLayer.Util.Exceptions import CourseAlreadyExists, InvalidCourseIdFormat
 from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
-from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
-
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 
 from sqlalchemy import create_engine
@@ -24,15 +13,6 @@ from unittest import TestCase
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Base import Base, delete_all_data
 
-from Backend.DataLayer.UserData import UserModel  # Import the UserModel
-from Backend.DataLayer.ReactionData import ReactionModel # Import the ReactionModel
-from Backend.DataLayer.Questions import QuestionModel
-from Backend.DataLayer.QuestionTopics import QuestionTopicsModel
-from Backend.DataLayer.CourseTopics import CourseTopicsModel
-
-from Backend.DataLayer.CourseData import CourseModel  # Import other models as needed
-from Backend.ServiceLayer.ServiceLayer import ServiceLayer
-
 
 class TestCourseFacade(TestCase):
 
@@ -40,8 +20,8 @@ class TestCourseFacade(TestCase):
     def setUpClass(cls):
         os.environ["APP_ENV"] = "test"
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))  # העלאה של 3 רמות לתיקיית ה-Backend
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")  # יצירת הנתיב המוחלט לקובץ ה-DB
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+        db_path = os.path.join(base_dir, "test_NegevNerds.db")
 
         engine = create_engine(f"sqlite:///{db_path}")
         cls.Session = sessionmaker(bind=engine)
@@ -113,7 +93,7 @@ class TestCourseFacade(TestCase):
     def test_remove_student_from_course(self):
         # Add a student to the course
         self.facade.open_course("1.123.1234", "new course", [])
-        curr_course  = self.facade.get_course("1.123.1234")
+        curr_course = self.facade.get_course("1.123.1234")
         curr_course.add_student("user1")
         # Remove the student
         self.facade.remove_student_from_course("1.123.1234", "user1")
@@ -133,7 +113,7 @@ class TestCourseFacade(TestCase):
         self.assertIn(new_course_id, self.facade.courses)
         self.assertEqual(self.facade.courses[new_course_id].name, new_course_name)
         for topic in new_course_topics:
-            self.assertTrue(topic in self.facade.courses[new_course_id].course_topics )
+            self.assertTrue(topic in self.facade.courses[new_course_id].course_topics)
 
     def test_open_course_already_exist(self):
 
@@ -259,9 +239,10 @@ class TestCourseFacade(TestCase):
             question_text="2+2="
         )
         # Assuming the real get_course method inside the facade returns a valid course object
-        course:Course = self.facade.get_course(self.course_id)
+        course: Course = self.facade.get_course(self.course_id)
         # Assert that the result from the facade matches the expected result
-        self.assertIsNotNone(course.get_questions_by_specific(year=2025, semester=Semester.SPRING, moed=Moed.A, question_number=1))
+        self.assertIsNotNone(course.get_questions_by_specific(year=2025, semester=Semester.SPRING, moed=Moed.A,
+                                                              question_number=1))
 
     def test_upload_full_exam_pdf(self):
         # Directly call the method without mocking
@@ -323,8 +304,6 @@ class TestCourseFacade(TestCase):
 
         self.assertTrue("Math" in question.question_topics)
         result = self.facade.remove_topic_from_question(self.course_id, 2025, "אביב", "א", 1, "Math")
-
-        # Assuming the real get_course method inside the facade returns a valid course object
 
         # Assert that the result from the facade matches the expected result
         self.assertEqual(len(question.question_topics), 1)

@@ -460,7 +460,9 @@ class TestCourse(unittest.TestCase):
 
         dummy_exam = MagicMock()
         dummy_exam.edit_question_topic.return_value = "edited_topic"
+
         self.course.get_exam = MagicMock(return_value=dummy_exam)
+        self.course.course_topics_repository = mock_repo  # <<< הזרקה מפורשת
 
         result = self.course.edit_question_topic(2025, "SPRING", "A", 1, ["new_topic"])
 

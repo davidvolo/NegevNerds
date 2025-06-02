@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 
 # Import the classes to test (adjust the paths as necessary)
-from Backend.BusinessLayer.Analyzer.InformationRetrival import InformationRetrival, WordIndex1, WordIndex2
+from Backend.BusinessLayer.Analyzer.InformationRetrieval import InformationRetrieval, WordIndex1, WordIndex2
 
 # For tests involving PDF, we patch pdfplumber and tabula.
 import pdfplumber
@@ -110,7 +110,7 @@ class TestWordIndex2(unittest.TestCase):
 class TestInformationRetrival(unittest.TestCase):
     def setUp(self):
         # We create an InformationRetrival instance.
-        self.ir = InformationRetrival()
+        self.ir = InformationRetrieval()
         # Patch the words_repository to be a MagicMock.
         self.ir.words_repository = MagicMock()
         # Also, set the wordIndex1 and wordIndex2 to dummy instances

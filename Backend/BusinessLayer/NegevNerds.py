@@ -5,7 +5,6 @@ import base64
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Notifications.NotificationFacade import NotificationFacade
 from Backend.BusinessLayer.FileManager.FileManager import FileManager
-from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 from Backend.BusinessLayer.User.UserFacade import UserFacade
 from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
@@ -39,11 +38,12 @@ import os
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 class NegevNerds:
 
     _instance = None
     _lock = threading.Lock()
-    _initialized = False # Class-level flag for initialization status
+    _initialized = False  # Class-level flag for initialization status
 
     def __new__(cls, mkdir):
         if cls._instance is None:
@@ -56,8 +56,8 @@ class NegevNerds:
     def __init__(self, mkdir):
         # Only initialize if it hasn't been initialized before for this instance
         if not self._initialized:
-            with self._lock: # Optional: Add lock here if init operations are sensitive to race conditions on first run
-                if not self._initialized: # Double-check after acquiring lock
+            with self._lock:  # Optional: Add lock here if init operations are sensitive to race conditions on first run
+                if not self._initialized:  # Double-check after acquiring lock
                     print("Initializing NegevNerds instance attributes...")
                     # Resolve directory path once
                     resolved_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), mkdir, "files"))
@@ -87,7 +87,6 @@ class NegevNerds:
                     print("NegevNerds instance initialization complete.")
         else:
             print("NegevNerds instance already initialized, skipping re-initialization.")
-
 
     # Getter methods for accessing the facades and file manager
     @property
@@ -654,7 +653,6 @@ class NegevNerds:
                                                                 link=question_link,appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
                     comment_to_comment=False, react_to_comment=True, remove_course_manager=False, send_email = send_email)
 
-
             #self._notification_facade.send_notification(sender_id=user_id, receiver_id=receiver_id ,message= f"{user_id} add reaction to your comment- {comment_id}", need_approval=False )
             return "ReactionData added successfully."
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
@@ -812,9 +810,9 @@ class NegevNerds:
                                                                  question_number=question_number,is_american=is_american,
                                                                  question_topics=question_topics,pdf_question_path=question_path, pdf_answer_path=answer_path, question_text=question_text)
                     if self.is_photo(question_file):
-                        self._pdfFacade.perform_information_retrival_question_photo(text=question_text, question_id=question_id, course_id = course_id)
+                        self._pdfFacade.perform_information_retrieval_question_photo(text=question_text, question_id=question_id, course_id = course_id)
                     else:
-                        self._pdfFacade.perform_information_retrival_question_pdf(pdf_question_path=question_path,question_id=question_id, course_id = course_id)
+                        self._pdfFacade.perform_information_retrieval_question_pdf(pdf_question_path=question_path, question_id=question_id, course_id = course_id)
 
                 return "Question added successfully."
         except (CourseIsNotExist, ExamIsNotExist, TopicNotFound, QuestionAlreadyInExam) as e:
@@ -851,7 +849,7 @@ class NegevNerds:
                 self.fileManager.delete_file(pathAnswer)
             try:
                 elastic_id = f"{course_id}_{question_id}"
-                info_retrieval = self._pdfFacade.information_retrival
+                info_retrieval = self._pdfFacade.information_retrieval
                 info_retrieval.elastic_search.delete(index=info_retrieval.index_name, id=elastic_id)
                 print(f"Deleted question {elastic_id} from ElasticSearch successfully.")
             except Exception as e:
@@ -879,11 +877,10 @@ class NegevNerds:
     def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
         try:
             return self.courseFacade.get_comment_media_link(course_id, year, semester, moed, question_number, comment_id)
-        except (CourseIsNotExist, ExamIsNotExist, CommentNotFound) as e:
+        except (CourseIsNotExist, ExamIsNotExist, CommentNotFound, QuestionNotFound) as e:
             raise e
         except Exception as e:
             raise Exception(f"Failed to get path: {e}")
-
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         try:
@@ -990,7 +987,7 @@ class NegevNerds:
         except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
             raise e
         except Exception as e:
-            raise Exception(f"Failed to delete comment: {e}")
+            raise Exception(f"Failed to edit comment: {e}")
 
     def search_question_by_specifics(self, course_id, year=None, semester=None, moed=None, question_number=None):
         """Search for questions based on the provided specifics for the course."""
@@ -1033,7 +1030,7 @@ class NegevNerds:
 
     def edit_question_topic(self,course_id, year, semester, moed, question_number, topics):
         res = self._course_facade.edit_question_topic(course_id, year, semester, moed, question_number, topics)
-              
+
         if res:
             return json.dumps({
                 "status": "success",
@@ -1044,7 +1041,7 @@ class NegevNerds:
                 "status": "error",
                 "message": "אירעה שגיאה בעדכון נושאי השאלה"
         })
-    
+
     def checkSameExams(self, old_course_id, old_year, old_semester, old_moed,
                         new_course_id, new_year, new_semester, new_moed):
         if old_course_id == new_course_id:
@@ -1423,28 +1420,36 @@ class NegevNerds:
         "status": "success",
         "message": "הבקשה נדחתה בהצלחה"
             })
-    
+
     def disapprove_course_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()
-        reciever_id, message = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
-        if not reciever_id:
+        try:
+            reciever_id, _ = notification_repo.get_notification_by_id_and_mark_as_seen(notification_id)
+        except Exception as e:
             return json.dumps({
                 "status": "error",
-                "message": "Notification not found"
+                "message": str(e)
             })
-        # reciever_id = notification.sender_user_id
-        user_sender = self.userFacade.getUser_by_id(sender_id)
-        match = re.search(r'״(.+?)״\s+([\d.]+)', message)
-        course_name = match.group(1)
-        course_id = match.group(2)
-        message = f"{user_sender.get_first_name() + ' ' +user_sender.get_last_name()} סירב/ה להצעה שלך להתמנות לתפקיד מנהל קורס, בקורס ״{course_name}״ {course_id} "
-        self._notification_facade.send_notification(receiver_id=reciever_id, sender_id=sender_id, message = message, isApproved=False,
-                            link="",appoint_system_manager=False, appoint_course_manager=False, comment_to_following=False,
-                            comment_to_comment=False, react_to_comment=False, remove_course_manager=False)
+
+        message = "הבקשה נדחתה."
+        self._notification_facade.send_notification(
+            receiver_id=reciever_id,
+            sender_id=sender_id,
+            message=message,
+            isApproved=False,
+            link="",
+            appoint_system_manager=False,
+            appoint_course_manager=False,
+            comment_to_following=False,
+            comment_to_comment=False,
+            react_to_comment=False,
+            remove_course_manager=False
+        )
+
         return json.dumps({
-        "status": "success",
-        "message": "הבקשה נדחתה בהצלחה"
-            })
+            "status": "success",
+            "message": message
+        })
 
     def approve_course_manager_appoint(self, notification_id, sender_id):
         notification_repo = NotificationRepository()

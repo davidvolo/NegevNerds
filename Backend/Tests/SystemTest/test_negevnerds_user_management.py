@@ -20,30 +20,18 @@ class TestNegevNerdsUserManagement(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ["APP_ENV"] = "test"
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")
-        engine = create_engine(f"sqlite:///{db_path}")
-        cls.Session = sessionmaker(bind=engine)
-        cls.engine = engine
-        # Drop and create tables anew.
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
+        super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
-        Base.metadata.drop_all(cls.engine)
+        super().tearDownClass()
 
     def setUp(self):
-        self.session = self.Session()
-        delete_all_data(engine=self.engine, session=self.session)
-        self.negev = NegevNerds(mkdir="test_directory")
+        super().setUp()
         self.user = self._complete_user_registration("admin@bgu.ac.il", "Pass1!", "Admin", "User")
 
     def tearDown(self):
-        delete_all_data(engine=self.engine, session=self.session)
-        self.session.close()  # סגירת session
+        super().tearDown()
 
     def _mock_image_file(self, filename="profile.jpg", content=b"fake image content"):
         stream = io.BytesIO(content)

@@ -1,4 +1,3 @@
-from Backend.BusinessLayer.User.UserFacade import UserFacade
 import os
 import unittest
 
@@ -18,8 +17,8 @@ class TestUser(unittest.TestCase):
     def setUpClass(cls):
         os.environ["APP_ENV"] = "test"
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))  # העלאה של 3 רמות לתיקיית ה-Backend
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")  # יצירת הנתיב המוחלט לקובץ ה-DB
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+        db_path = os.path.join(base_dir, "test_NegevNerds.db")
 
         engine = create_engine(f"sqlite:///{db_path}")
         cls.Session = sessionmaker(bind=engine)
@@ -28,12 +27,9 @@ class TestUser(unittest.TestCase):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
 
-
     @classmethod
     def tearDownClass(cls):
         Base.metadata.drop_all(cls.engine)
-
-
 
     def setUp(self):
         delete_all_data(engine=self.engine, session=self.session)
@@ -42,9 +38,6 @@ class TestUser(unittest.TestCase):
         user_facade.users_byEmail={}
         user_facade.registerWithoutAuth("u1234@post.bgu.ac.il", "pass111!D",  "נדב", "קטלב")
         self.user = user_facade.getUser_by_email("u1234@post.bgu.ac.il")
-
-
-
 
     def test_reset_new_password(self):
         last_pass = self.user.password
@@ -81,11 +74,6 @@ class TestUser(unittest.TestCase):
         self.assertEqual(self.user.password, "newpass")
         self.assertEqual(self.user.first_name, "Changed")
         self.assertEqual(self.user.last_name, "User")
-
-    # def test_delete(self):
-    #     user_id = self.user.user_id
-    #     self.user.delete()
-    #     self.assertIsNone(self.user.user_id)
 
     def test_get_courses(self):
         self.user.courses = ["course1", "course2"]

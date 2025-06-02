@@ -25,25 +25,11 @@ class TestNegevNerdsCourseManagement(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Create test database and schema before all tests."""
-        os.environ["APP_ENV"] = "test"
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")
-        engine = create_engine(f"sqlite:///{db_path}")
-        cls.Session = sessionmaker(bind=engine)
-        cls.engine = engine
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
+        super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
-        """Drop test schema and verify DB is clean after all tests."""
-        session = cls.Session()
-        user_count = session.query(UserModel).count()
-        assert user_count == 0, f"Expected 0 users in DB after tests, found {user_count}"
-        session.close()
-        Base.metadata.drop_all(cls.engine)
+        super().tearDownClass()
 
     def setUp(self):
         """Clear data and create a fresh instance of NegevNerds before each test."""

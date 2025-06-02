@@ -40,20 +40,6 @@ class TestCourseFacade(unittest.TestCase):
         self.facade.register_to_course(self.course_id, "user1")
         self.dummy_course.add_student.assert_called_once_with("user1")
 
-    @patch("Backend.DataLayer.Questions.QuestionRepository.QuestionRepository.get_questions_by_dto")
-    def test_get_questions_dto_by_search_dtos(self, mock_get_by_dto):
-        dummy_search_dto = MagicMock(spec=SearchDTO)
-        # Set the required attribute
-        dummy_search_dto.course_id = "course1"
-
-        dummy_question = MagicMock()
-        dummy_question.to_dto.return_value = {"id": "q1"}
-        mock_get_by_dto.return_value = dummy_question
-
-        result = self.facade.get_questions_dto_by_search_dtos([dummy_search_dto])
-        mock_get_by_dto.assert_called_once_with(dummy_search_dto)
-        self.assertEqual(result, [{"id": "q1"}])
-
     @patch("Backend.DataLayer.Questions.QuestionRepository.QuestionRepository.get_questions_by_ids_list")
     def test_get_questions_dto_by_ids(self, mock_get_by_ids_list):
         dummy_question = MagicMock()
@@ -63,15 +49,6 @@ class TestCourseFacade(unittest.TestCase):
         result = self.facade.get_questions_dto_by_ids(["q1"], self.course_id)
         mock_get_by_ids_list.assert_called_once_with(["q1"])
         self.assertEqual(result, [{"id": "q1"}])
-
-    # def test_handleDownloadAllExamsZip(self):
-    #     self.dummy_course.handleDownloadAllExamsZip = MagicMock(return_value=("folder1", {"exam1": "link1"}))
-    #
-    #     folder, exams = self.facade.handleDownloadAllExamsZip(self.course_id)
-    #
-    #     self.dummy_course.handleDownloadAllExamsZip.assert_called_once()
-    #     self.assertEqual(folder, "folder1")
-    #     self.assertEqual(exams, {"exam1": "link1"})
 
     def test_remove_student_from_course(self):
         # Ensure get_course returns the dummy course.

@@ -31,17 +31,12 @@ class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.session = self.Session()
-        os.environ["APP_ENV"] = "test"  # שימוש בדאטהבייס טסט
+        os.environ["APP_ENV"] = "test"
         delete_all_data(engine=self.engine, session=self.session)
-        self.negev = NegevNerds(mkdir="test_directory")
+        self.negev = NegevNerds(mkdir="test_temp_files")
 
     def tearDown(self):
-        # מחיקת דאטה אחרי כל טסט
         delete_all_data(engine=self.engine, session=self.session)
-        # try:
-        #     Base.metadata.drop_all(bind=self.engine)
-        # except Exception:
-        #     pass
         self.session.close()
 
     def _encrypt_password(self, password: str) -> str:
@@ -51,7 +46,11 @@ class BaseTestCase(unittest.TestCase):
         user, _ = self.negev.register(email, password, password, first_name, last_name)
         encrypted_password = self._encrypt_password(password)
         self.negev.register_termOfUse_part(email, encrypted_password, first_name, last_name, profile_picture_file=None)
-        return self.negev._user_facade.getUser_by_email(email)
+        user_obj = self.negev._user_facade.getUser_by_email(email)
+
+        self.negev._user_facade.users_byId[user_obj.user_id] = user_obj
+
+        return user_obj
 
     def _open_course(self, user, course_id, course_name):
         syllabus_path = os.path.join(os.path.dirname(__file__), "sylabus.pdf")

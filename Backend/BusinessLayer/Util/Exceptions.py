@@ -52,6 +52,7 @@ class UserDoesnotExistsError(BaseError):
         message = f"User with user_id {user_id} not exists."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
+
 class UserIsNotLoggedInError(BaseError):
     """Exception raised when tring to log out a not logged in user."""
     def __init__(self, email):
@@ -90,6 +91,7 @@ class CourseAlreadyExists(BaseError):
         message = f"Course {course_id} is already exist."
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
 
+
 class SolutionAlreadyExists(BaseError):
     """Exception raised when the user is not exist."""
 
@@ -103,6 +105,7 @@ class InvalidCourseIdFormat(BaseError):
     def __init__(self, course_id):
         message = f"הפורמט של הקורס {course_id} אינו תקין"
         super().__init__(message, code=409)  # 409 is commonly used for conflict errors
+
 
 class ManagerIsNotExist(BaseError):
     """Exception raised when the manager is not exist."""

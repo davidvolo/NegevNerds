@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Moed(Enum):
     A = "א"
     B = "ב"
@@ -8,6 +9,7 @@ class Moed(Enum):
 
     def __str__(self):
         return self.value
+
 
 class Semester(Enum):
     FALL = "סתיו"

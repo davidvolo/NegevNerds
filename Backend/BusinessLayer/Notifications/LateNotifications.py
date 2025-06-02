@@ -4,12 +4,11 @@ import os
 from Backend.BusinessLayer.Notifications.Notification import Notification
 from Backend.DataLayer.Noitifications.NotificationRepository import NotificationRepository
 from Backend.DataLayer.UserData.UserRepository import UserRepository
-from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository import NotificationsSettingRepository
-from Backend.BusinessLayer.User.UserFacade import UserFacade
 from email.mime.text import MIMEText
 import smtplib
 import logging
 from socketio_instance import socketio
+
 
 class LateNotifications:
     _instance = None
@@ -19,14 +18,13 @@ class LateNotifications:
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
-
     def __init__(self):
         """
         Initialize a LateNotifications instance.
         The notifications attribute is a dictionary where the key is the user ID
         and the value is a list of notifications for that user.
         """
-        #self.notifications = {}
+        # self.notifications = {}
 
     def format_relative_time(self, past_time):
         now = datetime.now()
@@ -53,8 +51,9 @@ class LateNotifications:
         else:
             return f"לפני {years} שנים"
         
-    def add_notification(self, receiver_id, sender_id, message, isApproved,link,appoint_system_manager, appoint_course_manager, comment_to_following,
-                 comment_to_comment, react_to_comment, remove_course_manager, send_email):
+    def add_notification(self, receiver_id, sender_id, message, isApproved, link, appoint_system_manager,
+                         appoint_course_manager, comment_to_following, comment_to_comment, react_to_comment,
+                         remove_course_manager, send_email):
         notification_id = self.generateNotificationId()
         backend_base_url = os.getenv("BACKEND_BASE_URL", "http://localhost:5001")
         frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")  # default for safety
@@ -145,11 +144,8 @@ class LateNotifications:
 
         print(f"📡 Emitting to: notification_to_{receiver_id}")
 
-
     def generateNotificationId(self):
         return "notification-" + str(uuid.uuid4())
-
-
 
     def get_notification(self, user_id, notification_id):
         """

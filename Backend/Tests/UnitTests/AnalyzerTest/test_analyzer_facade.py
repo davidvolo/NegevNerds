@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 # Import the facade and its sub-components (adjust paths if needed)
 from Backend.BusinessLayer.Analyzer.AnalyzerFacade import AnalyzerFacade
 from Backend.BusinessLayer.Analyzer.SyllabusAnalyzer import SyllabusAnalyzer
-from Backend.BusinessLayer.Analyzer.InformationRetrival import InformationRetrival
+from Backend.BusinessLayer.Analyzer.InformationRetrieval import InformationRetrieval
 from Backend.BusinessLayer.Analyzer.QuestionAnalyzer import QuestionAnalyzer
 
 class TestAnalyzerFacade(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestAnalyzerFacade(unittest.TestCase):
         self.facade = AnalyzerFacade()
         # Override its internal components with mocks.
         self.facade.course_syllabus = MagicMock(spec=SyllabusAnalyzer)
-        self.facade.information_retrival = MagicMock(spec=InformationRetrival)
+        self.facade.information_retrieval = MagicMock(spec=InformationRetrieval)
         self.facade.question_analyser = MagicMock(spec=QuestionAnalyzer)
 
     def test_extract_text_from_pdf_file(self):
@@ -51,10 +51,10 @@ class TestAnalyzerFacade(unittest.TestCase):
         question_id = "q1"
         course_id = "c1"
         # No return value expected.
-        self.facade.information_retrival.process_pdf.return_value = None
+        self.facade.information_retrieval.process_pdf.return_value = None
 
-        self.facade.perform_information_retrival_question_pdf(pdf_question_path, question_id, course_id)
-        self.facade.information_retrival.process_pdf.assert_called_once_with(
+        self.facade.perform_information_retrieval_question_pdf(pdf_question_path, question_id, course_id)
+        self.facade.information_retrieval.process_pdf.assert_called_once_with(
             pdf_file_path=pdf_question_path, question_id=question_id, course_id=course_id
         )
 
@@ -62,10 +62,10 @@ class TestAnalyzerFacade(unittest.TestCase):
         text = "dummy photo text"
         question_id = "q1"
         course_id = "c1"
-        self.facade.information_retrival.process_photo.return_value = None
+        self.facade.information_retrieval.process_photo.return_value = None
 
-        self.facade.perform_information_retrival_question_photo(text, question_id, course_id)
-        self.facade.information_retrival.process_photo.assert_called_once_with(
+        self.facade.perform_information_retrieval_question_photo(text, question_id, course_id)
+        self.facade.information_retrieval.process_photo.assert_called_once_with(
             text=text, question_id=question_id, course_id=course_id
         )
 
@@ -75,11 +75,11 @@ class TestAnalyzerFacade(unittest.TestCase):
         expected_result = ["result1", "result2"]
 
         # mock את השיטה הקיימת במידע הקיים (בדוק שם נכון)
-        self.facade.information_retrival.search_free_text = MagicMock(return_value=expected_result)
+        self.facade.information_retrieval.search_free_text = MagicMock(return_value=expected_result)
 
         result = self.facade.search_free_text_from_course(text, course_id)
 
-        self.facade.information_retrival.search_free_text.assert_called_once_with(
+        self.facade.information_retrieval.search_free_text.assert_called_once_with(
             query=text, course_id=course_id
         )
         self.assertEqual(result, expected_result)

@@ -1,36 +1,13 @@
-import os
 import shutil
-
 import glob
-
 import threading
 import os
 
+
 class FileManager:
-  
     _instance = None
     _lock = threading.Lock()
 
-    # def __new__(cls, base_dir='./NegevNerds/files'):
-    #     if not cls._instance:
-    #         with cls._lock:
-    #             # Double-checked locking pattern
-    #             if not cls._instance:
-    #                 cls._instance = super().__new__(cls)
-                    # Initialize attributes here
-    #                 cls._instance._base_dir = base_dir
-    #                 cls._instance._initialized = True
-    #                 # Ensure the base directory exists
-    #                 os.makedirs(base_dir, exist_ok=True)
-    #     return cls._instance
-
-    # def __init__(self, base_dir='./NegevNerds/files'):
-    #     # This method might be called multiple times, so we use the _initialized check
-    #     if not hasattr(self, '_initialized'):
-    #         self._base_dir = base_dir
-    #         self._initialized = True
-    #         os.makedirs(self._base_dir, exist_ok=True)
-    
     def __new__(cls, base_dir=None):
         if not cls._instance:
             with cls._lock:
@@ -78,7 +55,7 @@ class FileManager:
         answers_folder = os.path.join(exam_folder, "answers")
         answer_file_path = os.path.join(answers_folder, f"answer_{question_number}.pdf")
         return answer_file_path
-      
+
     # def get_question_path(self, course_id, year, semester, moed, question_number):
     #     course_folder = os.path.join(self._base_dir, f"course_{course_id}")
     #     year_folder = os.path.join(course_folder, str(year))
@@ -133,7 +110,7 @@ class FileManager:
             file.write(exam_content)
 
         return exam_file_path
-    
+
     def save_exam_file(self, course_id, year, semester, moed, pdf_file):
         """Saves the exam file in the course's year folder."""
         try:
@@ -188,45 +165,44 @@ class FileManager:
     #     year_folder = os.path.join(course_folder, str(year))
     #     exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
 
-        # Create the exam folder if it doesn't exist
-        # if not os.path.exists(exam_folder):
-        #     os.makedirs(exam_folder)
+    # Create the exam folder if it doesn't exist
+    # if not os.path.exists(exam_folder):
+    #     os.makedirs(exam_folder)
 
-        # # Create the questions folder inside the exam folder if it doesn't exist
-        # question_folder = os.path.join(exam_folder, f"questions")
-        # if not os.path.exists(question_folder):
-        #     os.makedirs(question_folder)
+    # # Create the questions folder inside the exam folder if it doesn't exist
+    # question_folder = os.path.join(exam_folder, f"questions")
+    # if not os.path.exists(question_folder):
+    #     os.makedirs(question_folder)
 
-        # # Save the question file inside the questions folder
-        # question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
-        # with open(question_file_path, 'w') as file:
-        #     file.write(question_content_pdf)
+    # # Save the question file inside the questions folder
+    # question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
+    # with open(question_file_path, 'w') as file:
+    #     file.write(question_content_pdf)
 
-        # return question_file_path
-
+    # return question_file_path
 
     # def save_answer_file(self, course_id, year, semester, moed, question_number, answer_content_pdf):
-        # """Saves an answer file corresponding to a question inside the corresponding exam folder."""
+    # """Saves an answer file corresponding to a question inside the corresponding exam folder."""
 
-        # course_folder = os.path.join(self._base_dir, f"course_{course_id}")
-        # year_folder = os.path.join(course_folder, str(year))
-        # exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
+    # course_folder = os.path.join(self._base_dir, f"course_{course_id}")
+    # year_folder = os.path.join(course_folder, str(year))
+    # exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
 
-        # # Create the exam folder if it doesn't exist
-        # if not os.path.exists(exam_folder):
-        #     os.makedirs(exam_folder)
+    # # Create the exam folder if it doesn't exist
+    # if not os.path.exists(exam_folder):
+    #     os.makedirs(exam_folder)
 
-        # # Create the answers folder inside the exam folder if it doesn't exist
-        # answer_folder = os.path.join(exam_folder, f"answers")
-        # if not os.path.exists(answer_folder):
-        #     os.makedirs(answer_folder)
+    # # Create the answers folder inside the exam folder if it doesn't exist
+    # answer_folder = os.path.join(exam_folder, f"answers")
+    # if not os.path.exists(answer_folder):
+    #     os.makedirs(answer_folder)
 
-        # # Save the answer file inside the answers folder
-        # answer_file_path = os.path.join(answer_folder, f"answer_{question_number}.pdf")
-        # with open(answer_file_path, 'w') as file:
-        #     file.write(answer_content_pdf)
+    # # Save the answer file inside the answers folder
+    # answer_file_path = os.path.join(answer_folder, f"answer_{question_number}.pdf")
+    # with open(answer_file_path, 'w') as file:
+    #     file.write(answer_content_pdf)
 
-        # return answer_file_path
+    # return answer_file_path
 
     def save_media_for_comment(self, course_id, year, semester, moed, question_number, comment_id, photo_file):
         """
@@ -258,6 +234,14 @@ class FileManager:
     def save_question_file_pdf(self, course_id, year, semester, moed, question_number, pdf_question):
         """
         Saves the question PDF file to the appropriate directory.
+
+        :param course_id: ID of the course
+        :param year: Year of the exam
+        :param semester: Semester of the exam
+        :param moed: Moed of the exam
+        :param question_number: Question number
+        :param pdf_question: File-like object of the PDF (must support .read())
+        :return: The full path to the saved question PDF
         """
         # Construct the file path
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
@@ -268,15 +252,12 @@ class FileManager:
         # Create directories if they do not exist
         os.makedirs(question_folder, exist_ok=True)
 
-
         question_file_path = os.path.join(question_folder, f"question_{question_number}.pdf")
-        # with open(question_file_path, 'wb') as f:
-        #     f.write(file_content)
 
+        # Save the content of the file-like object to the destination
         pdf_question.seek(0)
-
-        pdf_question.save(question_file_path)
-
+        with open(question_file_path, 'wb') as f:
+            f.write(pdf_question.read())
 
         return question_file_path
 
@@ -323,7 +304,6 @@ class FileManager:
 
         pdf_answer.seek(0)
 
-
         course_folder = os.path.join(self._base_dir, f"course_{course_id}")
         year_folder = os.path.join(course_folder, str(year))
         exam_folder = os.path.join(year_folder, f"exam_{year}_{semester}_{moed}")
@@ -339,7 +319,6 @@ class FileManager:
         pdf_answer.save(answer_file_path)
 
         return answer_file_path
-
 
     def save_photo_answer_file(self, course_id, year, semester, moed, question_number, photo_file):
         """
@@ -376,7 +355,6 @@ class FileManager:
 
         return photo_file_path
 
-
     def delete_file(self, file_path):
         """
         Deletes a file (PDF or photo) from the specified path.
@@ -396,8 +374,6 @@ class FileManager:
         except Exception as e:
             print(f"Error deleting file: {str(e)}")
             return False
-
-
 
     def rename_answer_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
         """
@@ -425,8 +401,6 @@ class FileManager:
         shutil.move(old_path, new_file_path)
 
         return new_file_path
-
-
 
     def move_question_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
         """
@@ -456,7 +430,6 @@ class FileManager:
         shutil.move(old_path, new_file_path)
 
         return new_file_path
-    
 
     def move_solution_file(self, old_path, new_course_id, new_year, new_semester, new_moed, new_question_number):
         """
@@ -485,7 +458,7 @@ class FileManager:
         shutil.move(old_path, new_file_path)
 
         return new_file_path
-    
+
     def save_profile_picture(self, user_id, photo_file):
         """
         Saves a user's profile picture in 'profile_pictures' folder.
@@ -516,7 +489,7 @@ class FileManager:
         photo_file.save(photo_path)
 
         return photo_path
-    
+
     def delete_profile_picture(self, user_id):
         """
         Deletes the profile picture of a user if it exists.
@@ -541,6 +514,3 @@ class FileManager:
                 raise Exception(f"Error deleting profile picture: {str(e)}")
 
         return True
-
-
-

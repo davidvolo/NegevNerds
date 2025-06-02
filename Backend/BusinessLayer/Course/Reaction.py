@@ -1,6 +1,7 @@
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 from Backend.DataLayer.DTOs.ReactionDTO import ReactionDTO
 
+
 class Reaction:
     def __init__(self, reaction_id, user_id, emoji):
         """

@@ -19,6 +19,7 @@ class CommentRepository:
         if db_path is None:
             # Check for environment variable or default to the application's db path
             db_env = os.getenv("APP_ENV", "production")  # Set the environment variable for app environment (prod/test)
+            print(f"[DEBUG] APP_ENV = {db_env}, DB path = {db_path}")
 
             if db_env == "test":
                 db_path = os.path.join(os.path.dirname(__file__), '../../..', 'test_negevnerds.db')
@@ -64,7 +65,9 @@ class CommentRepository:
             session.commit()
 
             # Get the auto-generated ID
-
+            print(f"[DEBUG] CommentRepository.add_comment: question_id={question_id}")
+            print(
+                f"[DEBUG] CommentModel will be saved with: comment_id={comment.comment_id}, writer_id={comment.writer_id}, text={comment.comment_text}")
             return
         except Exception as e:
             session.rollback()
