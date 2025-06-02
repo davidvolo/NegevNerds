@@ -588,7 +588,7 @@ class Course:
         print("Question Embedding:", question_embedding)
         print("Scores Array:", scores_array)
 
-        MIN_ABSOLUTE_THRESHOLD = 0.4
+        MIN_ABSOLUTE_THRESHOLD = 0.3
         HIGH_ALL_RELEVANT_THRESHOLD = 0.7
         GAP_FROM_MAX_SCORE = 0.25
 
