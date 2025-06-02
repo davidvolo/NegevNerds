@@ -196,8 +196,8 @@ class Exam:
         Retrieve a question by its number.
         """
         with self.questions_lock:
-            if question_number in self.questions_list:
-                return self.questions_list[question_number]
+            # if question_number in self.questions_list:
+            #     return self.questions_list[question_number]
             question_repo = QuestionRepository()
             question = question_repo.get_question_by_number(exam_id=self.id, question_number=question_number)
             if question is not None:

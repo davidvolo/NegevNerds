@@ -171,12 +171,14 @@ class CourseFacade:
         Retrieves a course by its ID.
         """
         with self.courses_lock:
-            if course_id in self.courses.keys():
-                return self.courses[course_id]
+            # if course_id in self.courses.keys():
+            #     return self.courses[course_id]
 
             course_repo = CourseRepository()
             if course_repo.is_exist(course_id=course_id):
                 course = course_repo.get_course_by_id(course_id=course_id)
+                if course is not None:
+                    self.courses[course_id] = course
                 return course
             return None
 
