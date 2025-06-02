@@ -1,23 +1,7 @@
-import io
-import os
-import re
-import datetime
 import unittest
-from collections import defaultdict
 from unittest.mock import patch, MagicMock
 
-import pandas as pd
-
-# Import the classes to test (adjust the paths as necessary)
 from Backend.BusinessLayer.Analyzer.InformationRetrieval import InformationRetrieval, WordIndex1, WordIndex2
-
-# For tests involving PDF, we patch pdfplumber and tabula.
-import pdfplumber
-from tabula import read_pdf
-
-# We'll also patch arabic_reshaper and bidi.algorithm.get_display for normalization.
-import arabic_reshaper
-from bidi.algorithm import get_display
 
 
 class TestWordIndex1(unittest.TestCase):
@@ -92,8 +76,6 @@ class TestWordIndex2(unittest.TestCase):
         self.assertIn("עולם", heb)
         self.assertIn("טסט", heb)
 
-
-
     def test_contains_hebrew(self):
         self.assertTrue(self.index.contains_hebrew("שלום"))
         self.assertFalse(self.index.contains_hebrew("Hello"))
@@ -107,9 +89,9 @@ class TestWordIndex2(unittest.TestCase):
         self.assertEqual(result, "Hello םולש world")
 
 
-class TestInformationRetrival(unittest.TestCase):
+class TestInformationRetrieval(unittest.TestCase):
     def setUp(self):
-        # We create an InformationRetrival instance.
+        # We create an InformationRetrieval instance.
         self.ir = InformationRetrieval()
         # Patch the words_repository to be a MagicMock.
         self.ir.words_repository = MagicMock()
@@ -118,23 +100,17 @@ class TestInformationRetrival(unittest.TestCase):
         self.ir.wordIndex2 = MagicMock()
 
     def test_process_pdf(self):
-        # מוקים לפלט מ־process_pdf של wordIndex1 ו־wordIndex2
         self.ir.wordIndex1.process_pdf.return_value = ["word1", "word2"]
         self.ir.wordIndex2.process_pdf.return_value = ["word3"]
 
-        # לעג את elastic_search.indices.exists כדי שיחזיר True ולא ינסה לדבר עם ES
         with patch.object(self.ir.elastic_search.indices, "exists", return_value=True):
-            # לעג את elastic_search.index כדי שלא ינסה להתחבר ל־localhost
             with patch.object(self.ir.elastic_search, "index") as mock_index:
-                # לעג לפונקציה update_words כדי לבדוק שנקראת עם המילים הנכונות
                 with patch.object(self.ir, "update_words") as mock_update_words:
                     self.ir.process_pdf("dummy.pdf", "q1", "c1")
 
-                    # בדוק שה־update_words נקרא עם סט מאוחד של המילים
                     expected = set(["word1", "word2", "word3"])
                     mock_update_words.assert_called_once_with(words=expected, question_id="q1", course_id="c1")
 
-                    # בדוק שה־index נקרא פעם אחת עם הדוקומנט המתאים
                     mock_index.assert_called_once()
                     args, kwargs = mock_index.call_args
                     assert kwargs["index"] == "questions"
@@ -142,6 +118,7 @@ class TestInformationRetrival(unittest.TestCase):
                     assert kwargs["document"]["question_id"] == "q1"
                     assert kwargs["document"]["course_id"] == "c1"
                     assert set(kwargs["document"]["text"].split()) == expected
+
     def test_update_words(self):
         # Test update_words: For each word that is not in the common words,
         # words_repository.add_word_to_question should be called.
@@ -150,21 +127,13 @@ class TestInformationRetrival(unittest.TestCase):
         words = {"hello", "world", "the", "של"}
         self.ir.update_words(words, "q1", "c1")
         # Should call add_word_to_question for "hello" and "world" only.
-        calls = [ (("hello", "q1", "c1"),), (("world", "q1", "c1"),) ]
+        calls = [(("hello", "q1", "c1"),), (("world", "q1", "c1"),)]
         actual_calls = self.ir.words_repository.add_word_to_question.call_args_list
         # Convert each call to a tuple for comparison.
-        expected_calls = [ (("hello", "q1", "c1"),), (("world", "q1", "c1"),) ]
+        expected_calls = [(("hello", "q1", "c1"),), (("world", "q1", "c1"),)]
         self.assertEqual(len(actual_calls), 2)
         for call in expected_calls:
             self.assertIn(call, actual_calls)
-
-
-    # def test_search_free_text_with_course(self):
-    #     # Simulate repository returning question IDs.
-    #     self.ir.words_repository.get_questions_id_by_word_and_course.side_effect = lambda word, cid: [f"{word}_id"] if word=="hello" else []
-    #     result = self.ir.search_free_text("hello world", "c1")
-    #     # For "hello", we expect "hello_id" to be returned.
-    #     self.assertEqual(result, ["hello_id"])
 
     def test_get_english_common_words(self):
         common = self.ir.get_english_common_words()
@@ -175,6 +144,7 @@ class TestInformationRetrival(unittest.TestCase):
         common = self.ir.get_common_hebrew()
         self.assertTrue(isinstance(common, set))
         self.assertIn("אני", common)
+
 
 if __name__ == "__main__":
     unittest.main()

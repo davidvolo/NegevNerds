@@ -48,7 +48,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         FileManager._instance = None
 
     def test_check_exam_full_pdf_success(self):
-        with patch.object(self.negev._pdfFacade, 'perform_information_retrival_question_pdf',
+        with patch.object(self.negev._pdfFacade, 'perform_information_retrieval_question_pdf',
                              return_value=None), \
                 patch.object(self.negev._pdfFacade, 'extract_text_from_pdf_file',
                              return_value="שאלה לדוגמה"):
@@ -102,7 +102,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         self.assertIn("Course with ID", result)
         self.assertIn("not found", result.lower())
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.extract_text_from_pdf_file', return_value="שאלה לדוגמה")
     def test_upload_exam_success(self, mock_extract_text, mock_process_pdf):
         """Verify user can upload a valid exam file."""
@@ -147,7 +147,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         self.negev.courseFacade.check_exam_full_pdf = original_check_exam_full_pdf
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.extract_text_from_pdf_file', return_value="שאלה לדוגמה")
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_upload_exam_already_exists(self, mock_process_pdf, mock_extract_text):
         """Verify uploading an exam that already exists returns an error."""
 
@@ -183,7 +183,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         self.assertEqual(upload_response_2["status"], "error")
         self.assertIn("already exist", upload_response_2["message"].lower())
 
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_upload_and_get_exam_full_pdf_success(self, mock_process_pdf):
         """Full flow: Add question -> Upload exam -> Retrieve exam."""
 
@@ -215,7 +215,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         self.assertIsNotNone(result)
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.splitPDF')
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.extract_text_from_pdf_file', return_value="Sample question")
     def test_split_pdf_success(self, mock_extract_text, mock_process_pdf, mock_split_pdf):
         """Test: Successfully splitting and adding questions."""
@@ -247,7 +247,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
 
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.splitPDF')
     @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.check_valid_question', return_value=False)
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrieval.InformationRetrieval.process_pdf', return_value=None)
     def test_split_pdf_question_not_valid(self, mock_process_pdf, mock_check_valid, mock_split_pdf):
         """Test: Questions not added when check_valid_question fails."""
 
@@ -339,7 +339,7 @@ class TestNegevNerdsExamManagement(BaseTestCase):
         self.assertIn("exam from year", result["message"].lower())
         self.assertIn("is not exist", result["message"].lower())
 
-    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf',
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrieval_question_pdf',
            return_value=None)
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.extract_text_from_pdf_file',
            return_value="שאלה לדוגמה")
