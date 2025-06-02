@@ -55,7 +55,7 @@ class InformationRetrieval:
                             "match": {
                                 "text": {
                                     "query": query,
-                                    "minimum_should_match": "70%"  # אפשר גם מספר כמו "2"
+                                    "minimum_should_match": "49%"  # אפשר גם מספר כמו "2"
                                 }
                             }
                         }
