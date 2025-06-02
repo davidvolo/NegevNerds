@@ -52,8 +52,11 @@ class InformationRetrieval:
                 "bool": {
                     "must": [  # מחפש התאמה מדויקת יחסית
                         {
-                            "match_phrase": {  # חיפוש ביטוי מדויק
-                                "text": query
+                            "match": {
+                                "text": {
+                                    "query": query,
+                                    "minimum_should_match": "70%"  # אפשר גם מספר כמו "2"
+                                }
                             }
                         }
                     ],
