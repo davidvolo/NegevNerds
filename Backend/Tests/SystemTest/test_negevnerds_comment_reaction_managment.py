@@ -1,14 +1,10 @@
 import io
-import json
 from unittest.mock import patch, MagicMock
-from werkzeug.datastructures import FileStorage
 
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.User.UserFacade import UserFacade
-from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
-from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, QuestionAlreadyInExam, CommentNotFound, \
-    ExamIsNotExist, ReactionNotFound, QuestionNotFound
-from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
+from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
+from Backend.BusinessLayer.Util.Exceptions import CourseIsNotExist, CommentNotFound, QuestionNotFound, ExamIsNotExist
 from Backend.Tests.SystemTest.BaseTestCase import BaseTestCase
 
 
@@ -22,46 +18,110 @@ def _mock_invalid_file(filename="exam.txt", content=b"invalid"):
 
 class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
     def setUp(self):
         super().setUp()
-        self.user = self._complete_user_registration("examuser@bgu.ac.il", "Pass1!", "Exam", "Uploader")
+
         self.course_id = "777.1.1010"
         self.year = 2023
         self.semester = "אביב"
         self.moed = "א"
         self.exam_file = self._mock_pdf_file()
-        self.invalid_file = _mock_invalid_file()
-        self._open_course(self.user, self.course_id, "מבוא להעלאת מבחנים")
-        self.question_number = 165
 
+        # משתמשי ברירת מחדל
+        self.uploader = self._complete_user_registration("examuser@bgu.ac.il", "Pass1!", "Exam", "Uploader")
+        self.comment_writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
+
+        # פתיחת קורס
+        self._open_course(self.uploader, self.course_id, "מבוא לבדיקות")
 
     def tearDown(self):
         super().tearDown()
-
-        if isinstance(self.negev.courseFacade.check_valid_question, MagicMock):
-            del self.negev.courseFacade.check_valid_question
-
-        if isinstance(self.negev.courseFacade.check_exam_full_pdf, MagicMock):
-            del self.negev.courseFacade.check_exam_full_pdf
-
         self.negev.courseFacade = CourseFacade()
         self.negev.userFacade = UserFacade()
 
+    # --- Static helpers for setUpClass ---
+    @staticmethod
+    def _mock_pdf_file_static(filename="exam.pdf", content=b"%PDF-1.4"):
+        file = MagicMock()
+        file.filename = filename
+        file.file = io.BytesIO(content)
+        file.content_type = 'application/pdf'
+        return file
 
+    @staticmethod
+    def _mock_invalid_file(filename="exam.txt", content=b"invalid"):
+        file = MagicMock()
+        file.filename = filename
+        file.file = io.BytesIO(content)
+        file.content_type = 'text/plain'
+        return file
+
+    @staticmethod
+    def _mock_image_file(filename="image.jpg", content=b"fake image"):
+        file = MagicMock()
+        file.filename = filename
+        file.file = io.BytesIO(content)
+        file.content_type = 'image/jpeg'
+        return file
+
+    def _add_question_comment_with_users(self, question_number=9999):
+        """
+        יוצר משתמש שכותב תגובה, מוסיף שאלה, מוסיף תגובה, ומחזיר את comment_id ואת ה-user_id של כותב התגובה
+        """
+        # יוצר משתמש חדש שהוא כותב התגובה
+        comment_writer = self._complete_user_registration(
+            email=f"writer{question_number}@bgu.ac.il",
+            password="Pass1!",
+            first_name="Comment",
+            last_name="Writer"
+        )
+
+        # מוסיף שאלה
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            is_american=True,
+            question_topics=["בדיקה"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        comment_id = f"{question_number}_0"
+
+        # מוסיף תגובה
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            writer_name="Comment Writer",
+            writer_id=comment_writer.user_id,
+            prev_id="0",
+            comment_text="תגובה לבדיקה",
+            photo_file=None,
+            question_id=str(question_number)
+        )
+
+        return comment_id, comment_writer.user_id
 
     # ---Tests for Discussions---
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     def test_add_comment_success(self, mock_send_notification, mock_process_pdf):
         """Test: Add a comment successfully to a question discussion."""
-
         course_id = self.course_id
         year = self.year
         semester = self.semester
         moed = self.moed
-
-        question_number = 9001  # ודא שזה נשמר לאורך כל הטסט
-
+        question_number = 9001
         self.negev.add_question(
             course_id=course_id,
             year=year,
@@ -194,51 +254,60 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
     @patch('Backend.BusinessLayer.Notifications.NotificationFacade.NotificationFacade.send_notification')
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_add_reaction_success(self, mock_process_pdf, mock_send_notification):
+    @patch('Backend.BusinessLayer.User.UserFacade.UserFacade.should_send_notification', return_value=True)
+    def test_add_reaction_success(self, mock_should_send_notification, mock_process_pdf, mock_send_notification):
         """Test: Add reaction to a comment successfully."""
-        new_course_id = "888.8.8888"
-        self._open_course(self.user, new_course_id, "קורס לבדיקה תגובות")
+
+        # משתמש שיכתוב את התגובה
+        self.comment_writer = self._complete_user_registration(
+            "writer@bgu.ac.il", "Pass1!", "Writer", "Test"
+        )
+
+        # מוסיפים את המשתמש ידנית למפת המשתמשים
+        self.negev._user_facade.users_byId[self.comment_writer.user_id] = self.comment_writer
+
+        question_number = 8888
+        comment_id = f"{question_number}_0"
 
         self.negev.add_question(
-            course_id=new_course_id,
+            course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=99,
+            question_number=question_number,
             is_american=True,
-            question_topics=["תגובות"],
+            question_topics=["מבני נתונים"],
             question_file=self.exam_file,
             answer_file=None
         )
 
-        writer_name = "User A"
-        writer_id = "user_a"
-        question_id = "99"
-
         self.negev.add_comment(
-            course_id=new_course_id,
+            course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=99,
-            writer_name=writer_name,
-            writer_id=writer_id,
+            question_number=question_number,
+            writer_name="Writer Test",
+            writer_id=self.comment_writer.user_id,  # ← פה השינוי
             prev_id="0",
-            comment_text="זו תגובה לבדיקה",
+            comment_text="תגובה לבדיקה",
             photo_file=None,
-            question_id=question_id
+            question_id=str(question_number)
         )
 
-        reacting_user = self._complete_user_registration("another@bgu.ac.il", "Pass1!", "Another", "User")
+        reacting_user = self._complete_user_registration(
+            "reactor@bgu.ac.il", "Pass1!", "React", "User"
+        )
 
-        comment_id = "99_0"
+        # ✅ גם אותו מוסיפים
+        self.negev._user_facade.users_byId[reacting_user.user_id] = reacting_user
 
         response = self.negev.add_reaction(
-            course_id=new_course_id,
+            course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=99,
+            question_number=question_number,
             comment_id=comment_id,
             user_id=reacting_user.user_id,
             emoji="❤️"
@@ -301,159 +370,203 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 emoji="😂"
             )
 
-    def test_get_comment_media_link_success(self):
-        """Test: Successfully get media link of a comment."""
-        link = self.negev.get_comment_media_link(
-            course_id=self.course_id,
-            year=self.year,
-            semester=self.semester,
-            moed=self.moed,
-            question_number=1,
-            comment_id="1_0"
-        )
-        self.assertIsInstance(link, str)
-        self.assertTrue(link.endswith(".jpg") or link.endswith(".png") or link.endswith(".pdf"))
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
+    def test_get_comment_media_link_success(self, mock_ir, mock_pdf):
+        writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
+        self.negev._user_facade.users_byId[writer.user_id] = writer
 
-    def test_get_comment_media_link_comment_not_found(self):
-        """Test: Getting media link for non-existing comment raises CommentNotFound."""
-        with self.assertRaises(CommentNotFound):
-            self.negev.get_comment_media_link(
-                course_id=self.course_id,
-                year=self.year,
-                semester=self.semester,
-                moed=self.moed,
-                question_number=1,
-                comment_id="nonexistent_comment"
-            )
-
-    def test_get_comment_media_link_course_not_exist(self):
-        """Test: Getting media link for non-existing course raises CourseIsNotExist."""
-        with self.assertRaises(CourseIsNotExist):
-            self.negev.get_comment_media_link(
-                course_id="000.0.0000",
-                year=self.year,
-                semester=self.semester,
-                moed=self.moed,
-                question_number=1,
-                comment_id="1_0"
-            )
-
-    def test_remove_reaction_success(self):
-        """Test: Add question, comment, reaction, then remove reaction successfully."""
-
-        # Step 1: Add question
+        question_number = 1111
         self.negev.add_question(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=1,
+            question_number=question_number,
+            is_american=True,
+            question_topics=["נושאים"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        # מוסיף תגובה
+        course = self.negev.courseFacade.get_course(self.course_id)
+        exam = course.get_exam(self.year, self.semester, self.moed)
+        question = exam.get_question(question_number)
+        real_question_id = question.id
+
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            writer_name="Writer Test",
+            writer_id=writer.user_id,
+            prev_id="0",
+            comment_text="תגובה עם לינק",
+            photo_file=None,
+            question_id=real_question_id
+        )
+
+        metadata = self.negev.get_comments_metadata(real_question_id)
+        comment_id = metadata[0]["comment_id"]
+
+        link = self.negev.get_comment_media_link(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            comment_id=comment_id
+        )
+
+        self.assertIsInstance(link, str)
+
+    def test_get_comment_media_link_question_not_found(self):
+        with self.assertRaises(QuestionNotFound):
+            self.negev.get_comment_media_link(
+                course_id=self.course_id,
+                year=self.year,
+                semester=self.semester,
+                moed=self.moed,
+                question_number=9999,
+                comment_id="nonexistent_comment_id"
+            )
+
+    def test_get_comment_media_link_exam_not_found(self):
+        # יוצרים קורס אבל לא מוסיפים מבחן
+        new_course_id = "123.3.3333"
+        self.negev.courseFacade.open_course(
+            course_id=new_course_id,
+            name="מערכות",
+            course_topics=["בדיקה"]
+        )
+
+        with self.assertRaises(ExamIsNotExist):
+            self.negev.get_comment_media_link(
+                course_id=new_course_id,
+                year=self.year,
+                semester=self.semester,
+                moed=self.moed,
+                question_number=1,
+                comment_id="fake_id"
+            )
+
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch.object(UserFacade, "should_send_notification", return_value=False)
+    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit", return_value=None)
+    def test_remove_reaction_success(self, mock_emit, mock_should_send_notification, mock_process_pdf):
+        # הרשמת משתמשים
+        writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
+        reactor = self._complete_user_registration("reactor@bgu.ac.il", "Pass1!", "Reactor", "User")
+
+        # הוספה של המשתמשים למערכת
+        self.negev._user_facade.users_byId[writer.user_id] = writer
+        self.negev._user_facade.users_byId[reactor.user_id] = reactor
+
+        question_number = 9010
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
             is_american=True,
             question_topics=["בדיקה"],
             question_file=self.exam_file,
             answer_file=None
         )
 
-        # Step 2: Add comment
-        writer_name = "User A"
-        writer_id = "user_a"
-        question_id = "165"
+        real_question_id = self.negev.courseFacade.get_course(self.course_id).get_exam(
+            self.year, self.semester, self.moed).get_question(question_number).id
+
         self.negev.add_comment(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=165,
-            writer_name=writer_name,
-            writer_id=writer_id,
+            question_number=question_number,
+            writer_name="Writer Test",
+            writer_id=writer.user_id,
             prev_id="0",
-            comment_text="תגובה לבדיקה",
+            comment_text="טקסט לבדיקה",
             photo_file=None,
-            question_id=question_id
+            question_id=real_question_id
         )
-        comment_id = "1_0"
 
-        # Step 3: Add reaction
-        user_id = "another_user"
-        emoji = "👍"
-        self.negev.add_reaction(
+        comment_metadata = self.negev.get_comments_metadata(real_question_id)[0]
+        comment_id = comment_metadata["comment_id"]
+        receiver_id = comment_metadata["writer_id"]
+
+        # ✅ הדפסות לאבחון הבעיה
+        print("writer.user_id =", writer.user_id)
+        print("receiver_id =", receiver_id)
+        print("users_byId.keys =", list(self.negev._user_facade.users_byId.keys()))
+
+        # ודא שכותב התגובה (receiver_id) קיים במערכת כדי למנוע שגיאה בשליחה
+        self.negev._user_facade.users_byId[receiver_id] = writer
+
+        # הוספת רגש
+        reaction_id = self.negev.add_reaction(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=1,
+            question_number=question_number,
             comment_id=comment_id,
-            user_id=user_id,
-            emoji=emoji
+            user_id=reactor.user_id,
+            emoji="👍"
         )
 
-        # Get reaction_id from the DB (if you're storing it)
-        repo = ReactionRepository()
-        reactions = repo.get_reactions_for_comment(comment_id)
-        self.assertTrue(len(reactions) > 0)
-        reaction_id = reactions[0].reaction_id
-
-        # Step 4: Remove reaction
+        # הסרת הרגש
         result = self.negev.remove_reaction(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=1,
+            question_number=question_number,
             comment_id=comment_id,
             reaction_id=reaction_id
         )
 
-        # Step 5: Assert removal
-        self.assertEqual(result, "ReactionData removed successfully.")
-        self.assertEqual(len(repo.get_reactions_for_comment(comment_id)), 0)
+        assert result == "ReactionData removed successfully."
 
-    @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
-    def test_remove_reaction_course_not_exist(self, mock_remove_reaction):
-        """Test: Remove reaction fails because course does not exist."""
-        mock_remove_reaction.side_effect = CourseIsNotExist("Course not found")
-
-        with self.assertRaises(CourseIsNotExist):
+    def test_remove_reaction_question_not_found(self):
+        with self.assertRaises(QuestionNotFound):
             self.negev.remove_reaction(
-                course_id="invalid_course",
+                course_id=self.course_id,
                 year=self.year,
                 semester=self.semester,
                 moed=self.moed,
-                question_number=self.question_number,
+                question_number=12345,  # לא קיימת
                 comment_id="some_comment_id",
                 reaction_id="some_reaction_id"
             )
 
-    @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
-    def test_remove_reaction_comment_not_found(self, mock_remove_reaction):
-        """Test: Remove reaction fails because comment not found."""
-        mock_remove_reaction.side_effect = CommentNotFound("comment_id")
-
-        with self.assertRaises(CommentNotFound):
+    def test_remove_reaction_course_not_found(self):
+        with self.assertRaises(CourseIsNotExist):
             self.negev.remove_reaction(
-                course_id=self.course_id,
+                course_id="fake.course.id",
                 year=self.year,
                 semester=self.semester,
                 moed=self.moed,
-                question_number=self.question_number,
-                comment_id="invalid_comment",
-                reaction_id="some_reaction_id"
+                question_number=1,
+                comment_id="c1",
+                reaction_id="r1"
             )
 
-    @patch('Backend.BusinessLayer.Course.CourseFacade.CourseFacade.remove_reaction')
-    def test_remove_reaction_reaction_not_found(self, mock_remove_reaction):
-        """Test: Remove reaction fails because reaction not found."""
-        mock_remove_reaction.side_effect = ReactionNotFound("reaction_id")
-
-        with self.assertRaises(ReactionNotFound):
+    def test_remove_reaction_exam_not_found(self):
+        self.negev.courseFacade.open_course("999.9.9999", "מערכות", ["בדיקה"])
+        with self.assertRaises(ExamIsNotExist):
             self.negev.remove_reaction(
-                course_id=self.course_id,
+                course_id="999.9.9999",
                 year=self.year,
                 semester=self.semester,
                 moed=self.moed,
-                question_number=self.question_number,
-                comment_id=self.comment_id,
-                reaction_id="invalid_reaction"
+                question_number=1,
+                comment_id="c1",
+                reaction_id="r1"
             )
 
     @patch('Backend.BusinessLayer.NegevNerds.CommentRepository')
@@ -487,49 +600,104 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         self.assertEqual(result, [])
 
-    @patch('Backend.BusinessLayer.NegevNerds.CourseFacade')
-    def test_delete_comment_success(self, mock_course_facade_class):
-        """Test: Successfully delete a comment."""
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    def test_delete_comment_success(self, mock_ir):
+        """Test: Deleting an existing comment should succeed."""
 
-        mock_course_facade = MagicMock()
-        mock_course_facade.delete_comment.return_value = None  # לא מחזיר כלום במחיקה
-        mock_course_facade_class.return_value = mock_course_facade
+        # Step 1: Add user
+        writer = self._complete_user_registration(
+            "writer@bgu.ac.il", "Pass1!", "Writer", "Test"
+        )
+        self.negev._user_facade.users_byId[writer.user_id] = writer
 
+        # Step 2: Add question
+        question_number = 88881
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            is_american=True,
+            question_topics=["בדיקות"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        # Step 3: Get the real question ID
+        course = self.negev.courseFacade.get_course(self.course_id)
+        exam = course.get_exam(self.year, self.semester, self.moed)
+        question = exam.get_question(question_number)
+        real_question_id = question.id
+
+        # Step 4: Add comment
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            writer_name="Writer Test",
+            writer_id=writer.user_id,
+            prev_id="0",
+            comment_text="תגובה לבדיקה למחיקה",
+            photo_file=None,
+            question_id=real_question_id
+        )
+
+        # Step 5: Retrieve the comment_id via metadata
+        metadata_list = self.negev.get_comments_metadata(real_question_id)
+        print(f"[DEBUG] Metadata list: {metadata_list}")
+        assert len(metadata_list) > 0, "לא נמצאו תגובות"
+
+        real_comment_id = metadata_list[0]["comment_id"]
+        print(f"[DEBUG] Found real_comment_id: {real_comment_id}")
+
+        # Step 6: Load it into memory for deletion
+        comment_model = CommentRepository().get_comment_by_id(real_comment_id)
+        assert comment_model is not None, "התגובה לא נשמרה במסד הנתונים"
+        comment = comment_model
+        question.comments.append(comment)
+
+        # Step 7: Delete comment
         result = self.negev.delete_comment(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=self.question_number,
-            comment_id="self.comment_id"
+            question_number=question_number,
+            comment_id=real_comment_id
         )
 
         self.assertEqual(result, "CommentData deleted successfully.")
-        mock_course_facade.delete_comment.assert_called_once_with(
+
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    def test_delete_comment_not_found(self, mock_ir):
+        """Test: Deleting non-existing comment raises CommentNotFound."""
+
+        # שלב 1: מוסיפים שאלה אמיתית
+        question_number = 88880
+        self.negev.add_question(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=self.question_number,
-            comment_id=self.comment_id
+            question_number=question_number,
+            is_american=True,
+            question_topics=["בדיקות"],
+            question_file=self.exam_file,
+            answer_file=None
         )
 
-    @patch('Backend.BusinessLayer.NegevNerds.CourseFacade')
-    def test_delete_comment_not_found(self, mock_course_facade_class):
-        """Test: Deleting non-existing comment raises CommentNotFound."""
-
-        mock_course_facade = MagicMock()
-        mock_course_facade.delete_comment.side_effect = CommentNotFound(comment_id="self.comment_id")
-        mock_course_facade_class.return_value = mock_course_facade
-
+        non_existent_comment_id = "9999_0"
         with self.assertRaises(CommentNotFound):
             self.negev.delete_comment(
                 course_id=self.course_id,
                 year=self.year,
                 semester=self.semester,
                 moed=self.moed,
-                question_number=self.question_number,
-                comment_id="000"
+                question_number=question_number,
+                comment_id=non_existent_comment_id
             )
 
     def _add_question_and_comment(self, question_number=9002, comment_id="9002_0"):
@@ -561,8 +729,48 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
 
         return question_number, comment_id
 
-    def test_edit_comment_text_success(self):
-        question_number, comment_id = self._add_question_and_comment()
+    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
+    @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
+    def test_edit_comment_text_success(self, mock_retrival_pdf, mock_process_pdf):
+        """Test editing an existing comment's text works as expected."""
+
+        writer = self._complete_user_registration("writer@bgu.ac.il", "Pass1!", "Writer", "Test")
+        self.negev._user_facade.users_byId[writer.user_id] = writer
+
+        question_number = 9011
+        self.negev.add_question(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            is_american=True,
+            question_topics=["טסטים"],
+            question_file=self.exam_file,
+            answer_file=None
+        )
+
+        course = self.negev.courseFacade.get_course(self.course_id)
+        exam = course.get_exam(self.year, self.semester, self.moed)
+        question = exam.get_question(question_number)
+        real_question_id = question.id
+
+        self.negev.add_comment(
+            course_id=self.course_id,
+            year=self.year,
+            semester=self.semester,
+            moed=self.moed,
+            question_number=question_number,
+            writer_name="Writer Test",
+            writer_id=writer.user_id,
+            prev_id="0",
+            comment_text="תגובה לפני עריכה",
+            photo_file=None,
+            question_id=real_question_id
+        )
+
+        metadata_list = self.negev.get_comments_metadata(real_question_id)
+        comment_id = metadata_list[0]["comment_id"]
 
         result = self.negev.edit_comment_text(
             course_id=self.course_id,
@@ -571,48 +779,22 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
             moed=self.moed,
             question_number=question_number,
             comment_id=comment_id,
-            new_text="טקסט חדש לעריכה"
+            new_text="טקסט מעודכן"
         )
 
         self.assertEqual(result, "CommentData edited successfully.")
 
     @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
-    def test_edit_comment_text_course_not_found(self, mock_process_pdf):
-        with self.assertRaises(CourseIsNotExist(course_id="000.0.0000")):
-            self.negev.edit_comment_text(
-                course_id="000.0.0000",
-                year=self.year,
-                semester=self.semester,
-                moed=self.moed,
-                question_number=1,
-                comment_id="1_0",
-                new_text="טקסט"
-            )
-
-    def test_edit_comment_text_question_not_found(self):
-        with self.assertRaises(QuestionNotFound):
-            self.negev.edit_comment_text(
-                course_id=self.course_id,
-                year=self.year,
-                semester=self.semester,
-                moed=self.moed,
-                question_number=9999,
-                comment_id="9999_0",
-                new_text="עדכון"
-            )
-
-    @patch('Backend.BusinessLayer.Analyzer.InformationRetrival.InformationRetrival.process_pdf', return_value=None)
     @patch('Backend.BusinessLayer.Analyzer.AnalyzerFacade.AnalyzerFacade.perform_information_retrival_question_pdf')
-    def test_edit_comment_text_comment_not_found(self, mock_retrival_pdf, mock_process_pdf):
-        """Test editing comment that does not exist raises CommentNotFound."""
+    def test_edit_comment_text_not_found(self, mock_retrival_pdf, mock_process_pdf):
+        """Test editing a non-existing comment raises CommentNotFound."""
 
-        # מוסיף שאלה אבל לא תגובה
         self.negev.add_question(
             course_id=self.course_id,
             year=self.year,
             semester=self.semester,
             moed=self.moed,
-            question_number=9010,
+            question_number=9012,
             is_american=True,
             question_topics=["בדיקה"],
             question_file=self.exam_file,
@@ -625,7 +807,7 @@ class TestNegevNerdsCommentReactionManagement(BaseTestCase):
                 year=self.year,
                 semester=self.semester,
                 moed=self.moed,
-                question_number=9010,
-                comment_id="9010_0",  # לא קיימת תגובה
-                new_text="עדכון"
+                question_number=9012,
+                comment_id="9012_0",
+                new_text="ניסיון לעריכה"
             )

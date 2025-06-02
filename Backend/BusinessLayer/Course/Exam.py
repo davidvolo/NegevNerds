@@ -24,9 +24,8 @@ class Exam:
         self.questions_lock = threading.Lock()
         self.link_to_solution = link_to_solution
 
-
     @classmethod
-    def create(cls, exam_id, course_id, link, year , semester , moed, link_to_solution=None):
+    def create(cls, exam_id, course_id, link, year, semester, moed, link_to_solution=None):
         """
         Class method to create a new user and save to database
         Returns:
@@ -66,7 +65,8 @@ class Exam:
     def generate_question_id(self):
         return "question" + str(uuid.uuid4())
 
-    def add_question(self,question_number,is_american,question_topics, pdf__question_path, pdf__answer_path , question_text):
+    def add_question(self, question_number, is_american, question_topics, pdf__question_path, pdf__answer_path,
+                     question_text):
         """
         Add a question to the exam.
         """
@@ -81,7 +81,7 @@ class Exam:
 
             if question is not None:
                 self.questions_list[question_number] = question
-            else :
+            else:
                 raise Exception("error while creating question")
             return question.id
 
@@ -93,7 +93,8 @@ class Exam:
         # Ensure the question does not already exist
 
         question_repo = QuestionRepository()
-        if question_repo.is_exist(year=year, course_id=self.course_id, semester=semester.value, moed=moed.value, question_number=question_number):
+        if question_repo.is_exist(year=year, course_id=self.course_id, semester=semester.value, moed=moed.value,
+                                  question_number=question_number):
             raise QuestionAlreadyInExam(f"Question {question_number} already exists in this exam.")
 
         return True
@@ -109,10 +110,10 @@ class Exam:
         if question is None:
             raise QuestionNotFound(question_number)
         return question.link_to_answer
-    
-    def get_question_id(self , question_number):
+
+    def get_question_id(self, question_number):
         question = self.get_question(question_number)
-        if (question is None):
+        if question is None:
             raise QuestionNotFound(question_number)
         return question.id
 
@@ -139,7 +140,6 @@ class Exam:
         except Exception as e:
             print(f"Error in ExamData.upload_full_exam_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
-
 
     def existFullExamSolution(self):
         """
@@ -172,7 +172,8 @@ class Exam:
             exam_repo = ExamRepository()  # Assuming you have an ExamRepository for database operations
             exam_repo.update_exam(self)
 
-            return {"status": "success", "message": "File uploaded successfully and database updated.", "link": self.link}
+            return {"status": "success", "message": "File uploaded successfully and database updated.",
+                    "link": self.link}
         except Exception as e:
             print(f"Error in ExamData.upload_full_exam_solution_pdf: {str(e)}")
             return {"status": "error", "message": str(e)}
@@ -243,28 +244,30 @@ class Exam:
             for question in self.get_all_exam_question():
                 questions.append(question.to_dto(course_id=self.course_id))
         else:
-            question= self.get_question(question_number=question_number)
+            question = self.get_question(question_number=question_number)
             if question is not None:
                 questions.append(question.to_dto(course_id=self.course_id))
         return questions  # Will return an empty list if no question was found
-    
+
     def edit_question_topic(self, question_number, topics):
         question = self.get_question(question_number)
         if question is not None:
             return question.edit_question_topic(topics)
         else:
             raise QuestionNotFound(question_number, )
-    
+
     def checkQuestionAvailability(self, new_question_number):
-        question= self.get_question(question_number=new_question_number)
+        question = self.get_question(question_number=new_question_number)
         if question is None:
             return True
         else:
             return False
-    
-    def edit_question_details(self, old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
+
+    def edit_question_details(self, old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id,
+                              question_new_path, solution_new_path):
         question = self.get_question(old_question_number)
-        return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
+        return question.edit_question_details(new_year, new_semester, new_moed, new_question_number, exam_id,
+                                              question_new_path, solution_new_path)
 
     def __str__(self):
         """

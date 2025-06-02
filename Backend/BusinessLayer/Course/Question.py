@@ -13,7 +13,7 @@ from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 
 class Question:
     def __init__(self, year, semester, moed, question_number, is_american,
-                 link_to_question, link_to_answer, question_topics=None, question_id=None, comments=None, text = ""):
+                 link_to_question, link_to_answer, question_topics=None, question_id=None, comments=None, text=""):
         """
         Initialize a Question instance.
         """
@@ -26,17 +26,16 @@ class Question:
         self.link_to_question = link_to_question
         self.link_to_answer = link_to_answer
         self.id = question_id
-        #self.course_id = course_id
-        self.comments = comments if comments is not None else []# Default to an empty list
+        # self.course_id = course_id
+        self.comments = comments if comments is not None else []  # Default to an empty list
         self.text = text
 
         self.question_topics_lock = threading.Lock()
         self.comments_lock = threading.Lock()
 
     @classmethod
-    def create(cls, year, semester, moed, question_number, is_american,
-               link_to_question, link_to_answer,exam_id, question_id=None,
-               question_topics=None, question_text=""):
+    def create(cls, year, semester, moed, question_number, is_american, link_to_question, link_to_answer, exam_id,
+               question_id=None, question_topics=None, question_text=""):
         """
         Class method to create a new user and save to database
         Returns:
@@ -124,7 +123,7 @@ class Question:
             else:
                 print(f"Keyword '{question_topic}' not found in the list.")
 
-    def add_comment(self, comment_id, writer_name, writer_id,prev_id, comment_text, deleted, edited, link_to_media):
+    def add_comment(self, comment_id, writer_name, writer_id, prev_id, comment_text, deleted, edited, link_to_media):
         """
         Add a CommentData to the comments list.
         """
@@ -171,8 +170,8 @@ class Question:
     def get_comment_media_link(self, comment_id):
         for comment in self.comments:
             if comment.comment_id == comment_id:
-                return comment.get_link_to_media()
-        raise CommentNotFound
+                return comment.link_to_media
+        raise CommentNotFound(f"Comment {comment_id} not found.")
 
     def delete_comment(self, comment_id):
         for comment in self.comments:
@@ -216,11 +215,11 @@ class Question:
             self.question_topics.add(topic)
         return question_topics_repo.edit_question_topic(self.id, topics)
     
-    def edit_question_details(self,new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
+    def edit_question_details(self, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path,
+                              solution_new_path):
         question_repo = QuestionRepository()
-        return question_repo.edit_question_details(self.id, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
-
-
+        return question_repo.edit_question_details(self.id, new_year, new_semester, new_moed, new_question_number,
+                                                   exam_id, question_new_path, solution_new_path)
 
     def __str__(self):
         """
@@ -229,5 +228,3 @@ class Question:
         return (f"Question(ID: {self.id}, Year: {self.year}, Semester: {self.semester}, Moed: {self.moed}, "
                 f"Number: {self.question_number}, IsAmerican: {self.is_american}, "
                 f"Comments: {len(self.comments)})")
-    
-

@@ -3,17 +3,14 @@ import threading
 import numpy as np
 
 from Backend.BusinessLayer.Course.Exam import Exam
-from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
-from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
 from sentence_transformers import SentenceTransformer, util
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
 
 class Course:
     def __init__(self, course_id, name, course_topics=None):
@@ -21,13 +18,15 @@ class Course:
         self.name = name
         self.course_topics = course_topics if course_topics is not None else set()  # Default to an empty list
         self.exams = {}  # Dictionary to store exams by years
-        self.managers = set() # Dictionary to store managers with manager_id as key
+        self.managers = set()  # Dictionary to store managers with manager_id as key
         self.users = []  # List of users for the course
 
         self.course_topics_lock = threading.Lock()
         self.exams_lock = threading.Lock()
         self.managers_lock = threading.Lock()
         self.users_lock = threading.Lock()
+
+        self.course_topics_repository = CourseTopicsRepository()
 
     @classmethod
     def create(cls, course_id, name, course_topics=None):
@@ -44,10 +43,6 @@ class Course:
         course_repository = CourseRepository()
         course_repository.add_course(course)
         topics_repo = CourseTopicsRepository()
-
-        # for topic in course_topics:
-        #     if not topics_repo.is_exist(topic=topic, course_id=course_id):
-        #         topics_repo.add_Topic_to_course(course_id=course_id, topic=topic)
         return course
 
     # Getters
@@ -234,8 +229,9 @@ class Course:
 
             exam = self.get_exam(year, semester, moed, raise_exception=False)
             if exam is None:
-                exam_id = self.generate_exam_id(year=year,semester=semester.value, moed=moed.value)
-                exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester, moed=moed)
+                exam_id = self.generate_exam_id(year=year, semester=semester.value, moed=moed.value)
+                exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link=link, year=year, semester=semester,
+                                   moed=moed)
                 if exam is not None:
                     if year not in self.exams:
                         self.exams[year] = []
@@ -250,7 +246,7 @@ class Course:
             if exam is not None:
                 self.exams[year].remove(exam)
                 exam_repo = ExamRepository()
-                exam_repo.delete_exam(self.course_id, year,semester,moed)
+                exam_repo.delete_exam(self.course_id, year, semester, moed)
             else:
                 raise ExamIsNotExist(year, semester, moed)
 
@@ -340,9 +336,9 @@ class Course:
         exam = self.get_exam(year, semester, moed)
         if not exam:
             raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
-        return exam.existFullExamSolution() # Check for the exam link
+        return exam.existFullExamSolution()  # Check for the exam link
     
-    def checkExistSolution(self, year, semester, moed,question_number):
+    def checkExistSolution(self, year, semester, moed, question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
             raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
@@ -353,7 +349,7 @@ class Course:
         else:
             return False
 
-    def checkExistQuestion(self, year, semester, moed,question_number):
+    def checkExistQuestion(self, year, semester, moed, question_number):
         exam = self.get_exam(year, semester, moed)  # Retrieve the exam
         if not exam:
             raise ExamIsNotExist(f"ExamData for year {year}, semester {semester}, moed {moed} does not exist.")
@@ -462,13 +458,14 @@ class Course:
             self.add_exam(year=year, semester=semester, moed=moed)
             return True
         else:
-            # Compare normalized values
             if currExam.semester == semester and currExam.moed == moed:
-                return currExam.check_add_question_possibility(year=year, semester=semester,moed=moed,question_number=question_number)
+                return currExam.check_add_question_possibility(year=year, semester=semester, moed=moed,
+                                                               question_number=question_number)
             else:
                 raise ValueError(f"ExamData found, but mismatched semester {semester} or moed {moed}.")
 
-    def add_comment(self, year, semester, moed, question_number, comment_id, writer_name, writer_id,prev_id, comment_text, link_to_media):
+    def add_comment(self, year, semester, moed, question_number, comment_id, writer_name, writer_id, prev_id,
+                    comment_text, link_to_media):
         """
         Add a CommentData to specific question.
         """
@@ -478,31 +475,32 @@ class Course:
         question = exam.get_question(question_number)
         if question is None:
             raise QuestionNotFound
-        return question.add_comment(comment_id, writer_name, writer_id,prev_id, comment_text, False, False, link_to_media)
+        return question.add_comment(comment_id, writer_name, writer_id, prev_id, comment_text, False, False,
+                                    link_to_media)
 
     def get_question_path(self, year, semester, moed, question_number):
-        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        exam = self.get_exam(year=year, semester=semester, moed=moed)
         if exam is not None:
             return exam.get_question_path(question_number)
         else:
             raise ExamIsNotExist
 
     def get_answer_path(self, year, semester, moed, question_number):
-        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        exam = self.get_exam(year=year, semester=semester, moed=moed)
         if exam is not None:
             return exam.get_answer_path(question_number)
         else:
             raise ExamIsNotExist
     
     def get_question_id(self, year, semester, moed, question_number):
-        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        exam = self.get_exam(year=year, semester=semester, moed=moed)
         if exam is not None:
             return exam.get_question_id(question_number)
         else:
             raise ExamIsNotExist
 
     def get_question_id_and_path(self, year, semester, moed, question_number):
-        exam = self.get_exam(year=year,semester=semester,moed=moed)
+        exam = self.get_exam(year=year, semester=semester, moed=moed)
         if exam is not None:
             return exam.get_question_id_and_path(question_number)
         else:
@@ -544,34 +542,30 @@ class Course:
             raise QuestionNotFound
         question.edit_comment_text(comment_id, new_text)
 
-
     def remove_reaction(self, year, semester, moed, question_number, comment_id, reaction_id):
-        """
-        Add a reaction to specific question.
-        """
         exam = self.get_exam(year, semester, moed)
         if exam is None:
-            raise ExamIsNotExist
+            raise ExamIsNotExist(year, semester, moed)
         question = exam.get_question(question_number)
         if question is None:
-            raise QuestionNotFound
-        question.remove_reaction(comment_id, reaction_id)
-    
+            raise QuestionNotFound(f"Question {question_number} not found.")
+        return question.remove_reaction(comment_id, reaction_id)
+
     def handleDownloadAllExamsZip(self):
         exams = self.get_allExams_Link_and_name()
         folder_name = f"{self.course_id}_{self.name}_NegevNerds_מבחנים"
         return folder_name, exams
 
-    def add_question(self, year, semester, moed, question_number,is_american,question_topics,pdf__question_path, pdf__answer_path, question_text):
+    def add_question(self, year, semester, moed, question_number, is_american, question_topics, pdf__question_path,
+                     pdf__answer_path, question_text):
         if question_topics is None:
             question_topics = self.find_question_topics_by_text(question_text)
-
 
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
 
-    def find_question_topics_by_text(self,question_text):
+    def find_question_topics_by_text(self, question_text):
 
         # טען מודל תומך בעברית
         model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
@@ -592,7 +586,6 @@ class Course:
         HIGH_ALL_RELEVANT_THRESHOLD = 0.7
         GAP_FROM_MAX_SCORE = 0.25
 
-
         if np.max(scores_array) < MIN_ABSOLUTE_THRESHOLD:
             return []
 
@@ -609,23 +602,22 @@ class Course:
 
         return results
 
-
     def edit_question_topic(self, year, semester, moed, question_number, topics):
-        question_topic_repo = CourseTopicsRepository()
         for topic in topics:
-            if not question_topic_repo.is_exist(topic, self.course_id):
+            if not self.course_topics_repository.is_exist(topic, self.course_id):
                 return False
         exam = self.get_exam(year, semester, moed)
         if exam is not None:
             return exam.edit_question_topic(question_number, topics)
-        else :
+        else:
             raise ExamIsNotExist(year, semester, moed)
-    
-    def checkQuestionAvailability(self,new_year, new_semester, new_moed, new_question_number):
+
+    def checkQuestionAvailability(self, new_year, new_semester, new_moed, new_question_number):
         exam = self.get_exam(new_year, new_semester, new_moed)
         if exam is None:
-            exam_id = self.generate_exam_id(year=new_year,semester=new_semester,moed=new_moed)
-            exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link="", year=new_year, semester=new_semester, moed=new_moed)
+            exam_id = self.generate_exam_id(year=new_year, semester=new_semester, moed=new_moed)
+            exam = Exam.create(exam_id=exam_id, course_id=self.course_id, link="", year=new_year, semester=new_semester,
+                               moed=new_moed)
             if exam is not None:
                 if new_year not in self.exams:
                     self.exams[new_year] = []
@@ -634,10 +626,8 @@ class Course:
         else:
             return exam.checkQuestionAvailability(new_question_number), exam.id
 
-    def edit_question_details(self,old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
+    def edit_question_details(self, old_year, old_semester, old_moed, old_question_number, new_year, new_semester,
+                              new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
         exam = self.get_exam(old_year, old_semester, old_moed)
-        return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
-
-
-
+        return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number,
+                                          exam_id, question_new_path, solution_new_path)

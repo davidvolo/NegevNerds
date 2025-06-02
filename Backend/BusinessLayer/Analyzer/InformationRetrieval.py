@@ -8,7 +8,6 @@ from collections import defaultdict
 from dotenv import load_dotenv
 import os
 
-from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.WordsQuestions.WordsQuestionsRepository import WordsQuestionsRepository
 from elasticsearch import Elasticsearch
@@ -17,7 +16,7 @@ from elasticsearch import Elasticsearch
 load_dotenv()
 
 
-class InformationRetrival:
+class InformationRetrieval:
     def __init__(self):
         elastic_url = os.getenv('ELASTICSEARCH_URL')
         elastic_username = os.getenv('ELASTICSEARCH_USER_NAME')
@@ -47,8 +46,6 @@ class InformationRetrival:
             })
 
     def search_free_text(self, query: str, course_id: int = None, limit: int = 50) -> list:
-
-
         es_query = {
             "size": limit,
             "query": {
@@ -76,7 +73,6 @@ class InformationRetrival:
             ]
         }
 
-
         res = self.elastic_search.search(index=self.index_name, body=es_query)
 
         hits = res['hits']['hits']
@@ -97,7 +93,6 @@ class InformationRetrival:
                 first_suggestion = suggest['options'][0]['text']
                 break
         return question_dtos, first_suggestion
-
 
     def index_question_to_elasticsearch(self, question_id, course_id, all_text):
         doc = {
@@ -123,15 +118,12 @@ class InformationRetrival:
 
         self.update_words(words=words, question_id=question_id, course_id=course_id)
 
-
-    def process_photo(self, text, question_id , course_id):
-
+    def process_photo(self, text, question_id, course_id):
         self._ensure_index_exists()
 
         # Process PDF using both WordIndex classes
         # english_words1, hebrew_words1 = self.wordIndex1.process_pdf(pdf_file_path, question_data)
         # english_words2, hebrew_words2 = self.wordIndex2.process_pdf(pdf_file_path, question_data)
-
         english_words = re.findall(r'\b[a-zA-Z]+(?:-[a-zA-Z]+)?\b', text)
 
         # Regex for Hebrew words, including hyphenated ones
@@ -158,12 +150,10 @@ class InformationRetrival:
         self.index_question_to_elasticsearch(question_id=question_id, course_id=course_id, all_text=all_text)
         self.update_words(words=words_set, question_id=question_id, course_id=course_id)
 
-
-
     def update_words(self, words, question_id, course_id):
         for word in words:
             word = word.lower()
-            if len(word)>1:
+            if len(word) > 1:
                 if word not in self.common_words_en and word not in self.common_words_he:
                     self.words_repository.add_word_to_question(word, question_id, course_id)
 
@@ -173,9 +163,6 @@ class InformationRetrival:
             index=self.index_name,
             id=f"{course_id}_{question_id}"
         )
-
-
-
 
     def get_english_common_words(self):
         return {'i', 'me', 'my', 'myself', 'we', 'our', 'ours',
@@ -234,8 +221,6 @@ class InformationRetrival:
                 'יותר', 'מדי', 'גם', 'כן', 'נו', 'להלן', 'לפי', 'אחר', 'אחרת', 'אחרים', 'אחרות', 'אשר', 'או'}
 
 
-
-
 class WordIndex1:
     def __init__(self, common_words_en, common_words_he):
         self.hebrew_characters = re.compile(r'[\u0590-\u05FF]')
@@ -247,7 +232,7 @@ class WordIndex1:
 
     def extract_words(self, text):
         if text is None:
-            return [],[]
+            return [], []
 
         # Regex for English words, including hyphenated ones
         english_words = re.findall(r'\b[a-zA-Z]+(?:-[a-zA-Z]+)?\b', text)
@@ -268,8 +253,7 @@ class WordIndex1:
                 split_hebrew.extend(word.split('-'))  # Add components of hyphenated words
             split_hebrew.append(word)  # Keep the hyphenated word itself
 
-        return split_english , split_hebrew
-
+        return split_english, split_hebrew
 
     def process_pdf(self, pdf_file_path):
         try:
@@ -281,7 +265,7 @@ class WordIndex1:
 
             normalized_text = self.normalize_mixed_text(text)
             english_words, hebrew_words = self.extract_words(normalized_text)
-            print("proc" , hebrew_words)
+            print("proc", hebrew_words)
             return english_words + hebrew_words
 
         except Exception as e:
@@ -345,8 +329,6 @@ class WordIndex2:
                 if page_text:
                     text += page_text + " "
 
-            #normalized_text = self.normalize_text_direction(text)
-
             # Extract English and Hebrew words
             english_words, hebrew_words = self.extract_words(text)
 
@@ -356,8 +338,6 @@ class WordIndex2:
         except Exception as e:
             print(f"Error processing PDF: {e}")
             return []
-
-
 
     def contains_hebrew(self, text):
         return bool(self.hebrew_characters.search(text))
@@ -371,8 +351,6 @@ class WordIndex2:
             else:
                 reversed_words.append(word)
         return " ".join(reversed_words)
-
-
 
     # def search_free_text(self, text: str) -> list:
     #     """
@@ -408,7 +386,6 @@ class WordIndex2:
     #
     #     return top_50_dtos
 
-
     # def search_free_text_with_course(self, text, course_id) -> list:
     #     """
     #     Search for the 50 best matching question IDs based on the number of words in common with the text.
@@ -442,4 +419,3 @@ class WordIndex2:
     #     top_50_questions = [question_id for question_id, _ in sorted_questions[:50]]
     #
     #     return top_50_questions
-

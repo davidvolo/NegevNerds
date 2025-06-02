@@ -3,14 +3,13 @@ import uuid
 from datetime import datetime
 
 from Backend.BusinessLayer.Course.Reaction import Reaction
-from Backend.BusinessLayer.Util.Exceptions import ReactionNotFound
 from Backend.DataLayer.CommentData.CommentRepository import CommentRepository
 from Backend.DataLayer.DTOs.CommentDTO import CommentDTO
 from Backend.DataLayer.ReactionData.ReactionRepository import ReactionRepository
 
 
 class Comment:
-    def __init__(self, comment_id, writer_name,writer_id, link_to_media, date=None, prev_id=None, comment_text="",
+    def __init__(self, comment_id, writer_name, writer_id, link_to_media, date=None, prev_id=None, comment_text="",
                  deleted=None, edited=None, reactions=None):
         """
         Initialize a CommentData instance.
@@ -21,7 +20,7 @@ class Comment:
         self.date = date if date else datetime.now()  # Default to current date if not provided
         self.prev_id = prev_id
         self.comment_text = comment_text
-        self.reactions = reactions if reactions is not None else [] #reactions_list
+        self.reactions = reactions if reactions is not None else []  # reactions_list
         self.deleted = deleted
         self.edited = edited
         self.link_to_media = link_to_media
@@ -47,6 +46,7 @@ class Comment:
             edited=edited,
             link_to_media=link_to_media
         )
+        print(f"[DEBUG] Saving comment with ID: {comment_id} for question_id: {question_id}")
         comment_repo = CommentRepository()
         comment_repo.add_comment(comment, question_id)
 

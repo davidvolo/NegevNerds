@@ -5,6 +5,7 @@ import pdfplumber
 from tabula import read_pdf
 import pandas as pd
 
+
 class SyllabusAnalyzer:
     def __init__(self):
         pass
@@ -20,18 +21,18 @@ class SyllabusAnalyzer:
         r'CourseData Topics[:\n](.*?)\n',
         r'Outline[:\n](.*?)\n',
     ]
-        
-        topics_table = ["נושאי השיעור", "נושא השיעור","Topics", "Outline","Lecture", "Practical Session"]  # List of column headers to search for
+        # List of column headers to search for
+        topics_table = ["נושאי השיעור", "נושא השיעור", "Topics", "Outline", "Lecture", "Practical Session"]
 
         topics = set()
         cropped_pdf_path = self.crop_pdf_top_margin(pdf_path)
         has_table = self.has_valid_table_with_pdfplumber(cropped_pdf_path)
         if not has_table:
-            topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path,topic_patterns)
-            if len(topics)==0:
-                topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path,topic_patterns1)
+            topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path, topic_patterns)
+            if len(topics) == 0:
+                topics = self.extract_syllabus_topics_with_pdfplumber(cropped_pdf_path, topic_patterns1)
         else:
-            topics = self.extract_table_with_topics_final(cropped_pdf_path,topics_table )
+            topics = self.extract_table_with_topics_final(cropped_pdf_path, topics_table)
         cleaned_topics = set()
         for topic in topics:
             # Remove leading numbers (e.g., "1.", "2. ", etc.)
@@ -45,7 +46,6 @@ class SyllabusAnalyzer:
         # Delete the cropped PDF file
         if os.path.exists(cropped_pdf_path):
             os.remove(cropped_pdf_path)
-        
 
         return cleaned_topics
 
@@ -69,7 +69,6 @@ class SyllabusAnalyzer:
                                 return True
             return False
         except Exception as e:
-
             return False
 
     def extract_syllabus_topics_with_pdfplumber(self, file_path, topic_patterns):
@@ -117,7 +116,7 @@ class SyllabusAnalyzer:
 
         return syllabus_topics
 
-    def extract_table_with_topics_final(self,pdf_path, topics, pages="all"):
+    def extract_table_with_topics_final(self, pdf_path, topics, pages="all"):
         """
         Extracts tables from a PDF, matches column titles to a list of topics,
         and returns data under matching columns.
@@ -147,7 +146,6 @@ class SyllabusAnalyzer:
 
                 # Clean up headers for matching
                 df.columns = df.columns.str.strip()
-
 
                 # Check for matching columns
                 for column in df.columns:

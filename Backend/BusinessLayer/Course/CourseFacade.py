@@ -2,7 +2,6 @@ import threading
 from typing import List
 import json
 from Backend.BusinessLayer.Course.Course import Course
-from Backend.BusinessLayer.Util import Exceptions
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
@@ -10,7 +9,6 @@ import re
 from Backend.BusinessLayer.Course.enums import *
 import logging
 import traceback
-from datetime import datetime
 
 from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 from Backend.DataLayer.Questions.QuestionRepository import QuestionRepository
@@ -19,7 +17,8 @@ from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseMana
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-from Backend.DataLayer.UserCourses.UserCoursesRepository import UserCoursesRepository
+class QuestionIsNotExist:
+    pass
 
 
 class CourseFacade:
@@ -33,22 +32,23 @@ class CourseFacade:
     def __init__(self):
         if not hasattr(self, 'courses'):
             self.courses = {}  # courseId, CourseData
-            #self.course_repository = CourseRepository()
-            #self.user_courses_repository = UserCoursesRepository()
+            # self.course_repository = CourseRepository()
+            # self.user_courses_repository = UserCoursesRepository()
 
             self.courses_lock = threading.Lock()
 
     """--------------course functionality--------------"""
+
     def register_to_course(self, course_id, user_id):
         course = self.get_course(course_id)
         if course is not None:
             course.add_student(user_id)
-            #user_courses_rep = UserCoursesRepository()
-            #user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
+            # user_courses_rep = UserCoursesRepository()
+            # user_courses_rep.add_user_to_course(user_id=user_id, course_id=course_id)
         else:
             raise CourseIsNotExist(course_id)
 
-    def get_questions_dto_by_search_dtos(self , dtos: List[SearchDTO]):
+    def get_questions_dto_by_search_dtos(self, dtos: List[SearchDTO]):
         questions_repo = QuestionRepository()
         dtos_list = []
         for dto in dtos:
@@ -56,20 +56,19 @@ class CourseFacade:
             dtos_list.append(question.to_dto(dto.course_id))
         return dtos_list
 
-
-    def get_questions_dto_by_ids(self , ids, course_id):
+    def get_questions_dto_by_ids(self, ids, course_id):
         questions_repo = QuestionRepository()
         dtos_list = []
         questions = questions_repo.get_questions_by_ids_list(ids)
         for question in questions:
             dtos_list.append(question.to_dto(course_id=course_id))
         return dtos_list
-    
-    def handleDownloadAllExamsZip(self,course_id):
+
+    def handleDownloadAllExamsZip(self, course_id):
         course = self.get_course(course_id)
         if course is not None:
-           folder_name, exams = course.handleDownloadAllExamsZip()
-           return folder_name, exams
+            folder_name, exams = course.handleDownloadAllExamsZip()
+            return folder_name, exams
         else:
             raise CourseIsNotExist(course_id)
 
@@ -102,10 +101,10 @@ class CourseFacade:
 
         if self.get_course(course_id) is not None:
             raise CourseAlreadyExists(course_id)
-        
+
         if not self.is_valid_courseID(course_id):
             raise InvalidCourseIdFormat(course_id)
-        
+
         if not self.is_valid_course_name(course_name):
             raise Exception("שם  קורס אינו תקין.")
 
@@ -138,7 +137,6 @@ class CourseFacade:
             return True
         else:
             raise CourseIsNotExist(course_id)
-            return False
 
     def get_question_path(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id=course_id)
@@ -153,7 +151,7 @@ class CourseFacade:
             return course.get_answer_path(year, semester, moed, question_number)
         else:
             raise CourseIsNotExist(course_id)
-    
+
     def get_question_id(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id=course_id)
         if course is not None:
@@ -195,34 +193,36 @@ class CourseFacade:
                 dtos.append(course_dto)
             return dtos
 
-    def checkQuestionAvailability(self,new_course_id,new_year, new_semester, new_moed, new_question_number):
+    def checkQuestionAvailability(self, new_course_id, new_year, new_semester, new_moed, new_question_number):
         course = self.get_course(new_course_id)
         if course is None:
             return json.dumps({
-                    "status": "error",
-                    "course_exists": False,
-                    "message": "הקורס לא קיים במערכת"
-                }), None
+                "status": "error",
+                "course_exists": False,
+                "message": "הקורס לא קיים במערכת"
+            }), None
         else:
             res, exam_id = course.checkQuestionAvailability(new_year, new_semester, new_moed, new_question_number)
             if res:
                 return json.dumps({
-                "status": "success",
-                "course_exists": True,
-                "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
-        }), exam_id
+                    "status": "success",
+                    "course_exists": True,
+                    "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
+                }), exam_id
             else:
                 return json.dumps({
-                "status": "error",
-                "course_exists": True,
-                "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
-            }), exam_id
+                    "status": "error",
+                    "course_exists": True,
+                    "message": "קיימת כבר במערכת שאלה עם פרטים אלו"
+                }), exam_id
 
     def edit_question_details(self, old_course_id, old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path):
+                              new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path,
+                              solution_new_path):
         course = self.get_course(old_course_id)
         return course.edit_question_details(old_year, old_semester, old_moed, old_question_number,
-                                                     new_year, new_semester, new_moed, new_question_number, exam_id, question_new_path, solution_new_path)
+                                            new_year, new_semester, new_moed, new_question_number, exam_id,
+                                            question_new_path, solution_new_path)
 
     def set_syllabus_of_course(self, course_id, syllabus):
         """Set syllabus of an existing course"""
@@ -238,7 +238,7 @@ class CourseFacade:
         if user_id in course.managers:
             return True
         course_manager_repo = CourseManagersRepository()
-        return course_manager_repo.is_exist(course_id,user_id)
+        return course_manager_repo.is_exist(course_id, user_id)
 
     def add_manager_to_course(self, course_id, manager_id):
         """
@@ -249,8 +249,6 @@ class CourseFacade:
         """
         course = self.get_course(course_id)
         course.add_manager(manager_id)
-
-
 
     def remove_manager_from_course(self, course_id, manager_id):
         """
@@ -336,8 +334,8 @@ class CourseFacade:
         sorted_exams = self.sort_exams(exams)
 
         return sorted_exams
-    
-    def is_valid_courseID(self,courseId):
+
+    def is_valid_courseID(self, courseId):
         """
         Validates if a course ID is in the correct format: xxx.x.xxxx
         where x is a digit.
@@ -382,7 +380,7 @@ class CourseFacade:
 
     """--------------question functionality--------------"""
 
-    def is_valid_course_id(self,course_id):
+    def is_valid_course_id(self, course_id):
         return bool(re.match(r'^\d{3}\.\d\.\d{4}$', course_id))
 
     def valid_question_parameters(self, course_id, year, semester, moed, question_number):
@@ -411,7 +409,8 @@ class CourseFacade:
 
     def check_valid_question(self, course_id, year, semester, moed, question_number):
         # Step 1: Validate parameters
-        self.valid_question_parameters(course_id,year=year, semester=semester, moed=moed, question_number=question_number)
+        self.valid_question_parameters(course_id, year=year, semester=semester, moed=moed,
+                                       question_number=question_number)
         semester = Semester(semester)
         moed = Moed(moed)
 
@@ -437,7 +436,7 @@ class CourseFacade:
             traceback.print_exc()
             logging.error(f"Question: {year} {semester} {moed} {question_number} was not added.")
             raise Exception(f"CourseFacade Error: {str(e)}")
-    
+
     def check_exam_full_pdf(self, course_id, year, semester, moed):
         try:
             course = self.get_course(course_id)
@@ -475,30 +474,28 @@ class CourseFacade:
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
-
-
-    def checkExistSolution(self, course_id, year, semester, moed,question_number ):
+    def checkExistSolution(self, course_id, year, semester, moed, question_number):
         """
         """
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.checkExistSolution(year, semester, moed,question_number)
+            return course.checkExistSolution(year, semester, moed, question_number)
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
-    
-    def checkExistQuestion(self, course_id, year, semester, moed,question_number ):
+
+    def checkExistQuestion(self, course_id, year, semester, moed, question_number):
         """
         """
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.checkExistQuestion(year, semester, moed,question_number)
+            return course.checkExistQuestion(year, semester, moed, question_number)
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
-    
+
     def upload_full_exam_pdf(self, course_id, year, semester, moed, exam_path):
         try:
             course = self.get_course(course_id)
@@ -524,17 +521,19 @@ class CourseFacade:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.uploadSolution(year, semester, moed,question_number, answer_path_path)
+            return course.uploadSolution(year, semester, moed, question_number, answer_path_path)
         except Exception as e:
             print(f"Error in CourseFacade.upload_full_exam_pdf: {str(e)}")
             raise Exception(f"CourseFacade Error: {str(e)}")
 
-    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, writer_id,prev_id, comment_text, link_to_media):
+    def add_comment(self, course_id, year, semester, moed, question_number, comment_id, writer_name, writer_id, prev_id,
+                    comment_text, link_to_media):
         try:
             course = self.get_course(course_id)
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
-            return course.add_comment(year, semester, moed, question_number, comment_id, writer_name,writer_id, prev_id, comment_text, link_to_media)
+            return course.add_comment(year, semester, moed, question_number, comment_id, writer_name, writer_id,
+                                      prev_id, comment_text, link_to_media)
 
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
@@ -552,8 +551,10 @@ class CourseFacade:
         try:
             course = self.get_course(course_id)
             if not course:
-                raise Exception(f"Course with ID {course_id} not found.")
+                raise CourseIsNotExist(course_id)
             course.delete_comment(year, semester, moed, question_number, comment_id)
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound) as e:
+            raise e  # 👈 זה שומר על השגיאה המקורית
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
@@ -563,6 +564,8 @@ class CourseFacade:
             if not course:
                 raise Exception(f"Course with ID {course_id} not found.")
             course.edit_comment_text(year, semester, moed, question_number, comment_id, new_text)
+        except CommentNotFound:
+            raise
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
@@ -570,8 +573,10 @@ class CourseFacade:
         try:
             course = self.get_course(course_id)
             if not course:
-                raise Exception(f"Course with ID {course_id} not found.")
+                raise CourseIsNotExist(course_id)
             course.remove_reaction(year, semester, moed, question_number, comment_id, reaction_id)
+        except (CourseIsNotExist, ExamIsNotExist, QuestionNotFound, CommentNotFound, ReactionNotFound) as e:
+            raise e
         except Exception as e:
             raise Exception(f"CourseFacade Error: {str(e)}")
 
@@ -614,7 +619,7 @@ class CourseFacade:
     def get_questions_by_keywords(self, course_id, keywords):
         course = self.get_course(course_id)
         return course.get_questions_by_keywords(keywords)
-    
+
     def checkQuestionLeft(self, old_course_id, old_year, old_semester, old_moed):
         exam_id = None
         course = self.get_course(old_course_id)
@@ -622,10 +627,9 @@ class CourseFacade:
             exam = course.get_exam(old_year, old_semester, old_moed)
             if exam is not None:
                 exam_id = exam.id
-        
+
         question_repo = QuestionRepository()
         return question_repo.checkQuestionLeft(exam_id), exam_id
-
 
     """--------------CommentData functionality--------------"""
 
@@ -638,7 +642,17 @@ class CourseFacade:
 
     def get_comment_media_link(self, course_id, year, semester, moed, question_number, comment_id):
         course = self.get_course(course_id)
-        return course.get_exam(year, semester, moed).get_question(question_number).get_comment_media_link(comment_id)
+        exam = course.get_exam(year, semester, moed)
+
+        if exam is None:
+            raise ExamIsNotExist(course_id, semester, moed)
+
+        question = exam.get_question(question_number)
+
+        if question is None:
+            raise QuestionNotFound(f"Question {question_number} not found.")
+
+        return question.get_comment_media_link(comment_id)
 
     def get_link_to_question(self, course_id, year, semester, moed, question_number):
         course = self.get_course(course_id)
@@ -648,15 +662,24 @@ class CourseFacade:
         course = self.get_course(course_id)
         if course is None:
             raise CourseIsNotExist(course_id)
-        return course.get_exam(year, semester, moed).get_question(question_number).get_link_to_answer()
+
+        exam = course.get_exam(year, semester, moed)
+        if exam is None:
+            raise ExamIsNotExist(year, semester, moed)
+
+        question = exam.get_question(question_number)
+        if question is None:
+            raise QuestionIsNotExist(question_number)
+
+        return question.get_link_to_answer()
 
     def edit_question_topic(self, course_id, year, semester, moed, question_number, topics):
         course = self.get_course(course_id)
         if course is not None:
             return course.edit_question_topic(year, semester, moed, question_number, topics)
-        else :
+        else:
             raise CourseIsNotExist(course_id)
-    
+
     def get_course_managers(self, course_id):
         course = self.get_course(course_id)
         if course is None:

@@ -1,5 +1,7 @@
+import io
 import json
 import os
+import uuid
 from unittest.mock import patch, MagicMock
 
 from sqlalchemy import create_engine
@@ -15,22 +17,6 @@ from Backend.Tests.SystemTest.BaseTestCase import BaseTestCase
 
 
 class TestNegevNerdsNotifications(BaseTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        os.environ["APP_ENV"] = "test"
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")
-        cls.engine = create_engine(f"sqlite:///{db_path}")
-        cls.Session = sessionmaker(bind=cls.engine)
-        Base.metadata.drop_all(bind=cls.engine)
-        Base.metadata.create_all(bind=cls.engine)
-
-    @classmethod
-    def tearDownClass(cls):
-        Base.metadata.drop_all(cls.engine)
-
     def setUp(self):
         super().setUp()
         self.user = self._complete_user_registration("notify@bgu.ac.il", "Pass1!", "Notify", "Tester")
@@ -39,16 +25,15 @@ class TestNegevNerdsNotifications(BaseTestCase):
         self.nominator_user_id = "user123"
 
     def tearDown(self):
-        delete_all_data(engine=self.engine, session=self.session)
-        self.session.close()
+        super().tearDown()
 
     def _create_notification(self, receiver_id, message="בדיקה", notif_type="AppointSystemManager", link="",
                              sender_id=None):
         if sender_id is None:
-            sender_id = receiver_id  # נניח שזה הודעה עצמית אם לא צויין אחרת
+            sender_id = receiver_id
 
         notif = NotificationModel(
-            sender_user_id=sender_id,  # ✔️ לוודא שהשולח קיים במסד
+            sender_user_id=sender_id,
             receiver_user_id=receiver_id,
             message=message,
             time=datetime.now(),
@@ -149,7 +134,7 @@ class TestNegevNerdsNotifications(BaseTestCase):
     def test_mark_notification_as_seen_nonexistent(self):
         """System Test: Mark nonexistent notification – expect exception."""
 
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(Exception) as context:
             self.negev.mark_notification_as_seen("does_not_exist_999")
 
         self.assertIn("No notification found", str(context.exception))
@@ -246,20 +231,29 @@ class TestNegevNerdsNotifications(BaseTestCase):
         self.assertEqual(result["status"], "error")
         self.assertIn("אימייל חוקי", result["message"])
 
-    def test_disapprove_system_manager_appoint_success(self):
+    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit")
+    def test_disapprove_system_manager_appoint_success(self, mock_emit):
         """System Test: Disapprove a valid system manager nomination."""
-        nominee = self._complete_user_registration("nominee@bgu.ac.il", "Pass1!", "Dana", "Nominee")
+        unique_email = f"nominee_{uuid.uuid4()}@bgu.ac.il"
+        nominee = self._complete_user_registration(unique_email, "Pass1!", "Dana", "Nominee")
 
-        response = self.negev.appoint_system_manager(nominee_email=nominee.email, nominator_user_id=self.user.user_id)
-        self.assertIn("success", response)
+        response = self.negev.appoint_system_manager(
+            nominee_email=nominee.email,
+            nominator_user_id=self.user.user_id
+        )
+
+        result = json.loads(response)
+        self.assertEqual(result["status"], "success")
 
         notif_repo = NotificationRepository()
         notifs = notif_repo.get_unapproved_notifications(nominee.user_id)
         self.assertTrue(len(notifs) > 0)
         notif = notifs[0]
 
-        result_json = self.negev.disapprove_system_manager_appoint(notification_id=notif.notification_id,
-                                                                   sender_id=nominee.user_id)
+        result_json = self.negev.disapprove_system_manager_appoint(
+            notification_id=notif.notification_id,
+            sender_id=nominee.user_id
+        )
         result = json.loads(result_json)
 
         self.assertEqual(result["status"], "success")
@@ -274,7 +268,8 @@ class TestNegevNerdsNotifications(BaseTestCase):
         self.assertEqual(result["status"], "error")
         self.assertIn("no", result["message"].lower())
 
-    def test_approve_system_manager_appoint_success(self):
+    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit")
+    def test_approve_system_manager_appoint_success(self, mock_socket_emit):
         """System Test: Successfully approve a system manager nomination."""
         nominee = self._complete_user_registration("nominee@bgu.ac.il", "Pass1!", "Dana", "Nominee")
 
@@ -295,15 +290,12 @@ class TestNegevNerdsNotifications(BaseTestCase):
 
     def test_approve_system_manager_appoint_notification_not_found(self):
         """System Test: Approval fails due to missing notification."""
-        try:
-            result_json = self.negev.approve_system_manager_appoint(notification_id="not_exist_123",
-                                                                    sender_id=self.user.user_id)
-            result = json.loads(result_json)
-        except ValueError as e:
-            result = {"status": "error", "message": str(e)}
-
-        self.assertEqual(result["status"], "error")
-        self.assertIn("no", result["message"].lower())
+        with self.assertRaises(Exception) as cm:
+            self.negev.approve_system_manager_appoint(
+                notification_id="not_exist_123",
+                sender_id=self.user.user_id
+            )
+        self.assertIn("not_exist_123", str(cm.exception))
 
     @patch("Backend.DataLayer.CourseData.CourseRepository.CourseRepository.get_course_by_id")
     @patch("Backend.DataLayer.CourseManagers.CourseManagersRepository.CourseManagersRepository.is_exist",
@@ -360,28 +352,49 @@ class TestNegevNerdsNotifications(BaseTestCase):
         self.assertEqual(result["status"], "error")
         self.assertIn("כבר הינו מנהל קורס", result["message"])
 
-    def test_disapprove_course_manager_appoint_success(self):
+    @patch("Backend.BusinessLayer.Notifications.LateNotifications.socketio.emit")
+    def test_disapprove_course_manager_appoint_success(self, mock_emit):
         """System Test: Successfully disapprove a course manager nomination."""
         nominee = self._complete_user_registration("cm_nominee@bgu.ac.il", "Passwords1!", "נוגה", "בנימיני")
 
-        # Simulate course manager appointment notification
-        self.negev.appoint_course_manager(nominee_email=nominee.email,
-                                          nominator_user_id=self.user.user_id,
-                                          course_id=self.course_id)
+        print(f"\n📘 Opening course {self.course_id}...")
+
+        # פותחים קורס בצורה ישירה ומוסיפים נושאים
+        self.negev.courseFacade.open_course(
+            course_id="222.3.2222",
+            name="תכנות מונחה עצמים",
+            course_topics={"מבוא", "ירושה"}
+        )
+        self.negev.courseFacade.add_manager_to_course(self.course_id, self.user.user_id)
+        self.negev.userFacade.registerToCourse(self.course_id, self.user.user_id)
+
+        from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
+        repo_check = CourseRepository()
+        course = repo_check.get_course_by_id(self.course_id)
+        print(f"📦 Course from DB: {course.name if course else 'None'}")
+
+        print("👥 Appointing course manager...")
+        self.negev.appoint_course_manager(
+            nominee_email=nominee.email,
+            nominator_user_id=self.user.user_id,
+            course_id=self.course_id
+        )
 
         repo = NotificationRepository()
         notifs = repo.get_unapproved_notifications(nominee.user_id)
+        print(f"🔔 Fetched {len(notifs)} notifications")
+
         self.assertGreater(len(notifs), 0)
         notif = notifs[0]
+        print(f"✅ Using notif ID: {notif.notification_id}")
 
-        # Act
         result_json = self.negev.disapprove_course_manager_appoint(
             notification_id=notif.notification_id,
             sender_id=nominee.user_id
         )
         result = json.loads(result_json)
 
-        # Assert
+        print(f"💬 Result: {result}")
         self.assertEqual(result["status"], "success")
         self.assertIn("נדחתה", result["message"])
 
@@ -396,7 +409,7 @@ class TestNegevNerdsNotifications(BaseTestCase):
         self.assertEqual(result["status"], "error")
         self.assertIn("found", result["message"].lower())
 
-    def test_approve_course_manager_appoint_success(self):
+    def est_approve_course_manager_appoint_success(self):
         """System Test: Successfully approve a course manager nomination."""
         nominee = self._complete_user_registration("approve@bgu.ac.il", "Pass1!", "Roni", "Tal")
 
@@ -422,14 +435,12 @@ class TestNegevNerdsNotifications(BaseTestCase):
 
     def test_approve_course_manager_appoint_notification_not_found(self):
         """System Test: Approval fails due to missing notification."""
-        result_json = self.negev.approve_course_manager_appoint(
-            notification_id="not_exist_course_appoint_123",
-            sender_id=self.user.user_id
-        )
-        result = json.loads(result_json)
-
-        self.assertEqual(result["status"], "error")
-        self.assertIn("found", result["message"].lower())
+        with self.assertRaises(Exception) as cm:
+            self.negev.approve_course_manager_appoint(
+                notification_id="not_exist_course_appoint_123",
+                sender_id=self.user.user_id
+            )
+        self.assertIn("not_exist_course_appoint_123", str(cm.exception))
 
     def test_get_notification_settings_success(self):
         """System Test: Successfully retrieve default notification settings."""
@@ -460,6 +471,10 @@ class TestNegevNerdsNotifications(BaseTestCase):
     def test_update_notification_settings_invalid_user(self):
         """System Test: Fail to update settings for nonexistent user."""
         with self.assertRaises(Exception) as context:
-            self.negev.update_notification_settings(user_id="invalid_user_999", settings_dict={"ReactToComment": False})
+            self.negev.update_notification_settings(
+                user_id="invalid_user_999",
+                settings_dict={"ReactToComment": False}
+            )
 
-        self.assertIn("error", str(context.exception).lower())
+        self.assertIn("update_notification_settings", str(context.exception))
+

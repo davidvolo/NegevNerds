@@ -1,6 +1,4 @@
 import bcrypt
-
-from Backend.BusinessLayer.User.UserFacade import UserFacade
 import os
 import unittest
 
@@ -8,9 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Backend.BusinessLayer.User.UserFacade import UserFacade
-from Backend.BusinessLayer.Util.Exceptions import UserAlreadyRegisterToCourse, UserOrPasswordIncorrectError
-# Adjust these imports according to your project structure.
-from Backend.BusinessLayer.Util.Exceptions import UserIsNotRegisterToCourse
 from Backend.DataLayer.Base import delete_all_data, Base
 
 
@@ -20,8 +15,8 @@ class TestUser(unittest.TestCase):
     def setUpClass(cls):
         os.environ["APP_ENV"] = "test"
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))  # העלאה של 3 רמות לתיקיית ה-Backend
-        db_path = os.path.join(base_dir, "test_NegevNerds.db")  # יצירת הנתיב המוחלט לקובץ ה-DB
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+        db_path = os.path.join(base_dir, "test_NegevNerds.db")
 
         engine = create_engine(f"sqlite:///{db_path}")
         cls.Session = sessionmaker(bind=engine)
@@ -30,20 +25,17 @@ class TestUser(unittest.TestCase):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
 
-
     @classmethod
     def tearDownClass(cls):
         Base.metadata.drop_all(cls.engine)
 
-
-
     def setUp(self):
         delete_all_data(engine=self.engine, session=self.session)
-        self.session =self.Session()
+        self.session = self.Session()
         self.user_facade = UserFacade()
-        self.user_facade.users_byEmail={}
-        self.user_facade.users_byName={}
-        self.user_facade.users_byId= {}
+        self.user_facade.users_byEmail = {}
+        self.user_facade.users_byName = {}
+        self.user_facade.users_byId = {}
         self.user_id, massage = self.user_facade.registerWithoutAuth("u1234@post.bgu.ac.il", "pass111!D",  "נדב", "קטלב")
         self.user = self.user_facade.getUser_by_email("u1234@post.bgu.ac.il")
 
@@ -121,7 +113,7 @@ class TestUser(unittest.TestCase):
         self.assertEqual(message, "התחברות בוצעה בהצלחה")
 
     def test_login_failed_incorrect_password(self):
-        user_first_name, user_last_name, user_id, msg= self.user_facade.login("u1234@post.bgu.ac.il", "wrongpassword")
+        user_first_name, user_last_name, user_id, msg = self.user_facade.login("u1234@post.bgu.ac.il", "wrongpassword")
         self.assertIsNone(user_first_name)
         self.assertIsNone(user_last_name)
         self.assertIsNone(user_id)
@@ -138,13 +130,8 @@ class TestUser(unittest.TestCase):
 
     def test_register_to_course_user_not_found(self):
         with self.assertRaises(Exception):
-            self.user_facade.registerToCourse("course_123", "999")  # User 999 doesn't exist
-
+            self.user_facade.registerToCourse("course_123", "999")
 
     def test_edit_user_profile_user_not_found(self):
         with self.assertRaises(Exception):
             self.user_facade.editUserProfile("notfound@bgu.ac.il", first_name="Johnny")
-
-
-
-

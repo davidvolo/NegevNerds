@@ -1,40 +1,15 @@
 import os
 import unittest
-from typing import List
-from unittest.mock import patch
-
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
 
 # Adjust these imports according to your project structure.
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
-from Backend.BusinessLayer.Course.Course import Course
-from Backend.BusinessLayer.Course.Question import Question
-from Backend.BusinessLayer.Course.Question import Question
-from Backend.BusinessLayer.Util.Exceptions import CourseAlreadyExists, InvalidCourseIdFormat, ExamIsNotExist, \
-    TopicAlreadyExist, TopicNotFound, UserIsNotRegisterToCourse, ExamAlreadyExists, QuestionDoesNotMeetExamFields, \
-    QuestionAlreadyInExam, QuestionNotFound
-from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
 from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
-
-from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from unittest import TestCase
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Base import Base, delete_all_data
-from Backend.DataLayer.QuestionTopics.QuestionTopicsRepository import QuestionTopicsRepository
 
-from Backend.DataLayer.UserData import UserModel  # Import the UserModel
-from Backend.DataLayer.ReactionData import ReactionModel # Import the ReactionModel
-from Backend.DataLayer.Questions import QuestionModel
-from Backend.DataLayer.QuestionTopics import QuestionTopicsModel
-from Backend.DataLayer.CourseTopics import CourseTopicsModel
-
-from Backend.DataLayer.CourseData import CourseModel  # Import other models as needed
-from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 class TestQuestion(unittest.TestCase):
     @classmethod
@@ -59,7 +34,7 @@ class TestQuestion(unittest.TestCase):
         self.session = self.Session()
         self.facade = CourseFacade()
 
-        self.facade.open_course("123.4.5678", "new course" ,["topic1", "topic 2"])
+        self.facade.open_course("123.4.5678", "new course", ["topic1", "topic 2"])
         self.course_id = "123.4.5678"
         self.course = self.facade.get_course(self.course_id)
         self.course.add_exam(2025, Semester.SPRING, Moed.A, "link1")
@@ -160,7 +135,6 @@ class TestQuestion(unittest.TestCase):
         self.assertEqual("alice123", result)
         self.assertEqual(self.comment.reactions[0].emoji, "👍")
 
-
     def test_add_reaction_not_found(self):
         with self.assertRaises(Exception):  # CommentNotFound
             self.question.add_reaction("nonexistent", "user1", "👍")
@@ -214,5 +188,3 @@ class TestQuestion(unittest.TestCase):
         self.assertIn(str(self.question.year), s)
         self.assertIn(str(self.question.question_number), s)
         self.assertIn(str(len(self.question.comments)), s)
-
-

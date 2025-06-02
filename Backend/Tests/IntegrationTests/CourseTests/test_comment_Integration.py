@@ -1,33 +1,13 @@
 import os
 from datetime import datetime
 
-from sqlalchemy.orm import scoped_session, sessionmaker
-
-from Backend.BusinessLayer.Course.Comment import Comment
-# Adjust these imports according to your project structure.
 from Backend.BusinessLayer.Course.CourseFacade import CourseFacade
 from Backend.BusinessLayer.Course.Course import Course
-from Backend.BusinessLayer.Course.Question import Question
-from Backend.BusinessLayer.Util.Exceptions import CourseAlreadyExists, InvalidCourseIdFormat
-from Backend.DataLayer.DTOs.CourseDTO import CourseDTO
-from Backend.DataLayer.DTOs.QuestionDTO import QuestionDTO
-
-from Backend.DataLayer.DTOs.SearchDTO import SearchDTO
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from unittest import TestCase
 from Backend.BusinessLayer.Course.enums import Semester, Moed
 from Backend.DataLayer.Base import Base, delete_all_data
-
-from Backend.DataLayer.UserData import UserModel  # Import the UserModel
-from Backend.DataLayer.ReactionData import ReactionModel # Import the ReactionModel
-from Backend.DataLayer.Questions import QuestionModel
-from Backend.DataLayer.QuestionTopics import QuestionTopicsModel
-from Backend.DataLayer.CourseTopics import CourseTopicsModel
-
-from Backend.DataLayer.CourseData import CourseModel  # Import other models as needed
-from Backend.ServiceLayer.ServiceLayer import ServiceLayer
 
 
 class TestComment(TestCase):
@@ -44,7 +24,6 @@ class TestComment(TestCase):
         cls.engine = engine
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
-
 
     @classmethod
     def tearDownClass(cls):
