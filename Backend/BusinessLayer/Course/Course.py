@@ -124,10 +124,10 @@ class Course:
         semester = Semester(semester)
         moed = Moed(moed)
 
-        if year in self.exams:
-            for exam in self.exams[year]:
-                if exam.semester == semester and exam.moed == moed:
-                    return exam
+        # if year in self.exams:
+        #     for exam in self.exams[year]:
+        #         if exam.semester == semester and exam.moed == moed:
+        #             return exam
         exam_repo = ExamRepository()
         exam = exam_repo.get_exam_by_date(year=year, semester=semester, moed=moed, course_id=self.course_id)
         if exam:
