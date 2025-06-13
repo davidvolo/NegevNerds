@@ -44,8 +44,7 @@ class SystemManagersRepository:
         try:
             user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
-            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
-            "usereba84612-bfd9-49b6-adb0-b68baf068c2d"
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"
             ]
             if user_id in user_ids_managers:
                 return True

@@ -128,9 +128,10 @@ class User:
         with self.courses_lock:
             courses_repo = UserCoursesRepository()
             if course_id in self.courses or courses_repo.is_exist(user_id=self.user_id, course_id=course_id):
-                self.courses.remove(course_id)
-                self._repo.update_user(self)
+                if course_id in self.courses:
+                    self.courses.remove(course_id)
                 courses_repo.remove_user_from_course(user_id=self.user_id, course_id=course_id)
+                self._repo.update_user(self)
             else:
                 raise UserIsNotRegisterToCourse()
     
