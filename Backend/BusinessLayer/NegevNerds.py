@@ -842,7 +842,7 @@ class NegevNerds:
             comment_repo.delete_comments_by_question_id(question_id)
             words_questions_repo = WordsQuestionsRepository()
             words_questions_repo.delete_question_words_from_all_tables(question_id)
-            # self._pdfFacade.remove_question_from_search(course_id=course_id, question_id=question_id)
+            self._pdfFacade.remove_question_from_search(course_id=course_id, question_id=question_id)
             question_topics_repo = QuestionTopicsRepository()
             question_topics_repo.delete_topics_by_question_id(question_id)
             question_repo = QuestionRepository()
