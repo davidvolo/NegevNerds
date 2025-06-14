@@ -50,12 +50,13 @@ class InformationRetrieval:
             "size": limit,
             "query": {
                 "bool": {
-                    "must": [  # מחפש התאמה מדויקת יחסית
+                    "must": [
                         {
                             "match": {
                                 "text": {
                                     "query": query,
-                                    "minimum_should_match": "49%"  # אפשר גם מספר כמו "2"
+                                    "operator": "or",
+                                    "minimum_should_match": "50%"
                                 }
                             }
                         }
@@ -64,16 +65,15 @@ class InformationRetrieval:
                 }
             },
             "suggest": {
-                "text_suggestion": {
+                "did_you_mean": {
                     "text": query,
                     "term": {
-                        "field": "text"
+                        "field": "text",
+                        "suggest_mode": "missing",  # הכי יציב
+                        "min_word_length": 3
                     }
                 }
-            },
-            "sort": [
-                {"_score": {"order": "desc"}},
-            ]
+            }
         }
 
         res = self.elastic_search.search(index=self.index_name, body=es_query)
@@ -88,13 +88,24 @@ class InformationRetrieval:
                 course_id=source['course_id'],
             )
             question_dtos.append(question_dto)
-
-        suggestions = res.get('suggest', {}).get('text_suggestion', [])
+        print("res from elastic -" , res)
+        suggestions = res.get('suggest', {}).get('did_you_mean', [])
         first_suggestion = None
-        for suggest in suggestions:
-            if suggest.get('options'):
-                first_suggestion = suggest['options'][0]['text']
-                break
+
+        # בונה הצעה מתוקנת ע"פ כל המילים שיש להן תיקון
+        corrected_terms = []
+        for entry in suggestions:
+            original = entry['text']
+            if entry.get('options'):
+                # בוחר את ההצעה עם הסקור הגבוה ביותר (הראשונה בד"כ)
+                corrected = entry['options'][0]['text']
+                corrected_terms.append(corrected)
+            else:
+                corrected_terms.append(original)
+
+        # מחבר מחדש את המשפט המלא אם היה שינוי כלשהו
+        if corrected_terms and " ".join(corrected_terms) != query:
+            first_suggestion = " ".join(corrected_terms)
         return question_dtos, first_suggestion
 
     def index_question_to_elasticsearch(self, question_id, course_id, all_text):

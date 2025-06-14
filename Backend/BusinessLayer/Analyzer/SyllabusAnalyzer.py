@@ -2,15 +2,82 @@ from PyPDF2 import PdfReader, PdfWriter
 import re
 import os
 import pdfplumber
+import fitz
 from tabula import read_pdf
 import pandas as pd
+from bidi.algorithm import get_display
+import arabic_reshaper
+from Backend.BusinessLayer.Util.LLMutil import LLMutil
 
 
 class SyllabusAnalyzer:
     def __init__(self):
-        pass
+        self.llm = LLMutil()
 
-    def extract_syllabus_topic_total(self, pdf_path):
+    def extract_text_with_pymupdf(self, pdf_path: str) -> str:
+        text = ""
+        try:
+            doc = fitz.open(pdf_path)
+            for page in doc:
+                text += page.get_text() + "\n"
+            print("syllabus text pymupdf:", text)
+            return text
+        except Exception as e:
+            print(f"שגיאה ב-PyMuPDF: {e}")
+            return ""
+
+    def extract_text_from_pdf_with_pdf_plumber(self, pdf_path: str) -> str:
+        with pdfplumber.open(pdf_path) as pdf:
+            syllabus_text = ""
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    syllabus_text += text + "\n"
+
+            print("syllabus text plumber:", syllabus_text)
+            return syllabus_text.strip()
+
+    def normalize_mixed_text(self, text):
+        # Split into lines to preserve structure
+        lines = text.split('\n')
+        normalized_lines = []
+
+        for line in lines:
+            # Process each line separately
+            reshaped_text = arabic_reshaper.reshape(line)
+            bidi_text = get_display(reshaped_text)
+            normalized_lines.append(bidi_text)
+
+        return '\n'.join(normalized_lines)
+
+    def extract_text_from_pdf_file_with_llm(self, pdf_path, course_name):
+        try:
+            # קריאה לטקסט הסילבוס (לדוגמה, מתוך PDF)
+            plumber_text = self.extract_text_from_pdf_with_pdf_plumber(pdf_path)
+            plumber_text = self.normalize_mixed_text(plumber_text)
+            # fitz_text = self.extract_text_with_pymupdf(pdf_path)
+            # fitz_text = self.normalize_mixed_text(fitz_text)
+            # # השוואת אורך הטקסטים
+            # if len(plumber_text) > len(fitz_text):
+            syllabus_text =plumber_text
+            # else:
+            #syllabus_text = fitz_text
+
+            if not syllabus_text.strip():
+                print("לא נמצא טקסט בסילבוס.")
+            else:
+                # השתמש ב-LLM כדי לחלץ נושאים
+                topics = self.llm.extract_topics_from_syllabus_text(syllabus_text , course_name)
+                if topics:
+                    return topics
+                else:
+                    print("ה-LLM לא הצליח לזהות נושאים מהטקסט.")
+                    return []
+        except Exception as e:
+            print(f"שגיאה בקריאת הטקסט או ביצוע הבקשה ל-LLM: {e}")
+            return []
+
+    def extract_syllabus_topic_total(self, pdf_path, course_name):
         topic_patterns = [
         r'סילבוס[:\n](.*?)\n',  # Hebrew pattern for "Syllabus"
         r'סילבוס באנגלית[:\n](.*?)\n',
@@ -24,6 +91,11 @@ class SyllabusAnalyzer:
         # List of column headers to search for
         topics_table = ["נושאי השיעור", "נושא השיעור", "Topics", "Outline", "Lecture", "Practical Session"]
 
+        topics_list = self.extract_text_from_pdf_file_with_llm(pdf_path, course_name)
+        print("Extracted topics from LLM:", topics_list)
+        if topics_list is not None and len(topics_list) > 0:
+            # If LLM successfully extracted topics, return them
+            return set(topics_list)
         topics = set()
         cropped_pdf_path = self.crop_pdf_top_margin(pdf_path)
         has_table = self.has_valid_table_with_pdfplumber(cropped_pdf_path)

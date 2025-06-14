@@ -5,6 +5,8 @@ monkey.patch_all()
 
 import jwt as pyjwt
 
+from Backend.BusinessLayer.Util.LLMutil import LLMutil
+
 from flask_socketio import join_room
 
 from flask import Flask, jsonify
@@ -27,12 +29,14 @@ from socketio_instance import socketio  # ✅ Import the shared instance
 sys.path.append('/home/david/backend/NegevNerds')
 
 
+
 app = Flask(__name__)
 
 app.config['JWT_SECRET_KEY'] = 'negev_nerds'  # סוד ה-JWT שלך
 jwt = JWTManager(app)
 
 db = SQLAlchemy()
+
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///NegevNerds.db'  # Main DB
@@ -148,6 +152,7 @@ def main():
 
     service_layer = ServiceLayer(NegevNerds("../"))
     service_layer.initialize_system()
+    LLMutil()
     print("Starting the ExamData Preparation System API...")
     # threading.Thread(target=initialize).start()
 
