@@ -1085,7 +1085,7 @@ def add_comment():
         photo_file = request.files.get('photo_file')  # Optional
 
         # Validate required fields
-        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id, comment_text]
+        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id]
         if any(field is None for field in required_fields):
             return jsonify({
                 "success": False,
