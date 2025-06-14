@@ -14,8 +14,11 @@ class QuestionAnalyzer:
         doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
         result_files = []
 
+        # Filter out lines where y == 0
+        filtered_lines = [line for line in lines if line['y'] != 0]
+
         # Sort lines by page and position
-        sorted_lines = sorted(lines, key=lambda x: (x['page'], x['y']))
+        sorted_lines = sorted(filtered_lines, key=lambda x: (x['page'], x['y']))
 
         # Convert frontend coordinates to PDF coordinates
         pdf_lines = []
@@ -44,40 +47,31 @@ class QuestionAnalyzer:
             start_page = start_line['page']
             start_y = start_line['y']
 
-            # Create a new document for this question
             new_doc = fitz.open()
 
             if end_line['page'] > start_page:
-                # This question extends to the next page or is the last question
-                # First, add content from the start page
                 page = doc[start_page]
                 page_width = page.rect.width
                 page_height = page.rect.height
 
-                # From start_y to bottom of page
                 clip = fitz.Rect(0, start_y, page_width, page_height)
                 new_page = new_doc.new_page(width=page_width, height=page_height - start_y)
                 new_page.show_pdf_page(new_page.rect, doc, start_page, clip=clip)
 
-                # If there's an end line and it's on a different page
-                if end_line and end_line['page'] > start_page:
-                    # Add any middle pages completely
-                    for page_num in range(start_page + 1, end_line['page']):
-                        mid_page = doc[page_num]
-                        mid_width = mid_page.rect.width
-                        mid_height = mid_page.rect.height
-                        new_mid_page = new_doc.new_page(width=mid_width, height=mid_height)
-                        new_mid_page.show_pdf_page(new_mid_page.rect, doc, page_num)
+                for page_num in range(start_page + 1, end_line['page']):
+                    mid_page = doc[page_num]
+                    mid_width = mid_page.rect.width
+                    mid_height = mid_page.rect.height
+                    new_mid_page = new_doc.new_page(width=mid_width, height=mid_height)
+                    new_mid_page.show_pdf_page(new_mid_page.rect, doc, page_num)
 
-                    # Add the end page from top to end_y
-                    end_page = doc[end_line['page']]
-                    end_width = end_page.rect.width
-                    end_y = end_line['y']
-                    clip = fitz.Rect(0, 0, end_width, end_y)
-                    new_end_page = new_doc.new_page(width=end_width, height=end_y)
-                    new_end_page.show_pdf_page(new_end_page.rect, doc, end_line['page'], clip=clip)
+                end_page = doc[end_line['page']]
+                end_width = end_page.rect.width
+                end_y = end_line['y']
+                clip = fitz.Rect(0, 0, end_width, end_y)
+                new_end_page = new_doc.new_page(width=end_width, height=end_y)
+                new_end_page.show_pdf_page(new_end_page.rect, doc, end_line['page'], clip=clip)
             else:
-                # Question is contained within the same page
                 page = doc[start_page]
                 page_width = page.rect.width
                 end_y = end_line['y']
@@ -86,7 +80,6 @@ class QuestionAnalyzer:
                 new_page = new_doc.new_page(width=page_width, height=end_y - start_y)
                 new_page.show_pdf_page(new_page.rect, doc, start_page, clip=clip)
 
-            # Save the new document
             pdf_bytes = new_doc.write()
             pdf_io = io.BytesIO(pdf_bytes)
             file_storage = FileStorage(pdf_io, filename=f"question_{i + 1}.pdf")
