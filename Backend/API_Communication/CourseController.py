@@ -1085,7 +1085,7 @@ def add_comment():
         photo_file = request.files.get('photo_file')  # Optional
 
         # Validate required fields
-        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id, comment_text]
+        required_fields = [course_id, year, semester, moed, question_number, writer_name, prev_id, question_id]
         if any(field is None for field in required_fields):
             return jsonify({
                 "success": False,
@@ -1935,8 +1935,7 @@ def is_system_manager():
     try:
         user_ids_managers = [
             "user77e0f3fc-0889-4146-b84e-8c50b3e3b393",
-            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b",
-            "user5ed4456a-1cb8-4164-b55b-45c67fabde3e"
+            "user1c529f5c-d8ad-4af2-81e2-493bc43c0e6b"
             ]
 
         user_id = get_jwt_identity()
