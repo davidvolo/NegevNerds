@@ -27,7 +27,6 @@ from Backend.DataLayer.NotificationsSetting.NotificationsSettingRepository impor
 from Backend.DataLayer.ProfilePicture.ProfilePictureRepository import ProfilePictureRepository
 import re
 import json
-# import datetime
 from datetime import datetime, timedelta
 
 from flask_jwt_extended import create_access_token
@@ -388,14 +387,11 @@ class NegevNerds:
     def splitPDF(self, course_id, year, semester, moed, pdf_file, line_data):
         question_number = 1
         question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
-        for curr_question in question_files:
-            try:
 
-                if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
-                    self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
-            except Exception as e:
-                print(e)
-            question_number = question_number+1
+        for curr_question in question_files:
+            if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
+                self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
+            question_number += 1
 
     def split_solution_PDF(self, course_id, year, semester, moed, solution, line_data):
         if self._course_facade.existFullExamSolution(course_id=course_id, year=year, semester=semester, moed=moed):
@@ -928,9 +924,6 @@ class NegevNerds:
             allowed_photo_types = {"image/jpeg", "image/png"}  # Covers JPG, JPEG, and PNG
             return mime_type in allowed_photo_types
         return False
-    
-# import os
-# import base64
 
     def get_comments_metadata(self, question_id):
         """
