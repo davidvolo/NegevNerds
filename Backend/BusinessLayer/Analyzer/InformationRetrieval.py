@@ -173,10 +173,14 @@ class InformationRetrieval:
 
     def remove_question_from_search(self, course_id, question_id):
         # Delete the document from Elasticsearch using the correct ID format
-        self.elastic_search.delete(
-            index=self.index_name,
-            id=f"{course_id}_{question_id}"
-        )
+        try :
+            self.elastic_search.delete(
+                index=self.index_name,
+                id=f"{course_id}_{question_id}"
+            )
+        except Exception as e:
+            print(f"Error removing question from search: {e}")
+
 
     def get_english_common_words(self):
         return {'i', 'me', 'my', 'myself', 'we', 'our', 'ours',
