@@ -73,6 +73,9 @@ class Exam:
         with self.questions_lock:
             print("4.1.1_david")
             # Check if the fields match
+            if len(question_topics)== 0 or question_topics is None:
+                question_topics = []
+                question_topics.append("אחר")
             question = Question.create(exam_id=self.id, year=self.year, semester=self.semester, moed=self.moed,
                                        question_number=question_number, is_american=is_american,
                                        question_topics=question_topics, link_to_question=pdf__question_path,

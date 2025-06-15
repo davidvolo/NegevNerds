@@ -397,7 +397,7 @@ class NegevNerds:
                 print(f"Error adding question {question_number}: {str(e)}")
             question_number += 1
         if added_successfully == 0:
-            raise Exception("No questions were added from the split solution PDF.")
+            raise Exception("No questions were added from the split PDF.")
 
     def split_solution_PDF(self, course_id, year, semester, moed, solution, line_data):
         if self._course_facade.existFullExamSolution(course_id=course_id, year=year, semester=semester, moed=moed):
