@@ -330,8 +330,7 @@ class NegevNerds:
             try:
                 # Check if the course already exists using CourseFacade
                 if self.courseFacade.open_course_possibility(course_id, name):
-                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
-                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
+                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf, name)
                     self.courseFacade.open_course(course_id,name,syllabus )
                     self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
                     self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student

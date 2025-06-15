@@ -25,8 +25,8 @@ class AnalyzerFacade:
     def extract_text_from_image(self, question_file):
         return self.question_analyser.extract_text_from_image(question_file)
 
-    def extract_syllabus_topic_total(self, pdf_path):
-        syllabus = self.course_syllabus.extract_syllabus_topic_total(pdf_path)
+    def extract_syllabus_topic_total(self, pdf_path, course_name):
+        syllabus = self.course_syllabus.extract_syllabus_topic_total(pdf_path, course_name)
         return syllabus
     
     def perform_information_retrieval_question_pdf(self, pdf_question_path, question_id, course_id):
