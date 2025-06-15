@@ -387,34 +387,35 @@ class NegevNerds:
     def splitPDF(self, course_id, year, semester, moed, pdf_file, line_data):
         question_number = 1
         question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
-
+        added_successfully = 0
         for curr_question in question_files:
-            try:
+            try :
                 if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
                     self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
+                added_successfully += 1
             except Exception as e:
-                print(e)
-            question_number = question_number+1
-
-
-        #for curr_question in question_files:
-         #   if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
-          #      self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
-           # question_number += 1
+                print(f"Error adding question {question_number}: {str(e)}")
+            question_number += 1
+        if added_successfully == 0:
+            raise Exception("No questions were added from the split solution PDF.")
 
     def split_solution_PDF(self, course_id, year, semester, moed, solution, line_data):
         if self._course_facade.existFullExamSolution(course_id=course_id, year=year, semester=semester, moed=moed):
             raise Exceptions.ExamAlreadyExists
         question_number = 1
         solution_files = self._pdfFacade.splitPDF(solution, line_data)
+        added_successfully = 0
         for curr_solution in solution_files:
             try:
                 if self.courseFacade.checkExistQuestion(course_id, year, semester, moed, question_number):
                     if not self.courseFacade.checkExistSolution(course_id=course_id, year=year, semester=semester, moed=moed, question_number=question_number):
                         self.uploadSolution(course_id=course_id, year=year, semester=semester, moed=moed, question_number=question_number, solution_file=curr_solution)
+                added_successfully+=1
             except Exception as e:
-                print(e)
+                print(f"Error upload solution {question_number}: {str(e)}")
             question_number = question_number+1
+        if added_successfully == 0:
+            raise Exception("No questions were added from the split solution PDF.")
 
     def upload_full_exam_pdf(self, course_id, year, semester, moed, pdf_file):
         try:
