@@ -52,7 +52,9 @@ class CourseFacade:
         questions_repo = QuestionRepository()
         dtos_list = []
         for dto in dtos:
+            print("dto", dto)
             question = questions_repo.get_questions_by_dto(dto)
+            print("question on free- ",question)
             dtos_list.append(question.to_dto(dto.course_id))
         return dtos_list
 
@@ -273,6 +275,7 @@ class CourseFacade:
         course_list = []
         course_repo = CourseRepository()
         for course in course_repo.get_all_courses():
+            print(course.get_id())
             course_list.append(CourseDTO(course=course))
         return course_list
 

@@ -1,7 +1,7 @@
 import threading
 
 import numpy as np
-
+import json
 from Backend.BusinessLayer.Course.Exam import Exam
 from Backend.BusinessLayer.Util.Exceptions import *
 from Backend.BusinessLayer.Course.enums import Semester, Moed
@@ -9,7 +9,15 @@ from Backend.DataLayer.CourseData.CourseRepository import CourseRepository
 from Backend.DataLayer.CourseManagers.CourseManagersRepository import CourseManagersRepository
 from Backend.DataLayer.ExamData.ExamRepository import ExamRepository
 from Backend.DataLayer.CourseTopics.CourseTopicsRepository import CourseTopicsRepository
-from sentence_transformers import SentenceTransformer, util
+from Backend.BusinessLayer.Util.LLMutil import LLMutil
+
+
+
+
+
+
+# tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-reranker-v2-m3")
+# model = AutoModelForSequenceClassification.from_pretrained("BAAI/bge-reranker-v2-m3")
 
 
 class Course:
@@ -25,8 +33,10 @@ class Course:
         self.exams_lock = threading.Lock()
         self.managers_lock = threading.Lock()
         self.users_lock = threading.Lock()
-
+        # self.token = "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"  # Hugging Face token for authentication
+        # self.model_api_url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
         self.course_topics_repository = CourseTopicsRepository()
+        self.llmUtil = LLMutil()
 
     @classmethod
     def create(cls, course_id, name, course_topics=None):
@@ -249,6 +259,12 @@ class Course:
                 exam_repo.delete_exam(self.course_id, year, semester, moed)
             else:
                 raise ExamIsNotExist(year, semester, moed)
+
+    def get_relevant_topics(self, question_text, threshold=0.3):
+        topics_list = list(self.course_topics)
+        scored = self.score_pairs(question_text, topics_list)
+        relevant = [topic for topic, score in scored if score >= threshold]
+        return relevant
 
     def get_exam_full_pdf(self, year, semester, moed):
         """
@@ -559,48 +575,151 @@ class Course:
     def add_question(self, year, semester, moed, question_number, is_american, question_topics, pdf__question_path,
                      pdf__answer_path, question_text):
         if question_topics is None:
-            question_topics = self.find_question_topics_by_text(question_text)
-
+            question_topics = self.llmUtil.find_question_topics_by_text_cloud(question_text=question_text, course_topics=list(self.course_topics))
+            print(f"Found topics for question : {question_topics}")
         exam = self.get_exam(year, semester, moed)
         return exam.add_question(question_number, is_american, question_topics, pdf__question_path,
                                  pdf__answer_path, question_text)
 
-    def find_question_topics_by_text(self, question_text):
+    # def find_question_topics_by_text(self, question_text):
+    #
+    #     # טען מודל תומך בעברית
+    #     model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+    #     topics_list = list(self.course_topics)
+    #     # הפקת embedding
+    #     question_embedding = model.encode(question_text, convert_to_tensor=True)
+    #     topics_embeddings = model.encode(topics_list, convert_to_tensor=True)
+    #
+    #     # חישוב דמיון קוסיני
+    #     cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
+    #     scores_array = cosine_scores.cpu().numpy()
+    #     print("Cosine Scores:", cosine_scores)
+    #     print("Topics embeddings:", topics_embeddings)
+    #     print("Question Embedding:", question_embedding)
+    #     print("Scores Array:", scores_array)
+    #
+    #     MIN_ABSOLUTE_THRESHOLD = 0.3
+    #     HIGH_ALL_RELEVANT_THRESHOLD = 0.7
+    #     GAP_FROM_MAX_SCORE = 0.25
+    #
+    #     if np.max(scores_array) < MIN_ABSOLUTE_THRESHOLD:
+    #         return []
+    #
+    #     if np.min(scores_array) >= HIGH_ALL_RELEVANT_THRESHOLD:
+    #         return topics_list
+    #
+    #     dynamic_threshold = np.max(scores_array) - GAP_FROM_MAX_SCORE
+    #     final_threshold = max(dynamic_threshold, MIN_ABSOLUTE_THRESHOLD)
+    #
+    #     results = []
+    #     for topic, score in zip(topics_list, scores_array):
+    #         if score >= final_threshold:
+    #             results.append(topic)
+    #
+    #     return results
+    #
+    #
+    # def score_pairs(self, question_text, topics_list):
+    #     inputs = tokenizer(
+    #         [(question_text, topic) for topic in topics_list],
+    #         padding=True,
+    #         truncation=True,
+    #         return_tensors="pt"
+    #     )
+    #     with torch.no_grad():
+    #         scores = model(**inputs).logits.squeeze(-1).numpy()
+    #     return list(zip(topics_list, scores))
+    #
+    # def find_question_topics_by_text_cloud(self, question_text):
+    #     topics_list = list(self.course_topics)
+    #     if not question_text or not topics_list:
+    #         print("קלט טקסט שאלה ריק או רשימת נושאים ריקה. מחזיר רשימה ריקה.")
+    #         return []
+    #
+    #     topics_formatted = "\n".join([f"- {topic}" for topic in topics_list])
+    #
+    #     # פרומפט משופר: מדויק יותר בבקשת הפורמט
+    #     prompt = f"""
+    #      Given the following exam question:
+    #      "{question_text}"
+    #
+    #      And the following list of potential topics:
+    #      {topics_formatted}
+    #
+    #      Please identify only the most relevant topics from the list that directly relate to the question.
+    #      Return your answer as a Python list of strings. Do not include any other text or explanation, just the list.
+    #      For example: ['Topic 1', 'Topic 2']
+    #
+    #      Relevant topics:
+    #      """
+    #
+    #     headers = {
+    #         "Authorization": f"Bearer {self.token}",  # הוספת טוקן האימות
+    #         "Content-Type": "application/json"  # חשוב להגדיר Content-Type
+    #     }
+    #
+    #     payload = {
+    #         "inputs": prompt,
+    #         "parameters": {
+    #             "max_new_tokens": 100,  # הגבלת אורך התשובה
+    #             "return_full_text": False,  # רק הטקסט שנוצר, לא כל הפרומפט
+    #             "do_sample": False,  # כדי לקבל תשובה דטרמיניסטית יותר (פחות יצירתית)
+    #             # "temperature": 0.1 # יכול לעזור לדטרמיניסטיות, אבל לפעמים מודלים לא תומכים בזה
+    #         }
+    #     }
+    #
+    #     print(f"שולח בקשה ל-Hugging Face Inference API בכתובת:...")
+    #     try:
+    #         response = requests.post(
+    #             self.model_api_url,
+    #             headers=headers,
+    #             data=json.dumps(payload)  # השתמש ב-data=json.dumps(payload)
+    #         )
+    #         response.raise_for_status()  # יזרוק שגיאה עבור 4xx/5xx responses
+    #
+    #         result = response.json()
+    #         print("תגובת API מלאה:", json.dumps(result, indent=2, ensure_ascii=False))
+    #
+    #         # ניתוח הפלט: צריך להיות זהיר עם eval
+    #         # תגובה אופיינית היא רשימה עם אובייקט אחד: [{"generated_text": "['Topic 1', 'Topic 2']"}]
+    #         if isinstance(result, list) and result and 'generated_text' in result[0]:
+    #             output_text = result[0]['generated_text'].strip()
+    #         elif isinstance(result, dict) and 'generated_text' in result:
+    #             output_text = result['generated_text'].strip()
+    #         else:
+    #             print("שגיאה: מבנה תגובה לא צפוי מה-API.")
+    #             return []
+    #
+    #         match = re.search(r"\[.*?\]", output_text)
+    #         if match:
+    #             list_str = match.group(0)
+    #             try:
+    #                 extracted_list = eval(list_str)
+    #                 if isinstance(extracted_list, list) and all(isinstance(item, str) for item in extracted_list):
+    #                     return [topic for topic in extracted_list if topic in topics_list]
+    #             except Exception as e:
+    #                 print(f"שגיאה בניתוח עם eval: {e}")
+    #                 print(f"פלט המודל שניסה לנתח: {list_str}")
+    #
+    #             # שלב 2: fallback - נסה לפרסר רשימה עם מקפים
+    #         fallback_matches = re.findall(r"-\s+(.*)", output_text)
+    #         if fallback_matches:
+    #             extracted_list = [item.strip() for item in fallback_matches]
+    #             return [topic for topic in extracted_list if topic in topics_list]
+    #
+    #         print("שגיאה: לא נמצאה רשימה תקינה בפלט המודל.")
+    #         print(f"פלט המודל המלא: {output_text}")
+    #
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"שגיאת בקשת HTTP: {e}")
+    #         return []
+    #     except json.JSONDecodeError as e:
+    #         print(f"שגיאת ניתוח JSON מהתגובה: {e}. התגובה כטקסט: {response.text}")
+    #         return []
+    #     except Exception as e:
+    #         print(f"שגיאה בלתי צפויה: {e}")
+    #         return []
 
-        # טען מודל תומך בעברית
-        model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-        topics_list = list(self.course_topics)
-        # הפקת embedding
-        question_embedding = model.encode(question_text, convert_to_tensor=True)
-        topics_embeddings = model.encode(topics_list, convert_to_tensor=True)
-
-        # חישוב דמיון קוסיני
-        cosine_scores = util.cos_sim(question_embedding, topics_embeddings)[0]
-        scores_array = cosine_scores.cpu().numpy()
-        print("Cosine Scores:", cosine_scores)
-        print("Topics embeddings:", topics_embeddings)
-        print("Question Embedding:", question_embedding)
-        print("Scores Array:", scores_array)
-
-        MIN_ABSOLUTE_THRESHOLD = 0.3
-        HIGH_ALL_RELEVANT_THRESHOLD = 0.7
-        GAP_FROM_MAX_SCORE = 0.25
-
-        if np.max(scores_array) < MIN_ABSOLUTE_THRESHOLD:
-            return []
-
-        if np.min(scores_array) >= HIGH_ALL_RELEVANT_THRESHOLD:
-            return topics_list
-
-        dynamic_threshold = np.max(scores_array) - GAP_FROM_MAX_SCORE
-        final_threshold = max(dynamic_threshold, MIN_ABSOLUTE_THRESHOLD)
-
-        results = []
-        for topic, score in zip(topics_list, scores_array):
-            if score >= final_threshold:
-                results.append(topic)
-
-        return results
 
     def edit_question_topic(self, year, semester, moed, question_number, topics):
         for topic in topics:

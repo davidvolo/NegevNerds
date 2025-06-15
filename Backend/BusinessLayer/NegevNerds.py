@@ -330,7 +330,7 @@ class NegevNerds:
             try:
                 # Check if the course already exists using CourseFacade
                 if self.courseFacade.open_course_possibility(course_id, name):
-                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf)
+                    syllabus = self._pdfFacade.extract_syllabus_topic_total(syllabus_content_pdf, name)
                     self.courseFacade.open_course(course_id,name,syllabus )
                     self.courseFacade.add_manager_to_course(course_id, user_id)  # Add the user as a manager
                     self.userFacade.registerToCourse(course_id, user_id)  # Add the user as a student
@@ -389,9 +389,18 @@ class NegevNerds:
         question_files = self._pdfFacade.splitPDF(pdf_file, line_data)
 
         for curr_question in question_files:
-            if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
-                self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
-            question_number += 1
+            try:
+                if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
+                    self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
+            except Exception as e:
+                print(e)
+            question_number = question_number+1
+
+
+        #for curr_question in question_files:
+         #   if self.courseFacade.check_valid_question(course_id, year, semester, moed, question_number):
+          #      self.add_question(course_id, year, semester, moed, question_number, False, None, curr_question, None)
+           # question_number += 1
 
     def split_solution_PDF(self, course_id, year, semester, moed, solution, line_data):
         if self._course_facade.existFullExamSolution(course_id=course_id, year=year, semester=semester, moed=moed):
