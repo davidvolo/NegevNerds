@@ -108,6 +108,14 @@ class Exam:
             raise QuestionNotFound(question_number)
         return question.link_to_question
 
+    def set_question_path(self, question_number, new_path):
+        question = self.get_question(question_number)
+        if question is None:
+            raise QuestionNotFound(question_number)
+        question.set_link_to_question(new_path)
+
+
+
     def get_answer_path(self, question_number):
         question = self.get_question(question_number)
         if question is None:
