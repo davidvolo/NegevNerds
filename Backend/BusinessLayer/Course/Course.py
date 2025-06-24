@@ -750,3 +750,10 @@ class Course:
         exam = self.get_exam(old_year, old_semester, old_moed)
         return exam.edit_question_details(old_question_number, new_year, new_semester, new_moed, new_question_number,
                                           exam_id, question_new_path, solution_new_path)
+
+    def set_question_pate(self, year, semester, moed, question_number, link_to_question):
+        exam = self.get_exam(year=year, semester=semester, moed=moed)
+        if exam is None:
+            raise ExamIsNotExist(year, semester, moed)
+        exam.set_question_path(question_number, link_to_question)
+

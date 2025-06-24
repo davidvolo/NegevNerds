@@ -64,6 +64,16 @@ class Question:
 
         return question
 
+
+    def set_link_to_question(self, link_to_question):
+        """
+        Set the link to the question.
+        :param link_to_question: The new link to the question.
+        """
+        self.link_to_question = link_to_question
+        question_repo = QuestionRepository()
+        question_repo.update_question(self)
+
     def to_dto(self, course_id):
         """
         Converts the Question instance to a QuestionDTO.

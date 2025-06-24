@@ -159,7 +159,7 @@ class QuestionRepository:
             # Update fields
             question_model.question_id = question.id,
             question_model.year = question.year,
-            question_model.is_american = question.is_american,
+            question_model.is_american = False,
             question_model.link_to_question = question.link_to_question,
             #question_model.link_to_exam = question.link_to_exam,
             question_model.link_to_answer = question.link_to_answer

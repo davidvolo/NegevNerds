@@ -690,3 +690,9 @@ class CourseFacade:
         if course is None:
             raise CourseIsNotExist(course_id)
         return course.get_course_managers()
+
+    def set_question_path(self , course_id, year, semester, moed, question_number, path):
+        course = self.get_course(course_id)
+        if course is None:
+            raise CourseIsNotExist(course_id)
+        course.set_question_path(year, semester, moed, question_number, path)

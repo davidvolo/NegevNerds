@@ -1157,6 +1157,7 @@ class NegevNerds:
                 else:
                     new_path = self.fileManager.save_question_file_pdf(course_id, year, semester, moed, question_number, new_file)
 
+                self._course_facade.set_question_path(course_id, year, semester, moed, question_number, new_path)
                 return json.dumps({
                     "status": "success",
                     "message": "Question file successfully swapped",
